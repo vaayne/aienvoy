@@ -2,7 +2,7 @@ project_name: OpenAI-Dashboard
 release:
     github:
         owner: Vaayne
-        name: OpenAI-Dashboard
+        name: openai-dashboard
     name_template: "{{.Tag}}"
 # This is an example .goreleaser.yml file with some sensible defaults.
 # Make sure to check the documentation at https://goreleaser.com

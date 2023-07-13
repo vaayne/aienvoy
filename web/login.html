@@ -9,11 +9,13 @@
 		/>
 		<script src="https://cdn.tailwindcss.com"></script>
 		<script src="//unpkg.com/alpinejs" defer></script>
+		<script src="https://unpkg.com/htmx.org@1.9.2"></script>
 		<script type="module" src="./js/server.js"></script>
 		<title>Title</title>
 	</head>
 	<body>
-		<div x-data="logindata" class="">
+		<div x-data="logindata" x-init="loadHeaderAndFooter()" class="">
+			<div x-ref="header"></div>
 			<div :data-theme="$store.darkMode.theme">
 				<div
 					class="relative flex flex-col justify-center h-screen overflow-hidden"
@@ -81,7 +83,9 @@
 					</div>
 				</div>
 			</div>
+			<div x-ref="footer"></div>
 		</div>
+
 		<script>
 			document.addEventListener("alpine:init", () => {
 				Alpine.data("logindata", () => ({
@@ -96,11 +100,7 @@
 						this.isLogin = true;
 					},
 					login() {
-						console.log(this.user, this.pass);
-						// Services.login(this.user, this.pass)
-						document.cookie = `user=${this.user}`;
-						document.cookie = `pass=${this.pass}`;
-						this.isLogin = true;
+						Services.login(this.user, this.pass)
 					},
 				}));
 			});
@@ -114,6 +114,17 @@
 					},
 				});
 			});
+			function loadHeaderAndFooter() {
+				fetch('/web/component/header.html')
+				  .then(res => res.text())
+				  .then(html => document.getElementById('header').innerHTML = html)
+
+				fetch('/web/component/footer.html')
+				  .then(res => res.text())
+				  .then(html => document.getElementById('footer').innerHTML = html)
+			  }
+
 		</script>
+
 	</body>
 </html>

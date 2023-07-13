@@ -1,0 +1,29 @@
+<!-- hello page -->
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link
+			href="https://cdn.jsdelivr.net/npm/daisyui@3.2.1/dist/full.css"
+			rel="stylesheet"
+			type="text/css"
+		/>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="//unpkg.com/alpinejs" defer></script>
+        <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+		<script type="module" src="./js/server.js"></script>
+	</head>
+	<body>
+		<div x-data >
+			<hx-include src="/web/component/header.html"></hx-include>
+
+			<h1>Welcome to my Home Page!</h1>
+
+			<p>This is my home page content...</p>
+            <div hx-load></div>
+
+			<hx-include src="/web/component/footer.html"></hx-include>
+		</div>
+	</body>
+
+</html>

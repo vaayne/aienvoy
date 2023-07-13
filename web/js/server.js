@@ -16,3 +16,14 @@ class Services {
         return false;
     }
 }
+
+
+function loadHeaderAndFooter() {
+    fetch('/web/component/header.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('header').innerHTML = html)
+
+    fetch('/web/component/footer.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('footer').innerHTML = html)
+  }

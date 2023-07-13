@@ -27,3 +27,12 @@ func (s *OpenAI) ChatStream(ctx context.Context, req *ChatCompletionRequest) (Ch
 	resp, err := getClientByModel(req.Model).CreateChatCompletionStream(ctx, req.ChatCompletionRequest)
 	return ChatCompletionStream{resp}, err
 }
+
+type ListModelsResponse struct {
+	openai.ModelsList
+}
+
+func (s *OpenAI) GetModels(ctx context.Context) (ListModelsResponse, error) {
+	resp, err := getClientByModel(openai.GPT3Dot5Turbo).ListModels(ctx)
+	return ListModelsResponse{resp}, err
+}

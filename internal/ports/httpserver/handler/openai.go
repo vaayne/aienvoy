@@ -22,6 +22,15 @@ func NewOpenAIHandler() *OpenAIHandler {
 	}
 }
 
+func (h *OpenAIHandler) GetModels(c echo.Context) error {
+	resp, err := h.openai.GetModels(c.Request().Context())
+	if err != nil {
+		logger.SugaredLogger.Errorw("get models error", "err", err.Error())
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusOK, resp)
+}
+
 func (h *OpenAIHandler) Chat(c echo.Context) error {
 	req := new(openai.ChatCompletionRequest)
 	err := c.Bind(req)
