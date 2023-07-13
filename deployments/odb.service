@@ -1,0 +1,27 @@
+[Unit]
+Description=OpenAI Dashboard
+ConditionPathExists=/etc/openai-dashboard
+After=network.target network-online.target
+Requires=network-online.target
+
+
+[Service]
+Type=simple
+User=odb
+Group=odb
+LimitNOFILE=1024
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+LimitNPROC=512
+PrivateTmp=true
+ProtectSystem=full
+Restart=on-failure
+RestartSec=10
+startLimitIntervalSec=60
+
+WorkingDirectory=/etc/openai-dashboard
+ExecStart=/user/local/bin/openai-dashboard serve
+
+
+[Install]
+WantedBy=multi-user.target
