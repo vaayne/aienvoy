@@ -1,10 +1,11 @@
 module openai-dashboard
 
-go 1.20
+go 1.19
 
 require (
 	github.com/axiomhq/axiom-go v0.15.2
 	github.com/fsnotify/fsnotify v1.6.0
+	github.com/labstack/echo/v5 v5.0.0-20220201181537-ed2888cfa198
 	github.com/pocketbase/pocketbase v0.16.8
 	github.com/sashabaranov/go-openai v1.13.0
 	github.com/spf13/viper v1.13.0
@@ -57,7 +58,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
-	github.com/labstack/echo/v5 v5.0.0-20220201181537-ed2888cfa198 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect

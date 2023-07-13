@@ -1,0 +1,11 @@
+name: static checks
+on:
+  push:
+
+jobs:
+  golangci-lint:
+    uses: Vaayne/github-workflows/.github/workflows/go-golangci-lint.yml@v0.1.2
+  pre-commit:
+    uses: Vaayne/github-workflows/.github/workflows/go-pre-commit.yml@v0.1.2
+  test:
+    uses: Vaayne/github-workflows/.github/workflows/go-test.yml@v0.1.2
