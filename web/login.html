@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link
+			href="https://cdn.jsdelivr.net/npm/daisyui@3.2.1/dist/full.css"
+			rel="stylesheet"
+			type="text/css"
+		/>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="//unpkg.com/alpinejs" defer></script>
+		<script type="module" src="./js/server.js"></script>
+		<title>Title</title>
+	</head>
+	<body>
+		<div x-data="logindata" class="">
+			<div :data-theme="$store.darkMode.theme">
+				<div
+					class="relative flex flex-col justify-center h-screen overflow-hidden"
+				>
+					<!-- set dark mode -->
+					<input
+						type="checkbox"
+						class="absolute top-0 right-0 m-2 toggle"
+						@click="$store.darkMode.toggle()"
+						checked
+					/>
+					<div
+						class="w-full p-6 m-auto rounded-md shadow-md lg:max-w-lg"
+					>
+						<h1
+							class="text-3xl font-semibold text-center text-purple-700"
+						>
+							Dashboard
+						</h1>
+						<form class="space-y-4">
+							<div>
+								<label class="label">
+									<span class="text-base label-text"
+										>Email</span
+									>
+								</label>
+								<input
+									x-model="user"
+									type="text"
+									placeholder="Email Address"
+									class="w-full input input-bordered input-primary"
+								/>
+							</div>
+							<div>
+								<label class="label">
+									<span class="text-base label-text"
+										>Password</span
+									>
+								</label>
+								<input
+									x-model="pass"
+									type="password"
+									placeholder="Enter Password"
+									autocomplete="on"
+									class="w-full input input-bordered input-primary"
+								/>
+							</div>
+							<a
+								href="#"
+								class="text-xs text-gray-600 hover:underline hover:text-blue-600"
+								>Forget Password?</a
+							>
+							<div>
+								<button @click="login" class="btn btn-primary">
+									Login
+								</button>
+							</div>
+						</form>
+						<!-- <button @click="toggle" class="btn btn-primary">Toggle</button> -->
+						<div x-show="isLogin" class="toast">
+							<div class="alert alert-info">
+								<span>Login Success.</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			document.addEventListener("alpine:init", () => {
+				Alpine.data("logindata", () => ({
+					user: "",
+					pass: "",
+					open: false,
+					isLogin: false,
+					redirectPath: "",
+
+					toggle() {
+						this.open = !this.open;
+						this.isLogin = true;
+					},
+					login() {
+						console.log(this.user, this.pass);
+						// Services.login(this.user, this.pass)
+						document.cookie = `user=${this.user}`;
+						document.cookie = `pass=${this.pass}`;
+						this.isLogin = true;
+					},
+				}));
+			});
+			document.addEventListener("alpine:init", () => {
+				Alpine.store("darkMode", {
+					on: false,
+					theme: "light",
+					toggle() {
+						this.on = !this.on;
+						this.theme = this.on ? "dark" : "light";
+					},
+				});
+			});
+		</script>
+	</body>
+</html>
