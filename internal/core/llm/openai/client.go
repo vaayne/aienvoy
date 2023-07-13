@@ -2,7 +2,6 @@ package openai
 
 import (
 	"context"
-	"sync"
 	"sync/atomic"
 
 	"openai-dashboard/internal/pkg/config"
@@ -11,11 +10,7 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-var (
-	once               sync.Once
-	client             *OpenAI
-	modelClientMapping clientPoolMap = make(clientPoolMap)
-)
+var modelClientMapping clientPoolMap = make(clientPoolMap)
 
 const (
 	LLMTypeOpenAI      = "openai"

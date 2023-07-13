@@ -3,8 +3,9 @@ package logger
 import (
 	"context"
 	"log"
-	"openai-dashboard/internal/pkg/config"
 	"time"
+
+	"openai-dashboard/internal/pkg/config"
 
 	"go.uber.org/zap/zapcore"
 
