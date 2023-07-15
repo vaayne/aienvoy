@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync/atomic"
 
-	"openai-dashboard/internal/pkg/config"
-	"openai-dashboard/internal/pkg/logger"
+	"aienvoy/internal/pkg/config"
+	"aienvoy/internal/pkg/logger"
 
 	"github.com/sashabaranov/go-openai"
 )

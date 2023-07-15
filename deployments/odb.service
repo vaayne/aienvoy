@@ -1,14 +1,14 @@
 [Unit]
-Description=OpenAI Dashboard
-ConditionPathExists=/etc/openai-dashboard
+Description=AI Envoy
+ConditionPathExists=/etc/aienvoy
 After=network.target network-online.target
 Requires=network-online.target
 
 
 [Service]
 Type=simple
-User=odb
-Group=odb
+User=aienvoy
+Group=aienvoy
 LimitNOFILE=1024
 TimeoutStopSec=5s
 LimitNOFILE=1048576
@@ -19,8 +19,8 @@ Restart=on-failure
 RestartSec=10
 startLimitIntervalSec=60
 
-WorkingDirectory=/etc/openai-dashboard
-ExecStart=/usr/local/bin/openai-dashboard serve
+WorkingDirectory=/etc/aienvoy
+ExecStart=/usr/local/bin/aienvoy serve
 
 
 [Install]

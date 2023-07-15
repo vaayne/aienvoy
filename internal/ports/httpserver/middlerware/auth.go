@@ -3,7 +3,7 @@ package middlerware
 import (
 	"strings"
 
-	"openai-dashboard/internal/pkg/logger"
+	"aienvoy/internal/pkg/logger"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"

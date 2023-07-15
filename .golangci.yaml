@@ -4,4 +4,4 @@ linters:
 
 linters-settings:
     gofumpt:
-        module-path: openai-dashboard
+        module-path: aienvoy

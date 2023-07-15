@@ -3,8 +3,8 @@ package main
 import (
 	"embed"
 
-	"openai-dashboard/internal/pkg/logger"
-	"openai-dashboard/internal/ports/httpserver"
+	"aienvoy/internal/pkg/logger"
+	"aienvoy/internal/ports/httpserver"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"

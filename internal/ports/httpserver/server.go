@@ -4,8 +4,8 @@ import (
 	"embed"
 	"net/http"
 
-	"openai-dashboard/internal/ports/httpserver/handler"
-	"openai-dashboard/internal/ports/httpserver/middlerware"
+	"aienvoy/internal/ports/httpserver/handler"
+	"aienvoy/internal/ports/httpserver/middlerware"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"

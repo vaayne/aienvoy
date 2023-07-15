@@ -1,4 +1,4 @@
-module openai-dashboard
+module aienvoy
 
 go 1.19
 

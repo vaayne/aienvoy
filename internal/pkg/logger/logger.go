@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"openai-dashboard/internal/pkg/config"
+	"aienvoy/internal/pkg/config"
 
 	"go.uber.org/zap/zapcore"
 

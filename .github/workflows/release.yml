@@ -20,6 +20,6 @@ jobs:
                   generate_release_notes: true
                   body: |
                       ## Changelog
-                      Please see the [changelog](https://github.com/Vaayne/openai-dashboard/blob/main/CHANGELOG.md)
+                      Please see the [changelog](https://github.com/Vaayne/aienvoy/blob/main/CHANGELOG.md)
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

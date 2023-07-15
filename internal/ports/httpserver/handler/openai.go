@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"openai-dashboard/internal/core/llm/openai"
-	"openai-dashboard/internal/pkg/logger"
+	"aienvoy/internal/core/llm/openai"
+	"aienvoy/internal/pkg/logger"
 
 	"github.com/labstack/echo/v5"
 )
