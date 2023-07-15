@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -82,14 +83,20 @@ func (h *OpenAIHandler) chatStream(c echo.Context, req *openai.ChatCompletionReq
 	}
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
 	c.Response().WriteHeader(http.StatusOK)
-	enc := json.NewEncoder(c.Response())
+
 	for {
 		resp, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
-			return nil
+			return c.String(http.StatusOK, "data: [DONE]\n\n")
 		}
-		if err := enc.Encode(resp); err != nil {
+		if msg, err := json.Marshal(resp); err != nil {
+			logger.SugaredLogger.Errorw("marshal response error", "err", err.Error())
 			return c.String(http.StatusInternalServerError, err.Error())
+		} else {
+			if _, err = c.Response().Write([]byte(fmt.Sprintf("data: %s\n\n", msg))); err != nil {
+				logger.SugaredLogger.Errorw("write response error", "err", err.Error())
+				return c.String(http.StatusInternalServerError, err.Error())
+			}
 		}
 		c.Response().Flush()
 	}
