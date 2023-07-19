@@ -6,8 +6,11 @@ import (
 	"aienvoy/internal/pkg/logger"
 	"aienvoy/internal/ports/httpserver"
 
+	_ "aienvoy/migrations"
+
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 )
 
 //go:embed all:web
@@ -22,7 +25,11 @@ func registerRoutes(app *pocketbase.PocketBase) {
 
 func main() {
 	app := pocketbase.New()
-	app.Dao()
+
+	migratecmd.MustRegister(app, app.RootCmd, &migratecmd.Options{
+		Automigrate: false,
+	})
+
 	registerRoutes(app)
 	if err := app.Start(); err != nil {
 		logger.SugaredLogger.Fatalw("failed to start app", "error", err)

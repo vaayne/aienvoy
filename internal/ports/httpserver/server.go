@@ -20,7 +20,16 @@ func RegisterRoutes(e *echo.Echo, app *pocketbase.PocketBase, staticFiles embed.
 	e.Add(http.MethodGet, "/web/*", echo.WrapHandler(http.FileServer(http.FS(staticFiles))))
 
 	// v1 apis
-	v1 := e.Group("/v1", middlerware.AuthByApiKeyMiddleware(app.Dao()), apis.RequireAdminOrRecordAuth())
+	mds := []echo.MiddlewareFunc{
+		middlerware.ContextMiddleware(),
+		middlerware.RequestIDMiddleware(),
+		middlerware.AuthByApiKeyMiddleware(app.Dao()),
+		apis.RequireAdminOrRecordAuth(),
+		middlerware.DaoMiddleware(app.Dao()),
+		middlerware.LoggerMiddleware(),
+	}
+
+	v1 := e.Group("/v1", mds...)
 	openaiHandler := handler.NewOpenAIHandler()
 	v1.POST("/chat/completions", openaiHandler.Chat)
 	v1.POST("/embeddings", openaiHandler.CreateEmbeddings)

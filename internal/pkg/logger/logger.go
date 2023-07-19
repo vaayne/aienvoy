@@ -1,16 +1,17 @@
 package logger
 
 import (
-	"context"
 	"log"
 	"time"
 
 	"aienvoy/internal/pkg/config"
+	"aienvoy/internal/pkg/context"
 
 	"go.uber.org/zap/zapcore"
 
 	adapter "github.com/axiomhq/axiom-go/adapters/zap"
 	"github.com/axiomhq/axiom-go/axiom"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 )
 
@@ -83,17 +84,14 @@ func initAxiom() {
 	}()
 }
 
-// SugaredLoggerWithContext returns a new sugared logger with additional fields
-// extracted from the given context using the provided keys.
-func SugaredLoggerWithContext(ctx context.Context, keys ...string) *zap.SugaredLogger {
-	// Pre-allocate a slice of interfaces for the new fields to add to the logger.
-	newFields := make([]interface{}, 0, len(keys)*2)
-
-	// Iterate through the keys and add the corresponding values from the context to the new fields.
-	for _, key := range keys {
-		newFields = append(newFields, key, ctx.Value(key))
+func GetSugaredLoggerWithContext(ctx context.Context) *zap.SugaredLogger {
+	newFields := []interface{}{
+		"request_id", ctx.RequestId(),
+		"user_id", ctx.UserId(),
 	}
-
-	// Add the new fields to the existing SugaredLogger and return the result.
 	return SugaredLogger.With(newFields...)
+}
+
+func GetSugaredLoggerWithEchoContext(ctx echo.Context) *zap.SugaredLogger {
+	return GetSugaredLoggerWithContext(context.FromEchoContext(ctx))
 }
