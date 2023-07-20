@@ -51,7 +51,7 @@ func (d *Dao) CreateUsage(tx *daos.Dao, usage *Usage) error {
 		record.Set("usage", 0)
 	}
 
-	logger.SugaredLogger.Debug("save usage", "usage", usage, "record", record)
+	logger.SugaredLogger.Debugw("save usage", "token", usage.Usage, "model", usage.Model)
 	record.Set("user_id", usage.UserId)
 	record.Set("api_key", usage.ApiKey)
 	record.Set("usage", usage.Usage+record.GetInt("usage"))
