@@ -1,25 +1,25 @@
 name: "Generate Release Notes"
 on:
-    workflow_dispatch:
-    push:
-        tags:
-            - v*.*.*
+  workflow_dispatch:
+  push:
+    tags:
+      - v*.*.*
 
 permissions:
-    contents: write
-    discussions: write
+  contents: write
+  discussions: write
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
-            - name: Create Release
-              uses: softprops/action-gh-release@v1
-              with:
-                  generate_release_notes: true
-                  body: |
-                      ## Changelog
-                      Please see the [changelog](https://github.com/Vaayne/aienvoy/blob/main/CHANGELOG.md)
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          body: |
+            ## Changelog
+            Please see the [changelog](https://github.com/Vaayne/aienvoy/blob/main/CHANGELOG.md)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
