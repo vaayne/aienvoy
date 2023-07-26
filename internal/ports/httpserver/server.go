@@ -8,6 +8,7 @@ import (
 	"aienvoy/internal/ports/httpserver/middlerware"
 
 	"github.com/labstack/echo/v5"
+	emw "github.com/labstack/echo/v5/middleware"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 )
@@ -27,6 +28,7 @@ func RegisterRoutes(e *echo.Echo, app *pocketbase.PocketBase, staticFiles embed.
 		apis.RequireAdminOrRecordAuth(),
 		middlerware.DaoMiddleware(app.Dao()),
 		middlerware.LoggerMiddleware(),
+		emw.CORS(),
 	}
 
 	v1 := e.Group("/v1", mds...)
