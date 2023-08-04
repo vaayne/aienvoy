@@ -19,6 +19,7 @@ type LLMConfig struct {
 	Type        string // openai or azureOpenAI
 	ApiEndpoint string
 	ApiKey      string
+	ApiVersion  string
 	Models      []string // valid model ids
 }
 

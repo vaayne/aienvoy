@@ -1,7 +1,7 @@
 package openai
 
 import (
-	"context"
+	"fmt"
 	"sync/atomic"
 
 	"aienvoy/internal/pkg/config"
@@ -10,78 +10,78 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-var modelClientMapping clientPoolMap = make(clientPoolMap)
-
 const (
 	LLMTypeOpenAI      = "openai"
 	LLMTypeAzureOpenAI = "azure-openai"
 )
 
-type clientPool struct {
-	idx     atomic.Int32
-	clients []*openai.Client
+type llmClient struct {
+	openai.Client
+	config.LLMConfig
 }
 
-type clientPoolMap map[string]*clientPool
-
-func (cp *clientPool) add(client *openai.Client) {
-	cp.clients = append(cp.clients, client)
+func (c *llmClient) String() string {
+	return fmt.Sprintf("llmClient{type: %s, endpoint: %s, version: %s}", c.Type, c.ApiEndpoint, c.ApiVersion)
 }
+
+func (c *llmClient) isModelValid(model string) bool {
+	if len(c.Models) == 0 {
+		return true
+	}
+	for _, m := range c.Models {
+		if m == model {
+			return true
+		}
+	}
+	return false
+}
+
+var (
+	clientPoolMap = make(map[int32]*llmClient)
+	clientPoolIdx atomic.Int32
+)
 
 func init() {
-	newClientPool()
+	// init client pool
+	var idx int32 = 0
+	for _, llmCfg := range config.GetConfig().LLMs {
+		client := createClient(llmCfg)
+		if client == nil {
+			continue
+		}
+		clientPoolMap[idx] = client
+		idx++
+	}
 }
 
-func getClientByModel(model string) *openai.Client {
-	if pool, ok := modelClientMapping[model]; ok {
-		idx := pool.idx.Add(1)
-		if idx >= int32(len(pool.clients)) {
-			idx = 0
-			pool.idx.Store(idx)
+func getClientByModel(model string) (client *llmClient) {
+	defer func() {
+		if client != nil {
+			logger.SugaredLogger.Debugw("get LLM client", "client", client.String())
 		}
-		client := pool.clients[idx]
-		logger.SugaredLogger.Debugw("get client by model", "model", model, "client_idx", idx)
-		return client
+	}()
+	for i := 0; i < len(clientPoolMap); i++ {
+		idx := clientPoolIdx.Add(1)
+		if idx >= int32(len(clientPoolMap)) {
+			idx = 0
+			clientPoolIdx.Store(idx)
+		}
+		client := clientPoolMap[idx]
+		if client.isModelValid(model) {
+			return client
+		}
 	}
 	return nil
 }
 
-// NewAiClient creates a new ai client
-func newClientPool() {
-	for _, llmCfg := range config.GetConfig().LLMs {
-		client := createClient(llmCfg)
-		if client == nil {
-			break
-		}
-		if llmCfg.Type == LLMTypeOpenAI && len(llmCfg.Models) == 0 {
-			if models, err := client.ListModels(context.Background()); err == nil {
-				for _, model := range models.Models {
-					llmCfg.Models = append(llmCfg.Models, model.ID)
-				}
-			} else {
-				logger.SugaredLogger.Errorw("failed to list models", "err", err, "type", llmCfg.Type, "endpoint", llmCfg.ApiEndpoint)
-			}
-		}
-		logger.SugaredLogger.Debugw("llm models", "models", llmCfg.Models)
-		if len(llmCfg.Models) > 0 {
-			for _, model := range llmCfg.Models {
-				pool, ok := modelClientMapping[model]
-				if !ok {
-					pool = &clientPool{}
-					modelClientMapping[model] = pool
-				}
-				pool.add(client)
-			}
-		}
-	}
-	logger.SugaredLogger.Debugw("ai client created", "client", modelClientMapping)
-}
-
-func createClient(cfg config.LLMConfig) *openai.Client {
+func createClient(cfg config.LLMConfig) *llmClient {
 	var clientCfg openai.ClientConfig
 
 	if cfg.Type == LLMTypeAzureOpenAI {
 		clientCfg = openai.DefaultAzureConfig(cfg.ApiKey, cfg.ApiEndpoint)
+		if cfg.ApiVersion != "" {
+			clientCfg.APIVersion = cfg.ApiVersion
+		}
 	} else if cfg.Type == LLMTypeOpenAI {
 		clientCfg = openai.DefaultConfig(cfg.ApiKey)
 		if cfg.ApiEndpoint != "" {
@@ -91,5 +91,8 @@ func createClient(cfg config.LLMConfig) *openai.Client {
 		logger.SugaredLogger.Errorw("unknown LLM type", "type", cfg.Type)
 		return nil
 	}
-	return openai.NewClientWithConfig(clientCfg)
+	return &llmClient{
+		Client:    *openai.NewClientWithConfig(clientCfg),
+		LLMConfig: cfg,
+	}
 }
