@@ -81,7 +81,11 @@ func (h *OpenAIHandler) chatStream(c echo.Context, req *openai.ChatCompletionReq
 
 	go h.openai.ChatStream(context.FromEchoContext(c), req, dataChan, errChan)
 
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
+	// sse stream response
+	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+	c.Response().Header().Set("Cache-Control", "no-cache")
+	c.Response().Header().Set("Connection", "keep-alive")
+
 	c.Response().WriteHeader(http.StatusOK)
 
 	for {

@@ -9,7 +9,7 @@ require (
 	github.com/pkoukk/tiktoken-go v0.1.5
 	github.com/pocketbase/dbx v1.10.0
 	github.com/pocketbase/pocketbase v0.16.8
-	github.com/sashabaranov/go-openai v1.13.0
+	github.com/sashabaranov/go-openai v1.14.1
 	github.com/spf13/viper v1.13.0
 	go.uber.org/zap v1.24.0
 )
