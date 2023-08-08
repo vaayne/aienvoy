@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/axiomhq/axiom-go v0.15.2
+	github.com/bincooo/requests v0.0.0-20230720064210-7eae5d6c9d1e
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/labstack/echo/v5 v5.0.0-20220201181537-ed2888cfa198
 	github.com/pkoukk/tiktoken-go v0.1.5
@@ -12,6 +13,16 @@ require (
 	github.com/sashabaranov/go-openai v1.14.1
 	github.com/spf13/viper v1.13.0
 	go.uber.org/zap v1.24.0
+)
+
+require (
+	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/gaukas/godicttls v0.0.3 // indirect
+	github.com/refraction-networking/utls v1.3.2 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
+	github.com/wangluozhe/fhttp v0.0.0-20230512135433-5c2ebfb4868a // indirect
 )
 
 require (
@@ -46,7 +57,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/ganigeorgiev/fexpr v0.3.0 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
@@ -60,7 +71,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.16.5 // indirect
+	github.com/klauspost/compress v1.16.6 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
@@ -76,6 +87,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
+	github.com/tidwall/gjson v1.15.0
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
