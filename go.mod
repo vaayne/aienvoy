@@ -15,6 +15,14 @@ require (
 )
 
 require (
+	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/gaukas/godicttls v0.0.3 // indirect
+	github.com/refraction-networking/utls v1.3.2 // indirect
+	github.com/wangluozhe/fhttp v0.0.0-20230512135433-5c2ebfb4868a // indirect
+)
+
+require (
 	github.com/AlecAivazis/survey/v2 v2.3.7 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go v1.44.298 // indirect
@@ -53,7 +61,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -78,6 +86,7 @@ require (
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
+	github.com/wangluozhe/requests v1.1.15
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.40.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.40.0 // indirect
