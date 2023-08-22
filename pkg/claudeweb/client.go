@@ -3,9 +3,10 @@ package claudeweb
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
+
+	"aienvoy/internal/pkg/logger"
 
 	"github.com/wangluozhe/requests"
 	"github.com/wangluozhe/requests/models"
@@ -24,15 +25,18 @@ type MixMap = map[string]interface{}
 func NewMixMap(in interface{}) MixMap {
 	m := make(MixMap)
 	inrec, _ := json.Marshal(in)
-	json.Unmarshal(inrec, &m)
+	err := json.Unmarshal(inrec, &m)
+	if err != nil {
+		logger.SugaredLogger.Errorw("NewMixMap", "err", err)
+		return nil
+	}
 	return m
 }
 
 // Client is a ChatGPT request client
 type Client struct {
-	opts    Options // custom options
-	req     *url.Request
-	httpCli *http.Client
+	opts Options // custom options
+	req  *url.Request
 }
 
 // NewClient will return a ChatGPT request client
@@ -107,10 +111,9 @@ func (c *Client) Post(uri string, params MixMap, headers map[string]string) (*mo
 	}
 	req := c.newReq()
 	req.Json = params
-	if headers != nil {
-		for k, v := range headers {
-			req.Headers.Set(k, v)
-		}
+
+	for k, v := range headers {
+		req.Headers.Set(k, v)
 	}
 
 	// logger.SugaredLogger.Debugw("request", "request", req)
@@ -142,13 +145,6 @@ func (c *Client) GetOrgid() string {
 // GetModel will get model set in option
 func (c *Client) GetModel() string {
 	return c.opts.Model
-}
-
-// GetOrganizations is used to get account organizations
-func (c *Client) GetOrganizations() (*models.Response, error) {
-	uri := "/api/organizations"
-
-	return c.Get(uri)
 }
 
 // Options for request client
