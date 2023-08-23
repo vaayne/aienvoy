@@ -1,9 +1,15 @@
 package config
 
 type Config struct {
-	Service ServiceConfig
-	LLMs    []LLMConfig
-	Axiom   Axiom
+	Service  ServiceConfig
+	LLMs     []LLMConfig
+	Axiom    Axiom
+	Telegram struct {
+		Token string `yaml:"token"`
+	}
+	ClaudeWeb struct {
+		Token string `yaml:"token"`
+	}
 }
 
 type ServiceConfig struct {

@@ -12,6 +12,7 @@ require (
 	github.com/sashabaranov/go-openai v1.14.1
 	github.com/spf13/viper v1.13.0
 	go.uber.org/zap v1.24.0
+	gopkg.in/telebot.v3 v3.1.3
 )
 
 require (

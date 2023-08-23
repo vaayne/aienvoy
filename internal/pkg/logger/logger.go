@@ -34,7 +34,11 @@ func init() {
 
 	// Create logger based on log level
 	if level == zapcore.DebugLevel {
-		Logger, _ = zap.NewDevelopment()
+		// Create development logger if log level is debug
+		// support colorized output
+		devConfig := zap.NewDevelopmentConfig()
+		devConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		Logger, _ = devConfig.Build()
 	} else {
 		Logger, _ = zap.NewProduction()
 	}

@@ -5,3 +5,9 @@ service:
   url: http://localhost:8090
   logLevel: debug
   env: dev
+
+claudeweb:
+  token:
+
+telegram:
+  token:

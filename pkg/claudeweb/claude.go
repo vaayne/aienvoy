@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 
+	"aienvoy/internal/pkg/config"
 	"aienvoy/internal/pkg/logger"
 
 	"github.com/google/uuid"
@@ -18,9 +20,23 @@ const (
 	DEFAULT_TIMEZONE = "Asia/Shanghai"
 )
 
+var (
+	once            sync.Once
+	claudeWebClient *ClaudeWeb
+)
+
 type ClaudeWeb struct {
 	Client
 	orgId string
+}
+
+func DefaultClaudeWeb() *ClaudeWeb {
+	if claudeWebClient == nil {
+		once.Do(func() {
+			claudeWebClient = NewClaudeWeb(config.GetConfig().ClaudeWeb.Token)
+		})
+	}
+	return claudeWebClient
 }
 
 // NewClaudeWeb returns a new ClaudeWeb client
@@ -134,7 +150,7 @@ func (c *ClaudeWeb) CreateConversation(name string) (*Conversation, error) {
 		return nil, fmt.Errorf("CreateConversation err: %v", err)
 	}
 
-	var conversation interface{}
+	var conversation Conversation
 	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
@@ -145,7 +161,7 @@ func (c *ClaudeWeb) CreateConversation(name string) (*Conversation, error) {
 		return nil, fmt.Errorf("CreateConversation unmarshal response body err: %v", err)
 	}
 	logger.SugaredLogger.Debugw("CreateConversation", "status_code", resp.StatusCode, "conversation", conversation)
-	return nil, nil
+	return &conversation, nil
 }
 
 // UpdateConversation is used to update conversation

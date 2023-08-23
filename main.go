@@ -5,6 +5,7 @@ import (
 
 	"aienvoy/internal/pkg/logger"
 	"aienvoy/internal/ports/httpserver"
+	"aienvoy/internal/ports/tgbot"
 
 	_ "aienvoy/migrations"
 
@@ -25,6 +26,8 @@ func registerRoutes(app *pocketbase.PocketBase) {
 
 func main() {
 	app := pocketbase.New()
+
+	go tgbot.Serve(app)
 
 	migratecmd.MustRegister(app, app.RootCmd, &migratecmd.Options{
 		Automigrate: false,
