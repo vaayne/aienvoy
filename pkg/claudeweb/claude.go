@@ -243,6 +243,8 @@ func (c *ClaudeWeb) CreateChatMessageStream(id, prompt string, streamChan chan *
 		return
 	}
 
+	logger.SugaredLogger.Infow("CreateChatMessageStream", "status_code", resp.StatusCode)
+
 	reader := bufio.NewReader(resp.Body)
 
 	defer resp.Body.Close()
