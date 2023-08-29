@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"sync"
 
@@ -210,6 +211,13 @@ func (c *ClaudeWeb) CreateChatMessage(id, prompt string) (*ChatMessageResponse, 
 	if err != nil {
 		return nil, fmt.Errorf("CreateChatMessage err: %v", err)
 	}
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		logger.SugaredLogger.Errorw("CreateChatMessage", "status_code", resp.StatusCode, "text", resp.Text)
+		return nil, fmt.Errorf("CreateChatMessage status_code %d err: %v", resp.StatusCode, err)
+	}
+	logger.SugaredLogger.Infow("CreateChatMessage", "status_code", resp.StatusCode)
+
 	var chatMessageResponse ChatMessageResponse
 	sb := strings.Builder{}
 	reader := bufio.NewReader(resp.Body)
@@ -237,22 +245,35 @@ func (c *ClaudeWeb) CreateChatMessage(id, prompt string) (*ChatMessageResponse, 
 }
 
 func (c *ClaudeWeb) CreateChatMessageStream(id, prompt string, streamChan chan *ChatMessageResponse, errChan chan error) {
+	c.CreateChatMessageStreamWithFullResponse(id, prompt, streamChan, nil, errChan)
+}
+
+func (c *ClaudeWeb) CreateChatMessageStreamWithFullResponse(id, prompt string, streamChan chan *ChatMessageResponse, fullRespChan chan string, errChan chan error) {
 	resp, err := c.createChatMessage(id, prompt)
 	if err != nil {
 		errChan <- fmt.Errorf("CreateChatMessage err: %v", err)
 		return
 	}
 
+	if resp.StatusCode >= http.StatusBadRequest {
+		logger.SugaredLogger.Errorw("CreateChatMessageStream", "status_code", resp.StatusCode, "text", resp.Text)
+		errChan <- fmt.Errorf("CreateChatMessage status_code %d err: %v", resp.StatusCode, err)
+		return
+	}
 	logger.SugaredLogger.Infow("CreateChatMessageStream", "status_code", resp.StatusCode)
 
 	reader := bufio.NewReader(resp.Body)
 
 	defer resp.Body.Close()
+	fullResp := strings.Builder{}
 
 	for {
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
+				if fullRespChan != nil {
+					fullRespChan <- fullResp.String()
+				}
 				errChan <- io.EOF
 				return
 			}
@@ -266,6 +287,9 @@ func (c *ClaudeWeb) CreateChatMessageStream(id, prompt string, streamChan chan *
 			if err != nil {
 				errChan <- fmt.Errorf("CreateChatMessageStream unmarshal response body err: %v", err)
 				return
+			}
+			if fullRespChan != nil {
+				fullResp.WriteString(chatMessageResponse.Completion)
 			}
 			streamChan <- &chatMessageResponse
 		}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"aienvoy/internal/pkg/logger"
@@ -37,6 +38,7 @@ func NewMixMap(in interface{}) MixMap {
 type Client struct {
 	opts Options // custom options
 	req  *url.Request
+	mu   sync.Mutex
 }
 
 // NewClient will return a ChatGPT request client
@@ -95,6 +97,8 @@ func (c *Client) newReq() *url.Request {
 }
 
 func (c *Client) Get(uri string) (*models.Response, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if !strings.HasPrefix(uri, "http") {
 		uri = c.opts.BaseUri + uri
 	}
@@ -106,6 +110,8 @@ func (c *Client) Get(uri string) (*models.Response, error) {
 }
 
 func (c *Client) Post(uri string, params MixMap, headers map[string]string) (*models.Response, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if !strings.HasPrefix(uri, "http") {
 		uri = c.opts.BaseUri + uri
 	}
@@ -127,6 +133,8 @@ func (c *Client) Post(uri string, params MixMap, headers map[string]string) (*mo
 
 // Delete will request api with delete method
 func (c *Client) Delete(uri string) (*models.Response, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if !strings.HasPrefix(uri, "http") {
 		uri = c.opts.BaseUri + uri
 	}

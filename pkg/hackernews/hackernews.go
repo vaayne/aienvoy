@@ -23,6 +23,7 @@ const (
 	AskPath     = "/v0/askstories.json"
 	ShowPath    = "/v0/showstories.json"
 	UpdatePath  = "/v0/updates.json"
+	HN_HOST     = "https://news.ycombinator.com"
 )
 
 type Client struct {
