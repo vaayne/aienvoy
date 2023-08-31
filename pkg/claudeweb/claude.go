@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
+	"sync"
 
+	"aienvoy/internal/pkg/config"
 	"aienvoy/internal/pkg/logger"
 
 	"github.com/google/uuid"
@@ -18,9 +21,23 @@ const (
 	DEFAULT_TIMEZONE = "Asia/Shanghai"
 )
 
+var (
+	once            sync.Once
+	claudeWebClient *ClaudeWeb
+)
+
 type ClaudeWeb struct {
 	Client
 	orgId string
+}
+
+func DefaultClaudeWeb() *ClaudeWeb {
+	if claudeWebClient == nil {
+		once.Do(func() {
+			claudeWebClient = NewClaudeWeb(config.GetConfig().ClaudeWeb.Token)
+		})
+	}
+	return claudeWebClient
 }
 
 // NewClaudeWeb returns a new ClaudeWeb client
@@ -134,7 +151,7 @@ func (c *ClaudeWeb) CreateConversation(name string) (*Conversation, error) {
 		return nil, fmt.Errorf("CreateConversation err: %v", err)
 	}
 
-	var conversation interface{}
+	var conversation Conversation
 	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
@@ -145,7 +162,7 @@ func (c *ClaudeWeb) CreateConversation(name string) (*Conversation, error) {
 		return nil, fmt.Errorf("CreateConversation unmarshal response body err: %v", err)
 	}
 	logger.SugaredLogger.Debugw("CreateConversation", "status_code", resp.StatusCode, "conversation", conversation)
-	return nil, nil
+	return &conversation, nil
 }
 
 // UpdateConversation is used to update conversation
@@ -194,6 +211,13 @@ func (c *ClaudeWeb) CreateChatMessage(id, prompt string) (*ChatMessageResponse, 
 	if err != nil {
 		return nil, fmt.Errorf("CreateChatMessage err: %v", err)
 	}
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		logger.SugaredLogger.Errorw("CreateChatMessage", "status_code", resp.StatusCode, "text", resp.Text)
+		return nil, fmt.Errorf("CreateChatMessage status_code %d err: %v", resp.StatusCode, err)
+	}
+	logger.SugaredLogger.Infow("CreateChatMessage", "status_code", resp.StatusCode)
+
 	var chatMessageResponse ChatMessageResponse
 	sb := strings.Builder{}
 	reader := bufio.NewReader(resp.Body)
@@ -221,20 +245,35 @@ func (c *ClaudeWeb) CreateChatMessage(id, prompt string) (*ChatMessageResponse, 
 }
 
 func (c *ClaudeWeb) CreateChatMessageStream(id, prompt string, streamChan chan *ChatMessageResponse, errChan chan error) {
+	c.CreateChatMessageStreamWithFullResponse(id, prompt, streamChan, nil, errChan)
+}
+
+func (c *ClaudeWeb) CreateChatMessageStreamWithFullResponse(id, prompt string, streamChan chan *ChatMessageResponse, fullRespChan chan string, errChan chan error) {
 	resp, err := c.createChatMessage(id, prompt)
 	if err != nil {
 		errChan <- fmt.Errorf("CreateChatMessage err: %v", err)
 		return
 	}
 
+	if resp.StatusCode >= http.StatusBadRequest {
+		logger.SugaredLogger.Errorw("CreateChatMessageStream", "status_code", resp.StatusCode, "text", resp.Text)
+		errChan <- fmt.Errorf("CreateChatMessage status_code %d err: %v", resp.StatusCode, err)
+		return
+	}
+	logger.SugaredLogger.Infow("CreateChatMessageStream", "status_code", resp.StatusCode)
+
 	reader := bufio.NewReader(resp.Body)
 
 	defer resp.Body.Close()
+	fullResp := strings.Builder{}
 
 	for {
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
+				if fullRespChan != nil {
+					fullRespChan <- fullResp.String()
+				}
 				errChan <- io.EOF
 				return
 			}
@@ -248,6 +287,9 @@ func (c *ClaudeWeb) CreateChatMessageStream(id, prompt string, streamChan chan *
 			if err != nil {
 				errChan <- fmt.Errorf("CreateChatMessageStream unmarshal response body err: %v", err)
 				return
+			}
+			if fullRespChan != nil {
+				fullResp.WriteString(chatMessageResponse.Completion)
 			}
 			streamChan <- &chatMessageResponse
 		}

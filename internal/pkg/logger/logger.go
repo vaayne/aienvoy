@@ -2,6 +2,8 @@ package logger
 
 import (
 	"log"
+	"log/slog"
+	"os"
 	"time"
 
 	"aienvoy/internal/pkg/config"
@@ -32,12 +34,28 @@ func init() {
 		log.Fatalf("Failed to parse log level: %v", err)
 	}
 
+	var slogger *slog.Logger
+
 	// Create logger based on log level
 	if level == zapcore.DebugLevel {
-		Logger, _ = zap.NewDevelopment()
+		// Create development logger if log level is debug
+		// support colorized output
+		devConfig := zap.NewDevelopmentConfig()
+		devConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		Logger, _ = devConfig.Build()
+		slogger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			AddSource: true,
+			Level:     slog.LevelDebug,
+		}))
 	} else {
 		Logger, _ = zap.NewProduction()
+		slogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			AddSource: true,
+			Level:     slog.LevelInfo,
+		}))
 	}
+
+	slog.SetDefault(slogger)
 
 	// Initialize Axiom logger if token is present in config
 	if config.GetConfig().Axiom.Token != "" {
@@ -68,6 +86,7 @@ func initAxiom() {
 	}
 
 	// Add Axiom core option to logger
+
 	Logger = Logger.WithOptions(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
 		return zapcore.NewTee(c, axiomCore)
 	}))

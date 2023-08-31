@@ -1,6 +1,6 @@
 module aienvoy
 
-go 1.19
+go 1.21
 
 require (
 	github.com/axiomhq/axiom-go v0.15.2
@@ -12,6 +12,8 @@ require (
 	github.com/sashabaranov/go-openai v1.14.1
 	github.com/spf13/viper v1.13.0
 	go.uber.org/zap v1.24.0
+	golang.org/x/sync v0.3.0
+	gopkg.in/telebot.v3 v3.1.3
 )
 
 require (
