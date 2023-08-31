@@ -5,7 +5,8 @@ type Config struct {
 	LLMs     []LLMConfig
 	Axiom    Axiom
 	Telegram struct {
-		Token string `yaml:"token"`
+		Token           string `yaml:"token"`
+		ReadeaseChannel int64  `yaml:"readeaseChannel"`
 	}
 	ClaudeWeb struct {
 		Token string `yaml:"token"`

@@ -18,6 +18,8 @@ type ReadeaseArticle struct {
 	ViewCounts  int    `json:"view_counts"`
 	Title       string `json:"title"`
 	Content     string `json:"content"`
+	LlmType     string `json:"llm_type"`
+	LlmCovId    string `json:"llm_cov_id"`
 }
 
 func getReadeaseArticleCollection(tx *daos.Dao) (*models.Collection, error) {
@@ -51,6 +53,8 @@ func GetReadeaseArticleByUrl(ctx context.Context, tx *daos.Dao, url string) (*Re
 		ViewCounts:  record.GetInt("view_counts"),
 		Title:       record.GetString("title"),
 		Content:     record.GetString("content"),
+		LlmType:     record.GetString("llm_type"),
+		LlmCovId:    record.GetString("llm_cov_id"),
 	}, nil
 }
 
@@ -87,5 +91,11 @@ func UpsertReadeaseArticle(ctx context.Context, tx *daos.Dao, article *ReadeaseA
 		record.Set("content", article.Content)
 	}
 
+	if article.LlmType != "" {
+		record.Set("llm_type", article.LlmType)
+	}
+	if article.LlmCovId != "" {
+		record.Set("llm_cov_id", article.LlmCovId)
+	}
 	return tx.SaveRecord(record)
 }

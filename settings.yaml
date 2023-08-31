@@ -3,7 +3,7 @@ service:
   host: "0.0.0.0"
   port: 8090
   url: http://localhost:8090
-  logLevel: debug
+  logLevel: info
   env: dev
 
 claudeweb:
@@ -11,3 +11,4 @@ claudeweb:
 
 telegram:
   token:
+  readeaseChannel:

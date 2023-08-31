@@ -1,6 +1,8 @@
 package tgbot
 
 import (
+	"sync"
+
 	"aienvoy/internal/pkg/config"
 	"aienvoy/internal/pkg/logger"
 	"aienvoy/internal/ports/tgbot/handler"
@@ -15,7 +17,10 @@ type TeleBot struct {
 	app *pocketbase.PocketBase
 }
 
-var bot *TeleBot
+var (
+	bot  *TeleBot
+	once sync.Once
+)
 
 func New(token string, app *pocketbase.PocketBase) *TeleBot {
 	b, err := tb.NewBot(tb.Settings{
@@ -38,7 +43,9 @@ func New(token string, app *pocketbase.PocketBase) *TeleBot {
 
 func DefaultBot(app *pocketbase.PocketBase) *TeleBot {
 	if bot == nil {
-		bot = New(config.GetConfig().Telegram.Token, app)
+		once.Do(func() {
+			bot = New(config.GetConfig().Telegram.Token, app)
+		})
 	}
 	return bot
 }

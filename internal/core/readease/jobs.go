@@ -3,62 +3,56 @@ package readease
 import (
 	"context"
 	"fmt"
-	"sync"
+	"log/slog"
+	"runtime"
 
-	"aienvoy/internal/pkg/logger"
-	"aienvoy/pkg/claudeweb"
 	"aienvoy/pkg/hackernews"
 
 	"github.com/pocketbase/pocketbase"
+	"golang.org/x/sync/semaphore"
 )
 
+const NumOfTopStoires = 10
+
 func ReadEasePeriodJob(app *pocketbase.PocketBase) ([]string, error) {
+	slog.Info("Start readease period job...")
 	ctx := context.Background()
 
-	contents := make([]string, 0, 100)
+	contents := make([]string, 0, NumOfTopStoires)
 
 	hn := hackernews.New()
-	topStories, err := hn.GetTopStories(100)
+	topStories, err := hn.GetTopStories(NumOfTopStoires)
 	if err != nil {
-		logger.SugaredLogger.Errorw("get top stories err", "err", err)
 		return contents, fmt.Errorf("get top stories err: %w", err)
 	}
+	slog.Info("success get hackernews top stories", "count", len(topStories))
 
-	const numbJobs = 2
-	wg := &sync.WaitGroup{}
 	reader := NewReader(app)
-
-	claude := claudeweb.DefaultClaudeWeb()
-	for i := 0; i < len(topStories); i += numbJobs {
-		for _, id := range topStories[i : i+numbJobs] {
-			wg.Add(1)
-			go func(id int) {
-				defer wg.Done()
-
-				itemUrl := fmt.Sprintf("%s/item?id=%d", hackernews.HN_HOST, id)
-				content, err := reader.readFromCache(ctx, itemUrl)
-				if err != nil {
-					logger.SugaredLogger.Infow("readFromCache err", "err", err)
-				} else if content != "" {
-					contents = append(contents, content)
-					return
-				}
-
-				covId, prompt, err := reader.read(ctx, itemUrl)
-				if err != nil {
-					logger.SugaredLogger.Errorw("read err", "err", err)
-					return
-				}
-				resp, err := claude.CreateChatMessage(covId, prompt)
-				if err != nil {
-					logger.SugaredLogger.Errorw("summaryArticle create chat message error", "err", err)
-					return
-				}
-				logger.SugaredLogger.Infow("summaryArticle create chat message success", "resp", resp)
-				contents = append(contents, resp.Completion)
-			}(id)
+	maxWorkers := runtime.GOMAXPROCS(0)
+	sem := semaphore.NewWeighted(int64(maxWorkers))
+	for _, id := range topStories {
+		if err := sem.Acquire(ctx, 1); err != nil {
+			slog.Error("Failed to acquire semaphore: %v", err)
+			break
 		}
-		wg.Wait()
+
+		go func(id int) {
+			defer sem.Release(1)
+			itemUrl := fmt.Sprintf("%s/item?id=%d", hackernews.HN_HOST, id)
+			slog.Info("start read hackernews item", "url", itemUrl)
+			// get from cache
+			summary, err := reader.Read(ctx, itemUrl)
+			if err != nil {
+				slog.Error("error read article by url", "err", err, "url", itemUrl)
+				return
+			}
+			contents = append(contents, fmt.Sprintf("%s\n\n原文: %s", summary, itemUrl))
+		}(id)
 	}
+	// Acquire all of the tokens to wait for any remaining workers to finish.
+	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
+		slog.Info("Failed to acquire semaphore: %v", err)
+	}
+	slog.Info("success read top hackernews", "count", len(contents))
 	return contents, nil
 }

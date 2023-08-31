@@ -25,3 +25,4 @@ pb_data/
 bin/
 dist/
 settings_*.yaml
+app
