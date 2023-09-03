@@ -2,6 +2,7 @@ package readease
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/daos"
@@ -11,15 +12,39 @@ import (
 const TableReadeaseArticle = "readease_article"
 
 type ReadeaseArticle struct {
-	Id          string `json:"id"`
-	Url         string `json:"url"`
-	OriginalUrl string `json:"original_url"`
-	Summary     string `json:"summary"`
-	ViewCounts  int    `json:"view_counts"`
-	Title       string `json:"title"`
-	Content     string `json:"content"`
-	LlmType     string `json:"llm_type"`
-	LlmCovId    string `json:"llm_cov_id"`
+	Id             string `json:"id"`
+	Url            string `json:"url"`
+	OriginalUrl    string `json:"original_url"`
+	Summary        string `json:"summary"`
+	ViewCounts     int    `json:"view_counts"`
+	Title          string `json:"title"`
+	Content        string `json:"content"`
+	LlmType        string `json:"llm_type"`
+	LlmCovId       string `json:"llm_cov_id"`
+	IsReadeaseSent bool   `json:"is_readease_sent"`
+}
+
+func (a *ReadeaseArticle) FromRecord(r *models.Record) error {
+	jsonData, err := r.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(jsonData, a)
+}
+
+func (a *ReadeaseArticle) ToRecord(r *models.Record) error {
+	jsonData, err := json.Marshal(a)
+	if err != nil {
+		return err
+	}
+	mapData := make(map[string]any)
+
+	if err := json.Unmarshal(jsonData, &mapData); err != nil {
+		return err
+	}
+
+	r.Load(mapData)
+	return nil
 }
 
 func getReadeaseArticleCollection(tx *daos.Dao) (*models.Collection, error) {
@@ -45,17 +70,11 @@ func GetReadeaseArticleByUrl(ctx context.Context, tx *daos.Dao, url string) (*Re
 	if record == nil {
 		return nil, nil
 	}
-	return &ReadeaseArticle{
-		Id:          record.Id,
-		Url:         record.GetString("url"),
-		OriginalUrl: record.GetString("original_url"),
-		Summary:     record.GetString("summary"),
-		ViewCounts:  record.GetInt("view_counts"),
-		Title:       record.GetString("title"),
-		Content:     record.GetString("content"),
-		LlmType:     record.GetString("llm_type"),
-		LlmCovId:    record.GetString("llm_cov_id"),
-	}, nil
+
+	var article *ReadeaseArticle
+
+	err = article.FromRecord(record)
+	return article, err
 }
 
 func UpsertReadeaseArticle(ctx context.Context, tx *daos.Dao, article *ReadeaseArticle) error {
@@ -72,30 +91,10 @@ func UpsertReadeaseArticle(ctx context.Context, tx *daos.Dao, article *ReadeaseA
 		record = models.NewRecord(col)
 	}
 
-	if article.Url != "" {
-		record.Set("url", article.Url)
-	}
-	if article.OriginalUrl != "" {
-		record.Set("original_url", article.OriginalUrl)
-	}
-	if article.Summary != "" {
-		record.Set("summary", article.Summary)
+	if err := article.ToRecord(record); err != nil {
+		return err
 	}
 
 	record.Set("view_counts", record.GetInt("view_counts")+1)
-
-	if article.Title != "" {
-		record.Set("title", article.Title)
-	}
-	if article.Content != "" {
-		record.Set("content", article.Content)
-	}
-
-	if article.LlmType != "" {
-		record.Set("llm_type", article.LlmType)
-	}
-	if article.LlmCovId != "" {
-		record.Set("llm_cov_id", article.LlmCovId)
-	}
 	return tx.SaveRecord(record)
 }

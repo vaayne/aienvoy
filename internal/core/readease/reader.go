@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"io"
 	"log/slog"
 	"strings"
 
@@ -23,10 +22,8 @@ Please execute the following tasks:
 1. Create a bullet point outline summarizing the essay.
 2. Identify and elaborate on the main point of the essay, explaining how the author substantiates it.
 3. Summarize each paragraph.
-4. Develop a Q&A note with 10 questions about the essay, and provide answers derived from the essay.
 
 An example of response will be:
-<ResponseExample>
 <Summary>
 This essay is about how to write a summary
 - The author first introduce the importance of summary and then explain how to write a summary.
@@ -41,15 +38,8 @@ The author prove the point by ...
 - The second paragraph is about ...
 - ...
 </ParagraphSummary>
-<Q&A>
-- Q: What is the main point of this essay?
-- A: The main point of this essay is how to write a summary.
-- Q: What is the main idea of the first paragraph?
-- A: The main idea of the first paragraph is ...
-</Q&A>
-</ResponseExample>
 
-Please respond in Chinese and refrain from including any additional explanations or comments and keep these xml tags in English as they were: <Summary>, <MainPoint>, <ParagraphSummary>, <Q&A>
+Please respond in Chinese and refrain from including any additional explanations or comments and keep these xml tags in English as they were: <Summary>, <MainPoint>, <ParagraphSummary>
 `
 
 type ReadeaseReader struct {
@@ -62,118 +52,166 @@ func NewReader(app *pocketbase.PocketBase) *ReadeaseReader {
 	}
 }
 
-func (s *ReadeaseReader) readSummaryFromCache(ctx context.Context, url string) string {
-	article, err := GetReadeaseArticleByUrl(ctx, s.app.Dao(), url)
-	if err == nil && article != nil {
-		return article.Summary
-	}
-	slog.Warn("Failed read article from cache", "url", url)
-	return ""
-}
-
-func (s *ReadeaseReader) read(ctx context.Context, url string) (string, string, error) {
-	var article parser.Content
+func (s *ReadeaseReader) read(ctx context.Context, url string) (*ReadeaseArticle, error) {
+	var content parser.Content
 	var err error
 
-	record, err := GetReadeaseArticleByUrl(ctx, s.app.Dao(), url)
-	if err == nil && record != nil {
-		article = parser.Content{
-			URL:     record.OriginalUrl,
-			Title:   record.Title,
-			Content: record.Content,
+	article, err := GetReadeaseArticleByUrl(ctx, s.app.Dao(), url)
+	if err == nil && article != nil {
+		content = parser.Content{
+			URL:     article.OriginalUrl,
+			Title:   article.Title,
+			Content: article.Content,
 		}
 	}
 
-	if article.Content == "" {
-		article, err = parser.New().Parse(url)
+	if content.Content == "" {
+		content, err = parser.New().Parse(url)
 		if err != nil {
-			return "", "", fmt.Errorf("summaryArticle readArticle err: %w", err)
+			return nil, fmt.Errorf("summaryArticle readArticle err: %w", err)
 		}
-		if err := UpsertReadeaseArticle(ctx, s.app.Dao(), &ReadeaseArticle{
+
+		if content.Content == "" {
+			slog.Warn("did not get any content from the url", "url", url, "title", content.Title)
+			return nil, fmt.Errorf("did not get any content from url %s", url)
+		}
+
+		article = &ReadeaseArticle{
 			Url:         url,
-			OriginalUrl: article.URL,
-			Title:       article.Title,
-			Content:     article.Content,
-		}); err != nil {
+			OriginalUrl: content.URL,
+			Title:       content.Title,
+			Content:     content.Content,
+		}
+
+		if err := UpsertReadeaseArticle(ctx, s.app.Dao(), article); err != nil {
 			slog.Error("upsertArticle err", "err", err)
 		}
 	}
-	slog.Info("success read article", "article", article.Title, "url", url, "content", article.Content[:min(100, len(article.Content))])
 
+	slog.Info("success read article", "article", content.Title, "url", url, "content", content.Content[:min(100, len(content.Content))])
+	return article, nil
+}
+
+func (s *ReadeaseReader) Read(ctx context.Context, url string) (*ReadeaseArticle, error) {
+	// get article content by parse web page
+	article, err := s.read(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+
+	if article != nil && article.Summary != "" {
+		slog.Debug("article alreay summaried", "url", url, "title", article.Title, "summary", article.Summary[:100])
+		return article, nil
+	}
+
+	// summary article
 	claude := claudeweb.DefaultClaudeWeb()
 	cov, err := claude.CreateConversation(article.Title)
 	if err != nil {
-		return "", "", fmt.Errorf("failed create conversation err: %v", err)
+		return nil, fmt.Errorf("failed create conversation err: %v", err)
 	}
-
 	slog.Debug("success create conversation", "conversation", cov)
 
-	t := template.Must(template.New("promptTemplate").Parse(promptTemplate))
-	var prompt strings.Builder
-	if err := t.Execute(&prompt, article); err != nil {
-		return "", "", fmt.Errorf("summaryArticle execute template err: %v", err)
-	}
-	return cov.UUID, prompt.String(), nil
-}
-
-func (s *ReadeaseReader) Read(ctx context.Context, url string) (string, error) {
-	// get summary from Cache
-	summary := s.readSummaryFromCache(ctx, url)
-	if summary != "" {
-		return summary, nil
+	prompt, err := buildPrompt(article)
+	if err != nil {
+		return nil, fmt.Errorf("failed build prompt for summary, %w", err)
 	}
 
-	// get article content by parse web page
-	covId, prompt, err := s.read(ctx, url)
+	resp, err := claude.CreateChatMessage(cov.UUID, prompt)
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("summaryArticle create chat message err: %v", err)
 	}
-	// summary article
-	claude := claudeweb.DefaultClaudeWeb()
-	resp, err := claude.CreateChatMessage(covId, prompt)
+
+	summary, err := buildSummaryResponse(url, article.Title, resp.Completion)
 	if err != nil {
-		return "", fmt.Errorf("summaryArticle create chat message err: %v", err)
+		return nil, fmt.Errorf("failed to build summary response %w", err)
 	}
+
+	article.Summary = summary
+	article.LlmCovId = cov.UUID
+	article.LlmType = "claude"
 
 	// save result to cache
-	if err := UpsertReadeaseArticle(ctx, s.app.Dao(), &ReadeaseArticle{
-		Url:      url,
-		Summary:  resp.Completion,
-		LlmType:  "claude",
-		LlmCovId: covId,
-	}); err != nil {
+	if err := UpsertReadeaseArticle(ctx, s.app.Dao(), article); err != nil {
 		slog.Error("upsertArticle err", "err", err)
 	}
-	return resp.Completion, nil
+	return article, nil
 }
 
 func (s *ReadeaseReader) ReadStream(ctx context.Context, url string, respChan chan *claudeweb.ChatMessageResponse, errChan chan error) {
-	summary := s.readSummaryFromCache(ctx, url)
-	if summary != "" {
-		respChan <- &claudeweb.ChatMessageResponse{
-			Completion: summary,
-		}
-		errChan <- io.EOF
-		return
-	}
-
-	covId, prompt, err := s.read(ctx, url)
+	article, err := s.read(ctx, url)
 	if err != nil {
 		errChan <- err
 		return
 	}
+
+	if article != nil && article.Summary != "" {
+		slog.Debug("article alreay summaried", "url", url, "title", article.Title, "summary", article.Summary[:100])
+		respChan <- &claudeweb.ChatMessageResponse{
+			Completion: article.Summary,
+		}
+		return
+	}
+
 	claude := claudeweb.DefaultClaudeWeb()
+	cov, err := claude.CreateConversation(article.Title)
+	if err != nil {
+		errChan <- fmt.Errorf("failed create conversation err: %w", err)
+		return
+	}
+	prompt, err := buildPrompt(article)
+	if err != nil {
+		errChan <- fmt.Errorf("failed build prompt for summary, %w", err)
+		return
+	}
 
 	fullRespChan := make(chan string)
+	defer close(fullRespChan)
+	claude.CreateChatMessageStreamWithFullResponse(cov.UUID, prompt, respChan, fullRespChan, errChan)
+	summary, err := buildSummaryResponse(url, article.Title, <-fullRespChan)
+	if err != nil {
+		errChan <- fmt.Errorf("failed to build summary response %w", err)
+		return
+	}
 
-	claude.CreateChatMessageStreamWithFullResponse(covId, prompt, respChan, fullRespChan, errChan)
+	article.Summary = summary
+	article.LlmCovId = cov.UUID
+	article.LlmType = "claude"
 
-	if err := UpsertReadeaseArticle(ctx, s.app.Dao(), &ReadeaseArticle{
-		Url:      url,
-		Summary:  <-fullRespChan,
-		LlmType:  "claude",
-		LlmCovId: covId,
-	}); err != nil {
+	if err := UpsertReadeaseArticle(ctx, s.app.Dao(), article); err != nil {
 		slog.Error("upsertArticle err", "err", err)
 	}
+}
+
+func buildPrompt(article *ReadeaseArticle) (string, error) {
+	t := template.Must(template.New("promptTemplate").Parse(promptTemplate))
+	var prompt strings.Builder
+	if err := t.Execute(&prompt, article); err != nil {
+		return "", fmt.Errorf("summaryArticle execute template err: %v", err)
+	}
+	return prompt.String(), nil
+}
+
+func buildSummaryResponse(url, title, summary string) (string, error) {
+	var sb strings.Builder
+	const summaryTemplate = `
+{{.Title}} ({{.Url}})
+
+{{.Summary}}
+`
+	t := template.Must(template.New("summaryTemplate").Parse(summaryTemplate))
+
+	type Summary struct {
+		Url     string
+		Title   string
+		Summary string
+	}
+
+	err := t.Execute(&sb, &Summary{Url: url,
+		Title:   title,
+		Summary: summary})
+	if err != nil {
+		return "", err
+	}
+	return sb.String(), nil
 }

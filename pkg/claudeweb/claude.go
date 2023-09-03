@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -274,10 +275,11 @@ func (c *ClaudeWeb) CreateChatMessageStreamWithFullResponse(id, prompt string, s
 				if fullRespChan != nil {
 					fullRespChan <- fullResp.String()
 				}
+				slog.Info("done with CreateChatMessageStream", "cov_id", id)
 				errChan <- io.EOF
 				return
 			}
-			errChan <- fmt.Errorf("CreateChatMessageStream read response body err: %v", err)
+			errChan <- fmt.Errorf("createChatMessageStream read response body err: %v", err)
 			return
 		}
 
@@ -285,7 +287,7 @@ func (c *ClaudeWeb) CreateChatMessageStreamWithFullResponse(id, prompt string, s
 			var chatMessageResponse ChatMessageResponse
 			err = json.Unmarshal(line[6:], &chatMessageResponse)
 			if err != nil {
-				errChan <- fmt.Errorf("CreateChatMessageStream unmarshal response body err: %v", err)
+				errChan <- fmt.Errorf("createChatMessageStream unmarshal response body err: %v", err)
 				return
 			}
 			if fullRespChan != nil {

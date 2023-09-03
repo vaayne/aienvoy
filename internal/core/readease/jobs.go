@@ -41,12 +41,28 @@ func ReadEasePeriodJob(app *pocketbase.PocketBase) ([]string, error) {
 			itemUrl := fmt.Sprintf("%s/item?id=%d", hackernews.HN_HOST, id)
 			slog.Info("start read hackernews item", "url", itemUrl)
 			// get from cache
-			summary, err := reader.Read(ctx, itemUrl)
+
+			article, err := reader.Read(ctx, itemUrl)
+
 			if err != nil {
-				slog.Error("error read article by url", "err", err, "url", itemUrl)
+				slog.Error("read artilce error", "err", err)
 				return
 			}
-			contents = append(contents, fmt.Sprintf("%s\n\n原文: %s", summary, itemUrl))
+
+			slog.Debug("artilce meta", "url", article.Url, "title", article.Title, "content", article.Content[:min(len(article.Content), 100)], "summary", article.Summary[:min(len(article.Summary), 100)], "is_sent", article.IsReadeaseSent)
+
+			if article.IsReadeaseSent {
+				slog.Debug("already sent article", "url", itemUrl, "title", article.Title)
+				return
+			}
+			if article.Summary != "" {
+				contents = append(contents, article.Summary)
+				article.IsReadeaseSent = true
+				if err := UpsertReadeaseArticle(ctx, app.Dao(), article); err != nil {
+					slog.Error("error update article send status", "err", err)
+				}
+				return
+			}
 		}(id)
 	}
 	// Acquire all of the tokens to wait for any remaining workers to finish.
