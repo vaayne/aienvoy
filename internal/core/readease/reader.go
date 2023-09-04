@@ -214,9 +214,11 @@ func buildSummaryResponse(url, title, summary string) (string, error) {
 		Summary string
 	}
 
-	err := t.Execute(&sb, &Summary{Url: url,
+	err := t.Execute(&sb, &Summary{
+		Url:     url,
 		Title:   title,
-		Summary: summary})
+		Summary: summary,
+	})
 	if err != nil {
 		return "", err
 	}

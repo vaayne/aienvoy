@@ -43,7 +43,6 @@ func ReadEasePeriodJob(app *pocketbase.PocketBase) ([]string, error) {
 			// get from cache
 
 			article, err := reader.Read(ctx, itemUrl)
-
 			if err != nil {
 				slog.Error("read artilce error", "err", err)
 				return
