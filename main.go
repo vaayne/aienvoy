@@ -48,7 +48,7 @@ func main() {
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		scheduler := cron.New()
 		// every 5 minutes to run readease job
-		scheduler.MustAdd("readease", "0 0 * * *", func() {
+		scheduler.MustAdd("readease", "0 * * * *", func() {
 			summaries, err := readease.ReadEasePeriodJob(app)
 			if err != nil {
 				slog.Error("run period readease job error", "err", err)
