@@ -1,7 +1,9 @@
 linters:
-    enable:
-        - gofumpt
+  enable:
+    - gofumpt
 
 linters-settings:
-    gofumpt:
-        module-path: aienvoy
+  gofumpt:
+    module-path: aienvoy
+run:
+  timeout: 5m
