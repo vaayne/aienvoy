@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/url"
 	"strings"
 	"time"
 
 	"aienvoy/internal/core/readease"
-	"aienvoy/internal/pkg/logger"
 	"aienvoy/pkg/claudeweb"
 
 	"github.com/pocketbase/pocketbase"
@@ -53,10 +53,10 @@ func OnText(c tb.Context) error {
 				continue
 			}
 			if len(chunk) > 200 {
-				// logger.SugaredLogger.Debugw("response with text", "text", text)
+				// slog.Debug("response with text", "text", text)
 				newMsg, err := c.Bot().Edit(msg, text)
 				if err != nil {
-					logger.SugaredLogger.Warnw("onText edit msg err", "err", err)
+					slog.Warn("onText edit msg err", "err", err)
 				} else {
 					msg = newMsg
 				}
@@ -69,17 +69,17 @@ func OnText(c tb.Context) error {
 
 				// send last message
 				if _, err := c.Bot().Edit(msg, text); err != nil {
-					logger.SugaredLogger.Errorw("onText edit msg err", "err", err)
+					slog.Error("onText edit msg err", "err", err)
 					return err
 				}
 				return nil
 			}
 			if _, err = c.Bot().Edit(msg, err.Error()); err != nil {
-				logger.SugaredLogger.Errorw("OnText edit msg err", "err", err, "text", text)
+				slog.Error("OnText edit msg err", "err", err, "text", text)
 			}
 			return fmt.Errorf("summary article err: %v", err)
 		case <-ctx.Done():
-			logger.SugaredLogger.Errorw("OnText timeout", "err", ctx.Err())
+			slog.Error("OnText timeout", "err", ctx.Err())
 			return fmt.Errorf("summary article timeout, please wait a moment and try again")
 		}
 	}

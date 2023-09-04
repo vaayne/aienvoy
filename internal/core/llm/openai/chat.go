@@ -1,14 +1,14 @@
 package openai
 
 import (
+	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"strings"
 
 	"aienvoy/internal/core/llm"
-	"aienvoy/internal/pkg/context"
-	"aienvoy/internal/pkg/dao"
-	"aienvoy/internal/pkg/logger"
+	"aienvoy/internal/pkg/ctxutils"
 
 	"github.com/pocketbase/pocketbase/daos"
 	"github.com/sashabaranov/go-openai"
@@ -37,24 +37,19 @@ type ListModelsResponse struct {
 func (s *OpenAI) Chat(ctx context.Context, req *ChatCompletionRequest) (ChatCompletionResponse, error) {
 	resp, err := getClientByModel(req.Model).CreateChatCompletion(ctx, req.ChatCompletionRequest)
 	if err != nil {
-		logger.GetSugaredLoggerWithContext(ctx).Errorw("chat with OpenAI error", "err", err.Error())
+		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err.Error())
 		return ChatCompletionResponse{}, err
 	}
 
-	if err := saveUsage(ctx, req.Model, resp.Usage.TotalTokens); err != nil {
-		logger.GetSugaredLoggerWithContext(ctx).Errorw("save usage error", "err", err.Error())
-		return ChatCompletionResponse{}, err
-	}
+	_ = saveUsage(ctx, req.Model, resp.Usage.TotalTokens)
 
 	return ChatCompletionResponse{resp}, nil
 }
 
 func (s *OpenAI) ChatStream(ctx context.Context, req *ChatCompletionRequest, dataChan chan ChatCompletionStreamResponse, errChan chan error) {
-	Logger := logger.GetSugaredLoggerWithContext(ctx)
-
 	stream, err := getClientByModel(req.Model).CreateChatCompletionStream(ctx, req.ChatCompletionRequest)
 	if err != nil {
-		Logger.Errorw("chat with OpenAI error", "err", err.Error())
+		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err.Error())
 		errChan <- err
 		return
 	}
@@ -67,13 +62,11 @@ func (s *OpenAI) ChatStream(ctx context.Context, req *ChatCompletionRequest, dat
 			if errors.Is(err, io.EOF) {
 				tk := NewTiktoken(req.Model)
 				totalTokens := tk.Encode(sb.String())
-				if err := saveUsage(ctx, req.Model, totalTokens); err != nil {
-					Logger.Errorw("save usage error", "err", err.Error())
-				}
+				_ = saveUsage(ctx, req.Model, totalTokens)
 				errChan <- err
 				return
 			}
-			Logger.Errorw("chat stream receive error", "err", err.Error())
+			slog.ErrorContext(ctx, "chat stream receive error", "err", err.Error())
 			errChan <- err
 			return
 		}
@@ -88,18 +81,18 @@ func (s *OpenAI) GetModels(ctx context.Context) (ListModelsResponse, error) {
 }
 
 func saveUsage(ctx context.Context, model string, tokenUsage int) error {
-	usageDao := dao.New(ctx)
+	usageDao := ctxutils.GetDao(ctx)
 
 	if err := usageDao.RunInTransaction(
 		func(tx *daos.Dao) error {
 			return llm.SaveLlmUsage(ctx, tx, &llm.LlmUsages{
-				UserId:     ctx.UserId(),
-				ApiKey:     ctx.APIKey(),
+				UserId:     ctxutils.GetUserId(ctx),
+				ApiKey:     ctxutils.GetApiKey(ctx),
 				TokenUsage: int64(tokenUsage),
 				Model:      model,
 			})
 		}); err != nil {
-		logger.GetSugaredLoggerWithContext(ctx).Errorw("save usage error", "err", err.Error())
+		slog.ErrorContext(ctx, "save usage error", "err", err.Error())
 		return err
 	}
 	return nil

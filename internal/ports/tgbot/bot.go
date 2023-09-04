@@ -1,10 +1,10 @@
 package tgbot
 
 import (
+	"log/slog"
 	"sync"
 
 	"aienvoy/internal/pkg/config"
-	"aienvoy/internal/pkg/logger"
 	"aienvoy/internal/ports/tgbot/handler"
 
 	"github.com/pocketbase/pocketbase"
@@ -29,7 +29,8 @@ func New(token string, app *pocketbase.PocketBase) *TeleBot {
 		// Verbose: false,
 	})
 	if err != nil {
-		logger.SugaredLogger.Fatalf("Init telebot error", "err", err)
+		slog.Error("Init telebot error", "err", err)
+		return nil
 	}
 
 	teleBot := &TeleBot{

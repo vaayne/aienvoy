@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	"aienvoy/internal/pkg/config"
-	"aienvoy/internal/pkg/logger"
 
 	"github.com/google/uuid"
 	"github.com/wangluozhe/requests/models"
@@ -49,15 +48,15 @@ func NewClaudeWeb(token string, opts ...Option) *ClaudeWeb {
 	}
 	orgs, err := client.GetOrganizations()
 	if err != nil {
-		logger.SugaredLogger.Errorf("get organization err: %v", err)
+		slog.Error("get organization err", "err", err)
 		return nil
 	}
 	if len(orgs) == 0 {
-		logger.SugaredLogger.Errorf("no organization found")
+		slog.Error("no organization found")
 		return nil
 	}
 	client.orgId = orgs[0].UUID
-	logger.SugaredLogger.Infof("org info: %v", orgs[0])
+	slog.Info(fmt.Sprintf("org info: %v", orgs[0]))
 	return client
 }
 
@@ -102,7 +101,7 @@ func (c *ClaudeWeb) ListConversations() ([]*Conversation, error) {
 		return nil, fmt.Errorf("ListConversations unmarshal response body err: %v", err)
 	}
 
-	logger.SugaredLogger.Debugw("conversations", "conversations", conversations)
+	slog.Debug("conversations", "conversations", conversations)
 
 	return conversations, nil
 }
@@ -162,7 +161,7 @@ func (c *ClaudeWeb) CreateConversation(name string) (*Conversation, error) {
 	if err != nil {
 		return nil, fmt.Errorf("CreateConversation unmarshal response body err: %v", err)
 	}
-	logger.SugaredLogger.Debugw("CreateConversation", "status_code", resp.StatusCode, "conversation", conversation)
+	slog.Debug("CreateConversation", "status_code", resp.StatusCode, "conversation", conversation)
 	return &conversation, nil
 }
 
@@ -181,7 +180,7 @@ func (c *ClaudeWeb) UpdateConversation(id string, name string) error {
 	if err != nil {
 		return fmt.Errorf("UpdateConversation status_code %d err: %v", resp.StatusCode, err)
 	}
-	logger.SugaredLogger.Infow("update conversation", "status_code", resp.StatusCode)
+	slog.Info("update conversation", "status_code", resp.StatusCode)
 	return nil
 }
 
@@ -214,10 +213,10 @@ func (c *ClaudeWeb) CreateChatMessage(id, prompt string) (*ChatMessageResponse, 
 	}
 
 	if resp.StatusCode >= http.StatusBadRequest {
-		logger.SugaredLogger.Errorw("CreateChatMessage", "status_code", resp.StatusCode, "text", resp.Text)
+		slog.Error("CreateChatMessage", "status_code", resp.StatusCode, "text", resp.Text)
 		return nil, fmt.Errorf("CreateChatMessage status_code %d err: %v", resp.StatusCode, err)
 	}
-	logger.SugaredLogger.Infow("CreateChatMessage", "status_code", resp.StatusCode)
+	slog.Info("CreateChatMessage", "status_code", resp.StatusCode)
 
 	var chatMessageResponse ChatMessageResponse
 	sb := strings.Builder{}
@@ -257,11 +256,11 @@ func (c *ClaudeWeb) CreateChatMessageStreamWithFullResponse(id, prompt string, s
 	}
 
 	if resp.StatusCode >= http.StatusBadRequest {
-		logger.SugaredLogger.Errorw("CreateChatMessageStream", "status_code", resp.StatusCode, "text", resp.Text)
+		slog.Error("CreateChatMessageStream", "status_code", resp.StatusCode, "text", resp.Text)
 		errChan <- fmt.Errorf("CreateChatMessage status_code %d err: %v", resp.StatusCode, err)
 		return
 	}
-	logger.SugaredLogger.Infow("CreateChatMessageStream", "status_code", resp.StatusCode)
+	slog.Info("CreateChatMessageStream", "status_code", resp.StatusCode)
 
 	reader := bufio.NewReader(resp.Body)
 

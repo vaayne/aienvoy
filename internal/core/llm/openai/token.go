@@ -1,7 +1,7 @@
 package openai
 
 import (
-	"aienvoy/internal/pkg/logger"
+	"log/slog"
 
 	"github.com/pkoukk/tiktoken-go"
 	"github.com/sashabaranov/go-openai"
@@ -14,7 +14,7 @@ type Tiktoken struct {
 func NewTiktoken(model string) *Tiktoken {
 	tk, err := tiktoken.EncodingForModel(model)
 	if err != nil {
-		logger.SugaredLogger.Panicw("tiktoken.EncodingForModel", "err", err)
+		slog.Error("tiktoken.EncodingForModel", "err", err)
 	}
 
 	return &Tiktoken{

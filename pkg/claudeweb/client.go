@@ -3,11 +3,10 @@ package claudeweb
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
-
-	"aienvoy/internal/pkg/logger"
 
 	"github.com/wangluozhe/requests"
 	"github.com/wangluozhe/requests/models"
@@ -28,7 +27,7 @@ func NewMixMap(in interface{}) MixMap {
 	inrec, _ := json.Marshal(in)
 	err := json.Unmarshal(inrec, &m)
 	if err != nil {
-		logger.SugaredLogger.Errorw("NewMixMap", "err", err)
+		slog.Error("NewMixMap", "err", err)
 		return nil
 	}
 	return m
@@ -122,7 +121,7 @@ func (c *Client) Post(uri string, params MixMap, headers map[string]string) (*mo
 		req.Headers.Set(k, v)
 	}
 
-	// logger.SugaredLogger.Debugw("request", "request", req)
+	// slog.Debug("request", "request", req)
 
 	r, err := requests.Post(uri, req)
 	if err != nil {

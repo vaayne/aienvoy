@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"aienvoy/internal/core/llm/openai"
-	"aienvoy/internal/pkg/context"
-	"aienvoy/internal/pkg/logger"
 
 	"github.com/labstack/echo/v5"
 )
@@ -25,9 +24,9 @@ func NewOpenAIHandler() *OpenAIHandler {
 }
 
 func (h *OpenAIHandler) GetModels(c echo.Context) error {
-	resp, err := h.openai.GetModels(context.FromEchoContext(c))
+	resp, err := h.openai.GetModels(c.Request().Context())
 	if err != nil {
-		logger.GetSugaredLoggerWithEchoContext(c).Errorw("get models error", "err", err.Error())
+		slog.ErrorContext(c.Request().Context(), "get models error", "err", err.Error())
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, resp)
@@ -37,7 +36,7 @@ func (h *OpenAIHandler) Chat(c echo.Context) error {
 	req := new(openai.ChatCompletionRequest)
 	err := c.Bind(req)
 	if err != nil {
-		logger.GetSugaredLoggerWithEchoContext(c).Errorw("bind chat request body error", "err", err.Error())
+		slog.ErrorContext(c.Request().Context(), "bind chat request body error", "err", err.Error())
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 	// stream response
@@ -52,13 +51,13 @@ func (h *OpenAIHandler) CreateEmbeddings(c echo.Context) error {
 	var req *openai.EmbeddingRequest
 	err := c.Bind(req)
 	if err != nil {
-		logger.GetSugaredLoggerWithEchoContext(c).Errorw("bind embedding request body error", "err", err.Error())
+		slog.ErrorContext(c.Request().Context(), "bind embedding request body error", "err", err.Error())
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
 	resp, err := h.openai.CreateEmbeddings(c.Request().Context(), req)
 	if err != nil {
-		logger.GetSugaredLoggerWithEchoContext(c).Errorw("create embedding error", "err", err.Error())
+		slog.ErrorContext(c.Request().Context(), "create embedding error", "err", err.Error())
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
@@ -66,7 +65,7 @@ func (h *OpenAIHandler) CreateEmbeddings(c echo.Context) error {
 }
 
 func (h *OpenAIHandler) chat(c echo.Context, req *openai.ChatCompletionRequest) error {
-	resp, err := h.openai.Chat(context.FromEchoContext(c), req)
+	resp, err := h.openai.Chat(c.Request().Context(), req)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -79,7 +78,7 @@ func (h *OpenAIHandler) chatStream(c echo.Context, req *openai.ChatCompletionReq
 	errChan := make(chan error)
 	defer close(errChan)
 
-	go h.openai.ChatStream(context.FromEchoContext(c), req, dataChan, errChan)
+	go h.openai.ChatStream(c.Request().Context(), req, dataChan, errChan)
 
 	// sse stream response
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
@@ -93,12 +92,12 @@ func (h *OpenAIHandler) chatStream(c echo.Context, req *openai.ChatCompletionReq
 		case data := <-dataChan:
 			msg, err := json.Marshal(data)
 			if err != nil {
-				logger.GetSugaredLoggerWithEchoContext(c).Errorw("chat stream marshal response error", "err", err.Error())
+				slog.ErrorContext(c.Request().Context(), "chat stream marshal response error", "err", err.Error())
 				return c.String(http.StatusInternalServerError, err.Error())
 			}
 			_, err = c.Response().Write([]byte(fmt.Sprintf("data: %s\n\n", msg)))
 			if err != nil {
-				logger.GetSugaredLoggerWithEchoContext(c).Errorw("write chat stream response error", "err", err.Error())
+				slog.ErrorContext(c.Request().Context(), "write chat stream response error", "err", err.Error())
 				return c.String(http.StatusInternalServerError, err.Error())
 			}
 			c.Response().Flush()

@@ -2,10 +2,10 @@ package openai
 
 import (
 	"fmt"
+	"log/slog"
 	"sync/atomic"
 
 	"aienvoy/internal/pkg/config"
-	"aienvoy/internal/pkg/logger"
 
 	"github.com/sashabaranov/go-openai"
 )
@@ -57,7 +57,7 @@ func init() {
 func getClientByModel(model string) (client *llmClient) {
 	defer func() {
 		if client != nil {
-			logger.SugaredLogger.Debugw("get LLM client", "client", client.String())
+			slog.Debug("get LLM client", "client", client.String())
 		}
 	}()
 	for i := 0; i < len(clientPoolMap); i++ {
@@ -88,7 +88,7 @@ func createClient(cfg config.LLMConfig) *llmClient {
 			clientCfg.BaseURL = cfg.ApiEndpoint
 		}
 	} else {
-		logger.SugaredLogger.Errorw("unknown LLM type", "type", cfg.Type)
+		slog.Error("unknown LLM type", "type", cfg.Type)
 		return nil
 	}
 	return &llmClient{

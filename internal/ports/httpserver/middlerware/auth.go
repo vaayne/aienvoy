@@ -2,11 +2,11 @@ package middlerware
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 
 	"aienvoy/internal/core/auth"
 	"aienvoy/internal/pkg/config"
-	"aienvoy/internal/pkg/logger"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"
@@ -27,11 +27,11 @@ func AuthByApiKeyMiddleware(d *daos.Dao) echo.MiddlewareFunc {
 
 						authRecord, err := auth.FindAuthRecordByApiKey(context.TODO(), d, apiKeyStr)
 						if err != nil {
-							logger.SugaredLogger.Infow("error get user by api key", "err", err, "key", authHeader)
+							slog.Info("error get user by api key", "err", err, "key", authHeader)
 							return apis.NewUnauthorizedError("invalid api key", nil)
 						}
 						c.Set(config.ContextKeyAuthRecord, authRecord)
-						c.Set(config.ContextKeyUserId, authRecord.Id)
+						c.Set(config.ContextKeyUserId, authRecord.GetString("user_id"))
 						c.Set(config.ContextKeyApiKey, apiKeyStr)
 					}
 				}

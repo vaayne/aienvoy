@@ -8,7 +8,7 @@ import (
 
 	"aienvoy/internal/core/readease"
 	"aienvoy/internal/pkg/config"
-	"aienvoy/internal/pkg/logger"
+	_ "aienvoy/internal/pkg/logger"
 	"aienvoy/internal/ports/httpserver"
 	"aienvoy/internal/ports/tgbot"
 	_ "aienvoy/migrations"
@@ -48,7 +48,7 @@ func main() {
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		scheduler := cron.New()
 		// every 5 minutes to run readease job
-		scheduler.MustAdd("readease", "0 * * * *", func() {
+		scheduler.MustAdd("readease", "0 0 * * *", func() {
 			summaries, err := readease.ReadEasePeriodJob(app)
 			if err != nil {
 				slog.Error("run period readease job error", "err", err)
@@ -70,6 +70,6 @@ func main() {
 	// start telegram bot readease
 	go tgbot.Serve(app)
 	if err := app.Start(); err != nil {
-		logger.SugaredLogger.Fatalw("failed to start app", "error", err)
+		slog.Error("failed to start app", "err", err)
 	}
 }
