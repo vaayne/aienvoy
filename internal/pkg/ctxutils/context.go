@@ -9,7 +9,11 @@ import (
 )
 
 func GetDao(ctx context.Context) *daos.Dao {
-	return ctx.Value(config.ContextKeyDao).(*daos.Dao)
+	val, ok := ctx.Value(config.ContextKeyDao).(*daos.Dao)
+	if !ok {
+		return nil
+	}
+	return val
 }
 
 func GetUserId(ctx context.Context) string {
@@ -25,5 +29,9 @@ func GetRequestId(ctx context.Context) string {
 }
 
 func getString(ctx context.Context, key string) string {
-	return ctx.Value(key).(string)
+	val, ok := ctx.Value(key).(string)
+	if !ok {
+		return ""
+	}
+	return val
 }

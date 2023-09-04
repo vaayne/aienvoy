@@ -10,10 +10,10 @@ import (
 
 func init() {
 	var handler slog.Handler
-	if strings.ToLower(config.GetConfig().Service.LogLevel) == "debug" {
+	if IsDebug() {
 		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			AddSource: true,
-			Level:     slog.LevelInfo,
+			Level:     slog.LevelDebug,
 		})
 	} else {
 		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -23,4 +23,8 @@ func init() {
 	}
 
 	slog.SetDefault(slog.New(NewHandler(handler)))
+}
+
+func IsDebug() bool {
+	return strings.ToLower(config.GetConfig().Service.LogLevel) == "debug"
 }

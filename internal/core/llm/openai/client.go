@@ -18,13 +18,17 @@ const (
 type llmClient struct {
 	openai.Client
 	config.LLMConfig
+	valid *atomic.Bool
 }
 
 func (c *llmClient) String() string {
 	return fmt.Sprintf("llmClient{type: %s, endpoint: %s, version: %s}", c.Type, c.ApiEndpoint, c.ApiVersion)
 }
 
-func (c *llmClient) isModelValid(model string) bool {
+func (c *llmClient) isValid(model string) bool {
+	if !c.valid.Load() {
+		return false
+	}
 	if len(c.Models) == 0 {
 		return true
 	}
@@ -38,7 +42,7 @@ func (c *llmClient) isModelValid(model string) bool {
 
 var (
 	clientPoolMap = make(map[int32]*llmClient)
-	clientPoolIdx atomic.Int32
+	clientPoolIdx *atomic.Int32
 )
 
 func init() {
@@ -67,7 +71,7 @@ func getClientByModel(model string) (client *llmClient) {
 			clientPoolIdx.Store(idx)
 		}
 		client := clientPoolMap[idx]
-		if client.isModelValid(model) {
+		if client.isValid(model) {
 			return client
 		}
 	}
@@ -91,8 +95,13 @@ func createClient(cfg config.LLMConfig) *llmClient {
 		slog.Error("unknown LLM type", "type", cfg.Type)
 		return nil
 	}
+
+	valid := &atomic.Bool{}
+	valid.Store(true)
+
 	return &llmClient{
 		Client:    *openai.NewClientWithConfig(clientCfg),
 		LLMConfig: cfg,
+		valid:     valid,
 	}
 }
