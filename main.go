@@ -3,6 +3,8 @@ package main
 import (
 	"embed"
 	"log/slog"
+	"os"
+	"strings"
 
 	"aienvoy/internal/core/readease"
 	"aienvoy/internal/pkg/config"
@@ -31,14 +33,18 @@ func registerRoutes(app *pocketbase.PocketBase) {
 }
 
 func main() {
+	// loosely check if it was executed using "go run"
+	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 	app := pocketbase.New()
 
 	go tgbot.Serve(app)
 
+	// migrate DB
 	migratecmd.MustRegister(app, app.RootCmd, &migratecmd.Options{
-		Automigrate: false,
+		Automigrate: isGoRun,
 	})
 
+	// scheduled jobs
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		scheduler := cron.New()
 		// every 5 minutes to run readease job
@@ -59,8 +65,10 @@ func main() {
 		scheduler.Start()
 		return nil
 	})
-
+	// register routes
 	registerRoutes(app)
+	// start telegram bot readease
+	go tgbot.Serve(app)
 	if err := app.Start(); err != nil {
 		logger.SugaredLogger.Fatalw("failed to start app", "error", err)
 	}

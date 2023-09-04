@@ -1,10 +1,11 @@
 package middlerware
 
 import (
+	"context"
 	"strings"
 
+	"aienvoy/internal/core/auth"
 	"aienvoy/internal/pkg/config"
-	"aienvoy/internal/pkg/dao"
 	"aienvoy/internal/pkg/logger"
 
 	"github.com/labstack/echo/v5"
@@ -18,20 +19,20 @@ func AuthByApiKeyMiddleware(d *daos.Dao) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			val := c.Get(config.ContextKeyAuthRecord)
 			if val == nil {
-				auth := c.Request().Header.Get("Authorization")
-				if auth != "" {
-					auths := strings.Split(auth, " ")
+				authHeader := c.Request().Header.Get("Authorization")
+				if authHeader != "" {
+					auths := strings.Split(authHeader, " ")
 					if len(auths) == 2 && auths[0] == "Bearer" {
-						apiKey := auths[1]
+						apiKeyStr := auths[1]
 
-						authRecord, err := dao.FindAuthRecordByApiKey(d, apiKey)
+						authRecord, err := auth.FindAuthRecordByApiKey(context.TODO(), d, apiKeyStr)
 						if err != nil {
-							logger.SugaredLogger.Infow("error get user by api key", "err", err, "key", auth)
+							logger.SugaredLogger.Infow("error get user by api key", "err", err, "key", authHeader)
 							return apis.NewUnauthorizedError("invalid api key", nil)
 						}
 						c.Set(config.ContextKeyAuthRecord, authRecord)
 						c.Set(config.ContextKeyUserId, authRecord.Id)
-						c.Set(config.ContextKeyApiKey, apiKey)
+						c.Set(config.ContextKeyApiKey, apiKeyStr)
 					}
 				}
 			}

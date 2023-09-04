@@ -4,8 +4,8 @@ import (
 	"errors"
 	"io"
 	"strings"
-	"time"
 
+	"aienvoy/internal/core/llm"
 	"aienvoy/internal/pkg/context"
 	"aienvoy/internal/pkg/dao"
 	"aienvoy/internal/pkg/logger"
@@ -87,22 +87,17 @@ func (s *OpenAI) GetModels(ctx context.Context) (ListModelsResponse, error) {
 	return ListModelsResponse{resp}, err
 }
 
-func getCurrentTimeTruncatedToHour() time.Time {
-	return time.Now().UTC().Truncate(time.Hour)
-}
-
 func saveUsage(ctx context.Context, model string, tokenUsage int) error {
 	usageDao := dao.New(ctx)
-	usage := &dao.Usage{
-		UserId:   ctx.UserId(),
-		ApiKey:   ctx.APIKey(),
-		Usage:    tokenUsage,
-		Model:    model,
-		DateTime: getCurrentTimeTruncatedToHour(),
-	}
+
 	if err := usageDao.RunInTransaction(
 		func(tx *daos.Dao) error {
-			return usageDao.CreateUsage(tx, usage)
+			return llm.SaveLlmUsage(ctx, tx, &llm.LlmUsages{
+				UserId:     ctx.UserId(),
+				ApiKey:     ctx.APIKey(),
+				TokenUsage: int64(tokenUsage),
+				Model:      model,
+			})
 		}); err != nil {
 		logger.GetSugaredLoggerWithContext(ctx).Errorw("save usage error", "err", err.Error())
 		return err

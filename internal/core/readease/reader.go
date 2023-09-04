@@ -129,7 +129,7 @@ func (s *ReadeaseReader) Read(ctx context.Context, url string) (*ReadeaseArticle
 
 	article.Summary = summary
 	article.LlmCovId = cov.UUID
-	article.LlmType = "claude"
+	article.LlmModel = "claude"
 
 	// save result to cache
 	if err := UpsertReadeaseArticle(ctx, s.app.Dao(), article); err != nil {
@@ -180,7 +180,7 @@ func (s *ReadeaseReader) ReadStream(ctx context.Context, url string, respChan ch
 
 		article.Summary = summary
 		article.LlmCovId = cov.UUID
-		article.LlmType = "claude"
+		article.LlmModel = "claude"
 
 		if err := UpsertReadeaseArticle(ctx, s.app.Dao(), article); err != nil {
 			slog.Error("upsertArticle err", "err", err)

@@ -6,6 +6,11 @@ service:
   logLevel: info
   env: dev
 
+# default admin users
+admins:
+  - email: admin@admin.com
+    password: adminadmin
+
 claudeweb:
   token:
 

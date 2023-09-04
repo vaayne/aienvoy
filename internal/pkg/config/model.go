@@ -2,6 +2,7 @@ package config
 
 type Config struct {
 	Service  ServiceConfig
+	Admins   []Admin
 	LLMs     []LLMConfig
 	Axiom    Axiom
 	Telegram struct {
@@ -33,4 +34,9 @@ type LLMConfig struct {
 type Axiom struct {
 	Token   string
 	Dataset string
+}
+
+type Admin struct {
+	Email    string
+	Password string
 }
