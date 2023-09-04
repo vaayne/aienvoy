@@ -1,8 +1,8 @@
 package readease
 
 import (
+	"aienvoy/internal/pkg/dtoutils"
 	"context"
-	"encoding/json"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/daos"
@@ -12,39 +12,16 @@ import (
 const TableReadeaseArticle = "readease_article"
 
 type ReadeaseArticle struct {
-	Id             string `json:"id"`
-	Url            string `json:"url"`
-	OriginalUrl    string `json:"original_url"`
-	Summary        string `json:"summary"`
-	ViewCounts     int    `json:"view_counts"`
-	Title          string `json:"title"`
-	Content        string `json:"content"`
-	LlmType        string `json:"llm_type"`
-	LlmCovId       string `json:"llm_cov_id"`
-	IsReadeaseSent bool   `json:"is_readease_sent"`
-}
-
-func (a *ReadeaseArticle) FromRecord(r *models.Record) error {
-	jsonData, err := r.MarshalJSON()
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(jsonData, a)
-}
-
-func (a *ReadeaseArticle) ToRecord(r *models.Record) error {
-	jsonData, err := json.Marshal(a)
-	if err != nil {
-		return err
-	}
-	mapData := make(map[string]any)
-
-	if err := json.Unmarshal(jsonData, &mapData); err != nil {
-		return err
-	}
-
-	r.Load(mapData)
-	return nil
+	Id             string `json:"id,omitempty" mapstructure:"id,omitempty"`
+	Url            string `json:"url,omitempty" mapstructure:"url,omitempty"`
+	OriginalUrl    string `json:"original_url,omitempty" mapstructure:"original_url,omitempty"`
+	Summary        string `json:"summary,omitempty" mapstructure:"summary,omitempty"`
+	ViewCounts     int    `json:"view_counts,omitempty" mapstructure:"view_counts,omitempty"`
+	Title          string `json:"title,omitempty" mapstructure:"title,omitempty"`
+	Content        string `json:"content,omitempty" mapstructure:"content,omitempty"`
+	LlmType        string `json:"llm_type,omitempty" mapstructure:"llm_type,omitempty"`
+	LlmCovId       string `json:"llm_cov_id,omitempty" mapstructure:"llm_cov_id,omitempty"`
+	IsReadeaseSent bool   `json:"is_readease_sent,omitempty" mapstructure:"is_readease_sent,omitempty"`
 }
 
 func getReadeaseArticleCollection(tx *daos.Dao) (*models.Collection, error) {
@@ -72,8 +49,7 @@ func GetReadeaseArticleByUrl(ctx context.Context, tx *daos.Dao, url string) (*Re
 	}
 
 	var article *ReadeaseArticle
-
-	err = article.FromRecord(record)
+	err = dtoutils.FromRecord(record, article)
 	return article, err
 }
 
@@ -91,7 +67,7 @@ func UpsertReadeaseArticle(ctx context.Context, tx *daos.Dao, article *ReadeaseA
 		record = models.NewRecord(col)
 	}
 
-	if err := article.ToRecord(record); err != nil {
+	if err := dtoutils.ToRecord(record, article); err != nil {
 		return err
 	}
 

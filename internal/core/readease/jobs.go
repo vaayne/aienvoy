@@ -21,16 +21,16 @@ func ReadEasePeriodJob(app *pocketbase.PocketBase) ([]string, error) {
 	contents := make([]string, 0, NumOfTopStoires)
 
 	hn := hackernews.New()
-	topStories, err := hn.GetTopStories(NumOfTopStoires)
+	stories, err := hn.GetBestStories(NumOfTopStoires)
 	if err != nil {
 		return contents, fmt.Errorf("get top stories err: %w", err)
 	}
-	slog.Info("success get hackernews top stories", "count", len(topStories))
+	slog.Info("success get hackernews top stories", "count", len(stories))
 
 	reader := NewReader(app)
 	maxWorkers := runtime.GOMAXPROCS(0)
 	sem := semaphore.NewWeighted(int64(maxWorkers))
-	for _, id := range topStories {
+	for _, id := range stories {
 		if err := sem.Acquire(ctx, 1); err != nil {
 			slog.Error("Failed to acquire semaphore: %v", err)
 			break

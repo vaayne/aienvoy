@@ -167,19 +167,26 @@ func (s *ReadeaseReader) ReadStream(ctx context.Context, url string, respChan ch
 
 	fullRespChan := make(chan string)
 	defer close(fullRespChan)
-	claude.CreateChatMessageStreamWithFullResponse(cov.UUID, prompt, respChan, fullRespChan, errChan)
-	summary, err := buildSummaryResponse(url, article.Title, <-fullRespChan)
-	if err != nil {
-		errChan <- fmt.Errorf("failed to build summary response %w", err)
-		return
-	}
+	go claude.CreateChatMessageStreamWithFullResponse(cov.UUID, prompt, respChan, fullRespChan, errChan)
 
-	article.Summary = summary
-	article.LlmCovId = cov.UUID
-	article.LlmType = "claude"
+	select {
+	case resp := <-fullRespChan:
+		// save summary from AI
+		summary, err := buildSummaryResponse(url, article.Title, resp)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to build summary response %w", err)
+			return
+		}
 
-	if err := UpsertReadeaseArticle(ctx, s.app.Dao(), article); err != nil {
-		slog.Error("upsertArticle err", "err", err)
+		article.Summary = summary
+		article.LlmCovId = cov.UUID
+		article.LlmType = "claude"
+
+		if err := UpsertReadeaseArticle(ctx, s.app.Dao(), article); err != nil {
+			slog.Error("upsertArticle err", "err", err)
+		}
+	case <-ctx.Done():
+		slog.Warn("context done")
 	}
 }
 
