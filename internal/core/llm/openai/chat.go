@@ -70,8 +70,10 @@ func (s *OpenAI) ChatStream(ctx context.Context, req *ChatCompletionRequest, dat
 			errChan <- err
 			return
 		}
-		sb.WriteString(resp.Choices[0].Delta.Content)
-		dataChan <- ChatCompletionStreamResponse{resp}
+		if len(resp.Choices) > 0 {
+			sb.WriteString(resp.Choices[0].Delta.Content)
+			dataChan <- ChatCompletionStreamResponse{resp}
+		}
 	}
 }
 
