@@ -49,9 +49,9 @@ func GetReadeaseArticleByUrl(ctx context.Context, tx *daos.Dao, url string) (*Re
 		return nil, nil
 	}
 
-	var article *ReadeaseArticle
-	err = dtoutils.FromRecord(record, article)
-	return article, err
+	var article ReadeaseArticle
+	err = dtoutils.FromRecord(record, &article)
+	return &article, err
 }
 
 func UpsertReadeaseArticle(ctx context.Context, tx *daos.Dao, article *ReadeaseArticle) error {

@@ -57,6 +57,9 @@ func (s *ReadeaseReader) read(ctx context.Context, url string) (*ReadeaseArticle
 	var err error
 
 	article, err := GetReadeaseArticleByUrl(ctx, s.app.Dao(), url)
+	if err != nil {
+		slog.Error("get article from db error", "err", err)
+	}
 	if err == nil && article != nil {
 		content = parser.Content{
 			URL:     article.OriginalUrl,

@@ -42,7 +42,7 @@ func (c *llmClient) isValid(model string) bool {
 
 var (
 	clientPoolMap = make(map[int32]*llmClient)
-	clientPoolIdx *atomic.Int32
+	clientPoolIdx atomic.Int32
 )
 
 func init() {
