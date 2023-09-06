@@ -79,6 +79,10 @@ func (s *ReadeaseReader) read(ctx context.Context, url string) (*ReadeaseArticle
 			return nil, fmt.Errorf("did not get any content from url %s", url)
 		}
 
+		if content.URL == "" {
+			content.URL = url
+		}
+
 		article = &ReadeaseArticle{
 			Url:         url,
 			OriginalUrl: content.URL,
