@@ -6,12 +6,15 @@ type Config struct {
 	LLMs     []LLMConfig
 	Axiom    Axiom
 	Telegram struct {
-		Token           string `yaml:"token"`
-		ReadeaseChannel int64  `yaml:"readeaseChannel"`
+		Token string `yaml:"token"`
 	}
 	ClaudeWeb struct {
 		Token string `yaml:"token"`
 	}
+	Bard struct {
+		Token string `yaml:"token"`
+	}
+	ReadEase ReadEase
 }
 
 type ServiceConfig struct {
@@ -39,4 +42,9 @@ type Axiom struct {
 type Admin struct {
 	Email    string
 	Password string
+}
+
+type ReadEase struct {
+	TelegramChannel int64 `yaml:"telegramChannel"`
+	TopStoriesCnt   int   `yaml:"topStoriesCnt"`
 }
