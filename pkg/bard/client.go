@@ -1,17 +1,17 @@
 package bard
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"math/rand"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -30,8 +30,10 @@ var headers map[string]string = map[string]string{
 }
 
 type BardClient struct {
-	mu      sync.Mutex
 	token   string
+	snlm0e  string
+	cfb2h   string
+	cookies map[string]string
 	timeout time.Duration
 	session *http.Client
 }
@@ -43,10 +45,13 @@ func NewBardClient(token string, opts ...BardClientOption) (*BardClient, error) 
 		return nil, fmt.Errorf("__Secure-1PSID value must end with a single dot. Enter correct __Secure-1PSID value.")
 	}
 
+	jar, _ := cookiejar.New(nil)
 	b := &BardClient{
 		token:   token,
 		timeout: 10 * time.Second,
-		session: &http.Client{},
+		session: &http.Client{
+			Jar: jar,
+		},
 	}
 
 	for _, opt := range opts {
@@ -57,11 +62,28 @@ func NewBardClient(token string, opts ...BardClientOption) (*BardClient, error) 
 		b.session.Timeout = b.timeout
 	}
 
-	if _, err := b.getSNlM0e(); err != nil {
-		return nil, fmt.Errorf("init bard error %w", err)
+	// set cookies
+	setCookie := func(key, val string) *http.Cookie {
+		return &http.Cookie{
+			Name:   key,
+			Value:  val,
+			Domain: "google.com",
+		}
 	}
 
-	return b, nil
+	cookies := []*http.Cookie{
+		setCookie(cookieTokenKey, b.token),
+	}
+	for key, val := range b.cookies {
+		cookies = append(cookies, setCookie(key, val))
+	}
+	jar.SetCookies(&url.URL{
+		Scheme: "https",
+		Host:   "bard.google.com",
+	}, cookies)
+
+	err := b.initMeta()
+	return b, err
 }
 
 func WithTimeout(timeout time.Duration) BardClientOption {
@@ -76,42 +98,60 @@ func WithSession(session *http.Client) BardClientOption {
 	}
 }
 
-func (b *BardClient) getSNlM0e() (string, error) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
+func WithCookies(cookies map[string]string) BardClientOption {
+	return func(bc *BardClient) {
+		bc.cookies = cookies
+	}
+}
+
+func (b *BardClient) initMeta() error {
 	req, err := http.NewRequest(http.MethodGet, "https://bard.google.com/", nil)
 	if err != nil {
-		return "", fmt.Errorf("init request for SNlM0e error: %w", err)
+		return fmt.Errorf("init request for SNlM0e error: %w", err)
 	}
 	b.setHeaders(req)
 
 	resp, err := b.session.Do(req)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Response code not 200. Response Status is %d", resp.StatusCode)
+		return fmt.Errorf("Response code not 200. Response Status is %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	re := regexp.MustCompile(`SNlM0e":"(.*?)"`)
-	matches := re.FindStringSubmatch(string(body))
-	if len(matches) != 2 {
-		slog.Warn("SNlM0e value not found in response.", "resp", string(body))
-		return "", fmt.Errorf("SNlM0e value not found in response. Check __Secure-1PSID value.")
+	extractFromHTML := func(name string) (string, error) {
+		re := regexp.MustCompile(fmt.Sprintf(`%s":"(.*?)"`, name))
+		matches := re.FindStringSubmatch(string(body))
+		if len(matches) != 2 {
+			return "", fmt.Errorf(name + " value not found in response. Check __Secure-1PSID value.")
+		}
+		return matches[1], nil
 	}
-	return matches[1], nil
+
+	if snlm0e, err := extractFromHTML("SNlM0e"); err != nil {
+		return err
+	} else {
+		b.snlm0e = snlm0e
+	}
+
+	if cfb2h, err := extractFromHTML("cfb2h"); err != nil {
+		return err
+	} else {
+		b.cfb2h = cfb2h
+	}
+	return nil
 }
 
 func (b *BardClient) Ask(prompt, conversationID, responseID, choiceID string, reqID int) (*BardAnswer, error) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
+	// b.mu.Lock()
+	// defer b.mu.Unlock()
 	req, err := b.buildRequest(prompt, conversationID, responseID, choiceID, reqID)
 	if err != nil {
 		return nil, fmt.Errorf("build bard request error: %w", err)
@@ -121,35 +161,35 @@ func (b *BardClient) Ask(prompt, conversationID, responseID, choiceID string, re
 		return nil, fmt.Errorf("request to bard error: %w", err)
 	}
 	defer resp.Body.Close()
-	return b.parseResponse(req.Body)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read bard response body error: %w", err)
+	}
+
+	data1 := bytes.Split(body, []byte("\n"))
+	return parse(string(data1[3]))
 }
 
 func (b *BardClient) setHeaders(req *http.Request) {
 	for key, val := range headers {
 		req.Header.Add(key, val)
 	}
-	req.Header.Set("Cookie", fmt.Sprintf("%s=%s", cookieTokenKey, b.token))
 }
 
 func (b *BardClient) buildRequest(prompt, conversationID, responseID, choiceID string, reqID int) (*http.Request, error) {
 	// build req url
 	if reqID == 0 {
-		reqID = rand.Intn(10000)
+		reqID = 100000 + rand.Intn(10000)
 	}
 	params := url.Values{
-		"bl":     {"boq_assistant-bard-web-server_20230510.09_p1"},
+		"bl":     {b.cfb2h},
 		"_reqid": {strconv.Itoa(reqID)},
 		"rt":     {"c"},
 	}
 	reqURL := bardUrl + "?" + params.Encode()
 
 	// build req body
-	// get snlm0e
-	snlm0e, err := b.getSNlM0e()
-	if err != nil {
-		return nil, err
-	}
-
 	inputTextStruct := [][]any{
 		{prompt},
 		nil,
@@ -161,13 +201,18 @@ func (b *BardClient) buildRequest(prompt, conversationID, responseID, choiceID s
 		return nil, fmt.Errorf("encode input text error: %w", err)
 	}
 
-	values := &url.Values{}
-	values.Add("f.req", fmt.Sprintf("[null,%s]", inputText))
-	values.Add("at", snlm0e)
-	reqBody := strings.NewReader(values.Encode())
+	data := []any{nil, string(inputText)}
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("encode input data error: %w", err)
+	}
 
+	reqData := url.Values{
+		"f.req": {string(jsonData)},
+		"at":    {b.snlm0e},
+	}
 	// new http request
-	req, err := http.NewRequest(http.MethodPost, reqURL, reqBody)
+	req, err := http.NewRequest(http.MethodPost, reqURL, strings.NewReader(reqData.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -175,46 +220,4 @@ func (b *BardClient) buildRequest(prompt, conversationID, responseID, choiceID s
 	b.setHeaders(req)
 
 	return req, nil
-}
-
-func (b *BardClient) parseResponse(r io.ReadCloser) (*BardAnswer, error) {
-	body, err := io.ReadAll(r)
-	if err != nil {
-		return nil, fmt.Errorf("read bard response body error: %w", err)
-	}
-	var respDict []any
-	err = json.Unmarshal(body, &respDict)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshal bard response body error: %w", err)
-	}
-	if len(respDict) < 4 || respDict[3] == nil {
-		return nil, fmt.Errorf("bard response error: %s", string(body))
-	}
-
-	parsedAnswer := respDict[3].([]any)
-	answer := &BardAnswer{
-		Content:        parsedAnswer[0].(string),
-		ConversationID: parsedAnswer[1].([]any)[0].(string),
-		ResponseID:     parsedAnswer[1].([]any)[1].(string),
-	}
-	if parsedAnswer[3] != nil {
-		answer.FactualityQueries = parsedAnswer[3].([]interface{})
-	}
-
-	if parsedAnswer[2] != nil {
-		answer.TextQuery = parsedAnswer[2].([]interface{})[0].(string)
-	}
-
-	if parsedAnswer[4] != nil {
-		choices := parsedAnswer[4].([]interface{})
-		answer.Choices = make([]Choice, len(choices))
-		for i, choice := range choices {
-			choiceMap := choice.([]interface{})
-			answer.Choices[i] = Choice{
-				ID:      choiceMap[0].(string),
-				Content: choiceMap[1].(string),
-			}
-		}
-	}
-	return answer, nil
 }

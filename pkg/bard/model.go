@@ -4,18 +4,17 @@ package bard
 // the generated text content, conversation ID, response ID, factuality queries,
 // original text query, and any choices provided.
 type BardAnswer struct {
-	// Content is the generated text content.
-	Content string
-	// ConversationID is the unique ID for the conversation with Bard.
-	ConversationID string
-	// ResponseID is the unique ID for this particular response.
-	ResponseID string
-	// FactualityQueries are any follow up factuality clarification queries.
+	Content           string
+	ConversationID    string
+	ResponseID        string
 	FactualityQueries []any
-	// TextQuery is the original text query sent to Bard.
-	TextQuery string
-	// Choices are any alternative responses provided.
-	Choices []Choice
+	TextQuery         string
+	Choices           []Choice
+	Links             []string
+	Images            []any
+	ProgramLang       string
+	Code              string
+	StatusCode        int
 }
 
 // Choice represents an alternative response option provided by Bard.
