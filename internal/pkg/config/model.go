@@ -14,7 +14,8 @@ type Config struct {
 	Bard struct {
 		Token string `yaml:"token"`
 	}
-	ReadEase ReadEase
+	ReadEase    ReadEase
+	CookieCloud CookieCloud
 }
 
 type ServiceConfig struct {
@@ -47,4 +48,10 @@ type Admin struct {
 type ReadEase struct {
 	TelegramChannel int64 `yaml:"telegramChannel"`
 	TopStoriesCnt   int   `yaml:"topStoriesCnt"`
+}
+
+type CookieCloud struct {
+	Host string
+	UUID string
+	Pass string
 }

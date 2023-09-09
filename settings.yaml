@@ -23,3 +23,8 @@ telegram:
 readease:
   telegramChannel:
   topStoriesCnt: 10
+
+cookiecloud:
+  host:
+  uuid:
+  pass:
