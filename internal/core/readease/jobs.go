@@ -6,22 +6,22 @@ import (
 	"log/slog"
 	"runtime"
 
+	"aienvoy/internal/pkg/config"
 	"aienvoy/pkg/hackernews"
 
 	"github.com/pocketbase/pocketbase"
 	"golang.org/x/sync/semaphore"
 )
 
-const NumOfTopStoires = 10
-
 func ReadEasePeriodJob(app *pocketbase.PocketBase) ([]string, error) {
 	slog.Info("Start readease period job...")
 	ctx := context.Background()
+	topStoiresCnt := config.GetConfig().ReadEase.TopStoriesCnt
 
-	contents := make([]string, 0, NumOfTopStoires)
+	contents := make([]string, 0, topStoiresCnt)
 
 	hn := hackernews.New()
-	stories, err := hn.GetBestStories(NumOfTopStoires)
+	stories, err := hn.GetBestStories(topStoiresCnt)
 	if err != nil {
 		return contents, fmt.Errorf("get top stories err: %w", err)
 	}

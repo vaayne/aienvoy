@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/labstack/echo/v5 v5.0.0-20220201181537-ed2888cfa198
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkoukk/tiktoken-go v0.1.5
 	github.com/pocketbase/dbx v1.10.0
 	github.com/pocketbase/pocketbase v0.16.8
@@ -17,7 +18,9 @@ require (
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gaukas/godicttls v0.0.3 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/refraction-networking/utls v1.3.2 // indirect
 	github.com/wangluozhe/fhttp v0.0.0-20230512135433-5c2ebfb4868a // indirect
 )
@@ -78,6 +81,7 @@ require (
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stretchr/testify v1.8.4
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect

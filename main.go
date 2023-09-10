@@ -54,7 +54,7 @@ func main() {
 				slog.Error("run period readease job error", "err", err)
 			}
 			bot := tgbot.DefaultBot(app)
-			channel := tb.ChatID(config.GetConfig().Telegram.ReadeaseChannel)
+			channel := tb.ChatID(config.GetConfig().ReadEase.TelegramChannel)
 			for _, summary := range summaries {
 				msg, err := bot.Send(channel, summary)
 				if err != nil {
