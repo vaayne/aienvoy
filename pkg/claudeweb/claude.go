@@ -8,9 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"sync"
-
-	"aienvoy/internal/pkg/config"
 
 	"github.com/google/uuid"
 	"github.com/wangluozhe/requests/models"
@@ -21,23 +18,9 @@ const (
 	DEFAULT_TIMEZONE = "Asia/Shanghai"
 )
 
-var (
-	once            sync.Once
-	claudeWebClient *ClaudeWeb
-)
-
 type ClaudeWeb struct {
 	Client
 	orgId string
-}
-
-func DefaultClaudeWeb() *ClaudeWeb {
-	if claudeWebClient == nil {
-		once.Do(func() {
-			claudeWebClient = NewClaudeWeb(config.GetConfig().ClaudeWeb.Token)
-		})
-	}
-	return claudeWebClient
 }
 
 // NewClaudeWeb returns a new ClaudeWeb client
