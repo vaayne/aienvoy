@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"aienvoy/internal/core/llm/llmclaudeweb"
 	"aienvoy/internal/pkg/parser"
 	"aienvoy/pkg/claudeweb"
 
@@ -112,7 +113,7 @@ func (s *ReadeaseReader) Read(ctx context.Context, url string) (*ReadeaseArticle
 	}
 
 	// summary article
-	claude := claudeweb.DefaultClaudeWeb()
+	claude := llmclaudeweb.New()
 	cov, err := claude.CreateConversation(article.Title)
 	if err != nil {
 		return nil, fmt.Errorf("failed create conversation err: %v", err)
@@ -160,7 +161,7 @@ func (s *ReadeaseReader) ReadStream(ctx context.Context, url string, respChan ch
 		return
 	}
 
-	claude := claudeweb.DefaultClaudeWeb()
+	claude := llmclaudeweb.New()
 	cov, err := claude.CreateConversation(article.Title)
 	if err != nil {
 		errChan <- fmt.Errorf("failed create conversation err: %w", err)
