@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/pkg/loghandler"
 )
 
 func init() {
@@ -22,7 +23,7 @@ func init() {
 		})
 	}
 
-	slog.SetDefault(slog.New(NewHandler(handler)))
+	slog.SetDefault(slog.New(loghandler.NewHandler(handler, config.ContextKeyUserId, config.ContextKeyRequestId)))
 }
 
 func IsDebug() bool {
