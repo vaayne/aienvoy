@@ -76,6 +76,22 @@ func (c *CookieCloud) GetCookies(domain string) ([]Cookie, error) {
 	return cookieData.CookieData[domain], nil
 }
 
+// GetHttpCookies get http cookies for domain
+func (c *CookieCloud) GetHttpCookies(domain string) ([]*http.Cookie, error) {
+	cookies := make([]*http.Cookie, 0)
+	cks, err := c.GetCookies(domain)
+	if err != nil {
+		return cookies, err
+	}
+	for _, ck := range cks {
+		cookies = append(cookies, &http.Cookie{
+			Name:  ck.Name,
+			Value: ck.Value,
+		})
+	}
+	return cookies, nil
+}
+
 func (c *CookieCloud) GetCookie(domain, key string) (Cookie, error) {
 	ck := Cookie{}
 	cookies, err := c.GetCookies(domain)
