@@ -1,4 +1,4 @@
-module aienvoy
+module github.com/Vaayne/aienvoy
 
 go 1.21
 
