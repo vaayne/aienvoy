@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"aienvoy/internal/pkg/config"
-	"aienvoy/internal/pkg/ctxutils"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/internal/pkg/ctxutils"
 )
 
 type Handler struct {

@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"sync"
 
-	"aienvoy/internal/pkg/config"
-	"aienvoy/internal/ports/tgbot/handler"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/internal/ports/tgbot/handler"
 
 	"github.com/pocketbase/pocketbase"
 	tb "gopkg.in/telebot.v3"

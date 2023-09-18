@@ -1,11 +1,12 @@
 package main
 
 import (
-	"aienvoy/internal/pkg/config"
-	"aienvoy/pkg/bard"
-	"aienvoy/pkg/cookiecloud"
 	"log/slog"
 	"os"
+
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/pkg/bard"
+	"github.com/Vaayne/aienvoy/pkg/cookiecloud"
 )
 
 func main() {

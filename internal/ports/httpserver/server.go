@@ -4,8 +4,8 @@ import (
 	"embed"
 	"net/http"
 
-	"aienvoy/internal/ports/httpserver/handler"
-	"aienvoy/internal/ports/httpserver/middlerware"
+	"github.com/Vaayne/aienvoy/internal/ports/httpserver/handler"
+	"github.com/Vaayne/aienvoy/internal/ports/httpserver/middlerware"
 
 	"github.com/labstack/echo/v5"
 	emw "github.com/labstack/echo/v5/middleware"

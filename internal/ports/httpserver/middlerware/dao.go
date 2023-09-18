@@ -1,7 +1,7 @@
 package middlerware
 
 import (
-	"aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/daos"

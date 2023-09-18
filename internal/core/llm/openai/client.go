@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"sync/atomic"
 
-	"aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
 
 	"github.com/sashabaranov/go-openai"
 )

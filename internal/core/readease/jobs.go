@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"runtime"
 
-	"aienvoy/internal/pkg/config"
-	"aienvoy/pkg/hackernews"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/pkg/hackernews"
 
 	"github.com/pocketbase/pocketbase"
 	"golang.org/x/sync/semaphore"

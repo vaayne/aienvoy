@@ -1,7 +1,7 @@
 package migrations
 
 import (
-	"aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/daos"

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"aienvoy/internal/pkg/config"
-	"aienvoy/pkg/cookiecloud"
 	"fmt"
+
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/pkg/cookiecloud"
 )
 
 func main() {

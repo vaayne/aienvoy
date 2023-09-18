@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
 )
 
 func init() {

@@ -6,12 +6,12 @@ import (
 	"os"
 	"strings"
 
-	"aienvoy/internal/core/readease"
-	"aienvoy/internal/pkg/config"
-	_ "aienvoy/internal/pkg/logger"
-	"aienvoy/internal/ports/httpserver"
-	"aienvoy/internal/ports/tgbot"
-	_ "aienvoy/migrations"
+	"github.com/Vaayne/aienvoy/internal/core/readease"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	_ "github.com/Vaayne/aienvoy/internal/pkg/logger"
+	"github.com/Vaayne/aienvoy/internal/ports/httpserver"
+	"github.com/Vaayne/aienvoy/internal/ports/tgbot"
+	_ "github.com/Vaayne/aienvoy/migrations"
 
 	"github.com/pocketbase/pocketbase/tools/cron"
 

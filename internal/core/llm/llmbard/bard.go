@@ -4,10 +4,10 @@ import (
 	"log/slog"
 	"time"
 
-	"aienvoy/internal/pkg/cache"
-	"aienvoy/internal/pkg/config"
-	"aienvoy/pkg/bard"
-	"aienvoy/pkg/cookiecloud"
+	"github.com/Vaayne/aienvoy/internal/pkg/cache"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/pkg/bard"
+	"github.com/Vaayne/aienvoy/pkg/cookiecloud"
 )
 
 func New() *bard.BardClient {

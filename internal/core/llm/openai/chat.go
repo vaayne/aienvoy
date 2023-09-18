@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"aienvoy/internal/core/llm"
-	"aienvoy/internal/pkg/ctxutils"
+	"github.com/Vaayne/aienvoy/internal/core/llm"
+	"github.com/Vaayne/aienvoy/internal/pkg/ctxutils"
 
 	"github.com/pocketbase/pocketbase/daos"
 	"github.com/sashabaranov/go-openai"

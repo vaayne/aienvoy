@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"aienvoy/pkg/hackernews"
+	"github.com/Vaayne/aienvoy/pkg/hackernews"
 )
 
 type HackerNewsParser struct{}

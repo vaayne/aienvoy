@@ -3,6 +3,7 @@ module github.com/Vaayne/aienvoy
 go 1.21
 
 require (
+	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/labstack/echo/v5 v5.0.0-20220201181537-ed2888cfa198
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -17,6 +18,7 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gaukas/godicttls v0.0.3 // indirect

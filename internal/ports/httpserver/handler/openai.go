@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"aienvoy/internal/core/llm/openai"
+	"github.com/Vaayne/aienvoy/internal/core/llm/openai"
 
 	"github.com/labstack/echo/v5"
 )

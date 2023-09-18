@@ -1,10 +1,11 @@
 package main
 
 import (
-	"aienvoy/internal/pkg/config"
-	"aienvoy/pkg/claudeweb"
-	"aienvoy/pkg/cookiecloud"
 	"log/slog"
+
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/pkg/claudeweb"
+	"github.com/Vaayne/aienvoy/pkg/cookiecloud"
 )
 
 func main() {

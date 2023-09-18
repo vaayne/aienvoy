@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"aienvoy/internal/core/readease"
-	"aienvoy/pkg/claudeweb"
+	"github.com/Vaayne/aienvoy/internal/core/readease"
+	"github.com/Vaayne/aienvoy/pkg/claudeweb"
 
 	"github.com/pocketbase/pocketbase"
 	tb "gopkg.in/telebot.v3"

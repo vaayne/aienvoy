@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"aienvoy/internal/core/auth"
-	"aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/internal/core/auth"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/apis"

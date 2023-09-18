@@ -4,10 +4,10 @@ import (
 	"log/slog"
 	"time"
 
-	"aienvoy/internal/pkg/cache"
-	"aienvoy/internal/pkg/config"
-	"aienvoy/pkg/claudeweb"
-	"aienvoy/pkg/cookiecloud"
+	"github.com/Vaayne/aienvoy/internal/pkg/cache"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/pkg/claudeweb"
+	"github.com/Vaayne/aienvoy/pkg/cookiecloud"
 )
 
 func New() *claudeweb.ClaudeWeb {

@@ -3,7 +3,7 @@ package readease
 import (
 	"context"
 
-	"aienvoy/internal/pkg/dtoutils"
+	"github.com/Vaayne/aienvoy/internal/pkg/dtoutils"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/daos"

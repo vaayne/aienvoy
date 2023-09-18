@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"strings"
 
-	"aienvoy/internal/core/llm/llmclaudeweb"
-	"aienvoy/internal/pkg/parser"
-	"aienvoy/pkg/claudeweb"
+	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaudeweb"
+	"github.com/Vaayne/aienvoy/internal/pkg/parser"
+	"github.com/Vaayne/aienvoy/pkg/claudeweb"
 
 	"github.com/pocketbase/pocketbase"
 )
