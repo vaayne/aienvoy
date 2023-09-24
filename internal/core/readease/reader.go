@@ -22,7 +22,7 @@ You are my reading partner, and I have an article enclosed within the XML tag <a
 </article>
 
 ----
-Please complete the following tasks and provide responses enclosed within corresponding XML tags:
+Please complete the following tasks and provide responses in Chinese enclosed within corresponding XML tags:
 1. Summarize each paragraph in the article separately. Use <ParagraphSummary> ... </ParagraphSummary> for all paragraph summaries, and label each paragraph with its number.
 2. Summarize this article as a whole. Use <Summary> ... </Summary> for the overall article summary.
 3. Create a list of study questions and answers. Use <StudyQuestions> ... </StudyQuestions> for the list, and format each question and answer using Q: and A: labels.

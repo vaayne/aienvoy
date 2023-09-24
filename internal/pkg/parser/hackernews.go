@@ -10,7 +10,7 @@ import (
 
 type HackerNewsParser struct{}
 
-func (p *HackerNewsParser) Parse(uri string) (Content, error) {
+func (p HackerNewsParser) Parse(uri string) (Content, error) {
 	var content Content
 	u, err := url.ParseRequestURI(uri)
 	if err != nil {

@@ -19,7 +19,10 @@ func New() *DefaultParser {
 
 const BaseUrl = "https://readability.theboys.tech/api/parser?url="
 
-const HackerNewsHost = "news.ycombinator.com"
+const (
+	HOST_HACKERNEWS = "news.ycombinator.com"
+	HOST_YOUTUBE    = "www.youtube.com"
+)
 
 func (p *DefaultParser) Parse(urlStr string) (Content, error) {
 	var content Content
@@ -29,9 +32,14 @@ func (p *DefaultParser) Parse(urlStr string) (Content, error) {
 		return content, InvalidURLError
 	}
 
+	var parser Parser
+
 	switch u.Host {
-	case HackerNewsHost:
-		parser := HackerNewsParser{}
+	case HOST_HACKERNEWS:
+		parser = HackerNewsParser{}
+		return parser.Parse(urlStr)
+	case HOST_YOUTUBE:
+		parser = YoutubeParser{}
 		return parser.Parse(urlStr)
 	}
 
