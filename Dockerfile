@@ -15,4 +15,4 @@ WORKDIR /service/
 
 COPY --from=build /go/bin/app .
 COPY settings.yaml settings.yaml
-CMD ["./app"]
+CMD ["./app", "serve"]
