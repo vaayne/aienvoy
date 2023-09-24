@@ -12,7 +12,11 @@ var DefaultClient = cache.New(1*time.Hour, 24*time.Hour)
 // func input could be any params
 // func output should be (any, error)
 func CacheFunc(fn func(params ...any) (any, error), cacheKey string, duration time.Duration, params ...any) (any, error) {
-	val, ok := DefaultClient.Get(cacheKey)
+	return cacheFunc(DefaultClient, fn, cacheKey, duration, params...)
+}
+
+func cacheFunc(cacheService *cache.Cache, fn func(params ...any) (any, error), cacheKey string, duration time.Duration, params ...any) (any, error) {
+	val, ok := cacheService.Get(cacheKey)
 	if ok {
 		return val, nil
 	}
@@ -20,6 +24,6 @@ func CacheFunc(fn func(params ...any) (any, error), cacheKey string, duration ti
 	if err != nil {
 		return nil, err
 	}
-	DefaultClient.Set(cacheKey, val, duration)
+	cacheService.Set(cacheKey, val, duration)
 	return val, err
 }

@@ -15,32 +15,38 @@ import (
 )
 
 var promptTemplate = `
-As a college professor, you're tasked with analyzing an essay. Here is the essay content:
-<essay>
-{{.Content}}
-</essay>
-Please execute the following tasks:
-1. Create a bullet point outline summarizing the essay.
-2. Identify and elaborate on the main point of the essay, explaining how the author substantiates it.
-3. Summarize each paragraph.
+You are my reading partner, and I have an article enclosed within the XML tag <article>:
 
-An example of response will be:
-<Summary>
-This essay is about how to write a summary
-- The author first introduce the importance of summary and then explain how to write a summary.
-- ...
-</Summary>
-<MainPoint>
-The main point of this essay is how to write a summary.
-The author prove the point by ...
-</MainPoint>
+<article>
+{{.Content}}
+</article>
+
+----
+Please complete the following tasks and provide responses enclosed within corresponding XML tags:
+1. Summarize each paragraph in the article separately. Use <ParagraphSummary> ... </ParagraphSummary> for all paragraph summaries, and label each paragraph with its number.
+2. Summarize this article as a whole. Use <Summary> ... </Summary> for the overall article summary.
+3. Create a list of study questions and answers. Use <StudyQuestions> ... </StudyQuestions> for the list, and format each question and answer using Q: and A: labels.
+----
+For reference, here's an example response format:
 <ParagraphSummary>
-- The first paragraph is saying ...
-- The second paragraph is about ...
-- ...
+- Paragraph 1: ...
+- Paragraph 2: ...
+...
 </ParagraphSummary>
 
-Please respond in Chinese and refrain from including any additional explanations or comments and keep these xml tags in English as they were: <Summary>, <MainPoint>, <ParagraphSummary>
+<Summary>
+...
+</Summary>
+
+<StudyQuestions>
+Q: ...
+A: ...
+Q: ...
+A: ...
+...
+</StudyQuestions>
+----
+Please ensure that you maintain the XML tags in your responses and avoid adding explanations or extra words.
 `
 
 type ReadeaseReader struct {

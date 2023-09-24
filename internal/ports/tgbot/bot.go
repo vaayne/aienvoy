@@ -66,5 +66,6 @@ func Serve(app *pocketbase.PocketBase) {
 	b := DefaultBot(app)
 	b.Use(appMiddleware)
 	registerHandlers(b)
+	slog.Info("Start telegram bot...")
 	b.Start()
 }

@@ -37,8 +37,6 @@ func main() {
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 	app := pocketbase.New()
 
-	go tgbot.Serve(app)
-
 	// migrate DB
 	migratecmd.MustRegister(app, app.RootCmd, &migratecmd.Options{
 		Automigrate: isGoRun,
@@ -48,20 +46,22 @@ func main() {
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		scheduler := cron.New()
 		// every 5 minutes to run readease job
-		scheduler.MustAdd("readease", "0 * * * *", func() {
-			summaries, err := readease.ReadEasePeriodJob(app)
-			if err != nil {
-				slog.Error("run period readease job error", "err", err)
-			}
-			bot := tgbot.DefaultBot(app)
-			channel := tb.ChatID(config.GetConfig().ReadEase.TelegramChannel)
-			for _, summary := range summaries {
-				msg, err := bot.Send(channel, summary)
+		if config.GetConfig().ReadEase.TelegramChannel != 0 {
+			scheduler.MustAdd("readease", "0 * * * *", func() {
+				summaries, err := readease.ReadEasePeriodJob(app)
 				if err != nil {
-					slog.Error("failed to send readease message to channel", "err", err, "msg", msg)
+					slog.Error("run period readease job error", "err", err)
 				}
-			}
-		})
+				bot := tgbot.DefaultBot(app)
+				channel := tb.ChatID(config.GetConfig().ReadEase.TelegramChannel)
+				for _, summary := range summaries {
+					msg, err := bot.Send(channel, summary)
+					if err != nil {
+						slog.Error("failed to send readease message to channel", "err", err, "msg", msg)
+					}
+				}
+			})
+		}
 		scheduler.Start()
 		return nil
 	})
