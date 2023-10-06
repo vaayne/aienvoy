@@ -42,7 +42,7 @@ type BardClientOption func(*BardClient)
 
 func NewBardClient(token string, opts ...BardClientOption) (*BardClient, error) {
 	if token == "" || !strings.HasSuffix(token, ".") {
-		return nil, fmt.Errorf("__Secure-1PSID value must end with a single dot. Enter correct __Secure-1PSID value.")
+		return nil, fmt.Errorf("__Secure-1PSID value must end with a single dot. Enter correct __Secure-1PSID value: %s", token)
 	}
 
 	jar, _ := cookiejar.New(nil)
@@ -147,6 +147,10 @@ func (b *BardClient) initMeta() error {
 		b.cfb2h = cfb2h
 	}
 	return nil
+}
+
+func (b *BardClient) FirstAsk(prompt string) (*BardAnswer, error) {
+	return b.Ask(prompt, "", "", "", 0)
 }
 
 func (b *BardClient) Ask(prompt, conversationID, responseID, choiceID string, reqID int) (*BardAnswer, error) {

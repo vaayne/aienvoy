@@ -58,14 +58,38 @@ func appMiddleware(next tb.HandlerFunc) tb.HandlerFunc {
 	}
 }
 
+func registerCommands(b *TeleBot) {
+	cmds := []tb.Command{
+		{
+			Text:        handler.CommandRead,
+			Description: "ReadEase to summary artilcle or vedio using Claude 2",
+		},
+		{
+			Text:        handler.CommandBard,
+			Description: "Chat using Google Bard",
+		},
+		{
+			Text:        handler.CommandClaude,
+			Description: "Chat using Claude Web",
+		},
+	}
+	if err := b.SetCommands(cmds); err != nil {
+		slog.Error("set telegram bot commands error", "err", err)
+	}
+}
+
 func registerHandlers(b *TeleBot) {
 	b.Handle(tb.OnText, handler.OnText)
+	// b.Handle(commandRead, handler.OnReadEase)
+	// b.Handle(commandBard, handler.BardChat)
+	// b.Handle(commandClaude, handler.ClaudeChat)
 }
 
 func Serve(app *pocketbase.PocketBase) {
 	b := DefaultBot(app)
 	b.Use(appMiddleware)
 	registerHandlers(b)
+	registerCommands(b)
 	slog.Info("Start telegram bot...")
 	b.Start()
 }

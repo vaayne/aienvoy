@@ -19,12 +19,13 @@ import (
 
 var InvalidURLError = errors.New("Inavlid url")
 
-func OnText(c tb.Context) error {
+func OnReadEase(c tb.Context) error {
+	urlStr := strings.TrimSpace(c.Data())
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*10*time.Second)
 	defer cancel()
-	_, err := url.ParseRequestURI(c.Text())
-	if err != nil || !strings.HasPrefix(c.Text(), "http") {
-		return c.Reply(fmt.Sprintf("invalid url %s, please check and try again", c.Text()))
+	_, err := url.ParseRequestURI(urlStr)
+	if err != nil || !strings.HasPrefix(urlStr, "http") {
+		return c.Reply(fmt.Sprintf("invalid url %s, please check and try again", urlStr))
 	}
 
 	msg, err := c.Bot().Send(c.Sender(), "please wait a moment, I am reading the article...")
@@ -39,7 +40,7 @@ func OnText(c tb.Context) error {
 	defer close(respChan)
 	defer close(errChan)
 
-	go reader.ReadStream(ctx, c.Text(), respChan, errChan)
+	go reader.ReadStream(ctx, urlStr, respChan, errChan)
 
 	text := ""
 	chunk := ""
