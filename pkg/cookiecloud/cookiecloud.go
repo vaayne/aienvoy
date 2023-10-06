@@ -1,7 +1,6 @@
 package cookiecloud
 
 import (
-	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -136,11 +135,6 @@ func (c *CookieCloud) getKey() string {
 
 func parseResponse(data []byte) (*CookieData, error) {
 	var decryptedData CookieData
-
-	data = bytes.TrimRightFunc(data, func(r rune) bool {
-		return r != '}'
-	})
-
 	err := json.Unmarshal(data, &decryptedData)
 	if err != nil {
 		slog.Error("unmarshal error", "data", data)

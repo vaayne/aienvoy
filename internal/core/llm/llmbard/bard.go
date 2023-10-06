@@ -38,5 +38,5 @@ func newBardClient() (*bard.BardClient, error) {
 		"__Secure-1PSID":   getCookie("__Secure-1PSID"),
 		"__Secure-1PSIDCC": getCookie("__Secure-1PSIDCC"),
 		"__Secure-1PSIDTS": getCookie("__Secure-1PSIDTS"),
-	}))
+	}), bard.WithTimeout(120*time.Second))
 }

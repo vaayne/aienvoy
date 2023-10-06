@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/bard"
@@ -31,7 +32,7 @@ func main() {
 		"__Secure-1PSID":   getCookie("__Secure-1PSID"),
 		"__Secure-1PSIDCC": getCookie("__Secure-1PSIDCC"),
 		"__Secure-1PSIDTS": getCookie("__Secure-1PSIDTS"),
-	}))
+	}), bard.WithTimeout(60*time.Second))
 	if err != nil {
 		slog.Error("init bard error", "err", err)
 		return
