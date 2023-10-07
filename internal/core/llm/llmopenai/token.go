@@ -1,10 +1,10 @@
-package openai
+package llmopenai
 
 import (
 	"log/slog"
 
 	"github.com/pkoukk/tiktoken-go"
-	"github.com/sashabaranov/go-openai"
+	openai "github.com/sashabaranov/go-openai"
 )
 
 type Tiktoken struct {

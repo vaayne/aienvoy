@@ -8,18 +8,20 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm/openai"
+	"github.com/sashabaranov/go-openai"
+
+	"github.com/Vaayne/aienvoy/internal/core/llm/llmopenai"
 
 	"github.com/labstack/echo/v5"
 )
 
 type OpenAIHandler struct {
-	openai *openai.OpenAI
+	openai *llmopenai.OpenAI
 }
 
 func NewOpenAIHandler() *OpenAIHandler {
 	return &OpenAIHandler{
-		openai: &openai.OpenAI{},
+		openai: &llmopenai.OpenAI{},
 	}
 }
 
@@ -55,7 +57,7 @@ func (h *OpenAIHandler) CreateEmbeddings(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	resp, err := h.openai.CreateEmbeddings(c.Request().Context(), req)
+	resp, err := h.openai.CreateEmbeddings(c.Request().Context(), *req)
 	if err != nil {
 		slog.ErrorContext(c.Request().Context(), "create embedding error", "err", err.Error())
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -65,7 +67,7 @@ func (h *OpenAIHandler) CreateEmbeddings(c echo.Context) error {
 }
 
 func (h *OpenAIHandler) chat(c echo.Context, req *openai.ChatCompletionRequest) error {
-	resp, err := h.openai.Chat(c.Request().Context(), req)
+	resp, err := h.openai.Chat(c.Request().Context(), *req)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -78,7 +80,7 @@ func (h *OpenAIHandler) chatStream(c echo.Context, req *openai.ChatCompletionReq
 	errChan := make(chan error)
 	defer close(errChan)
 
-	go h.openai.ChatStream(c.Request().Context(), req, dataChan, errChan)
+	go h.openai.ChatStream(c.Request().Context(), *req, dataChan, errChan)
 
 	// sse stream response
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")

@@ -1,4 +1,4 @@
-package openai
+package llmopenai
 
 import (
 	"context"
@@ -14,40 +14,24 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-type ChatCompletionRequest struct {
-	openai.ChatCompletionRequest
-}
-
-type ChatCompletionResponse struct {
-	openai.ChatCompletionResponse
-}
-
-type ChatCompletionStream struct {
-	*openai.ChatCompletionStream
-}
-
-type ChatCompletionStreamResponse struct {
-	openai.ChatCompletionStreamResponse
-}
-
 type ListModelsResponse struct {
 	openai.ModelsList
 }
 
-func (s *OpenAI) Chat(ctx context.Context, req *ChatCompletionRequest) (ChatCompletionResponse, error) {
-	resp, err := getClientByModel(req.Model).CreateChatCompletion(ctx, req.ChatCompletionRequest)
+func (s *OpenAI) Chat(ctx context.Context, req openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error) {
+	resp, err := getClientByModel(req.Model).CreateChatCompletion(ctx, req)
 	if err != nil {
 		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err.Error())
-		return ChatCompletionResponse{}, err
+		return openai.ChatCompletionResponse{}, err
 	}
 
 	_ = saveUsage(ctx, req.Model, resp.Usage.TotalTokens)
 
-	return ChatCompletionResponse{resp}, nil
+	return resp, nil
 }
 
-func (s *OpenAI) ChatStream(ctx context.Context, req *ChatCompletionRequest, dataChan chan ChatCompletionStreamResponse, errChan chan error) {
-	stream, err := getClientByModel(req.Model).CreateChatCompletionStream(ctx, req.ChatCompletionRequest)
+func (s *OpenAI) ChatStream(ctx context.Context, req openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error) {
+	stream, err := getClientByModel(req.Model).CreateChatCompletionStream(ctx, req)
 	if err != nil {
 		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err.Error())
 		errChan <- err
@@ -72,7 +56,7 @@ func (s *OpenAI) ChatStream(ctx context.Context, req *ChatCompletionRequest, dat
 		}
 		if len(resp.Choices) > 0 {
 			sb.WriteString(resp.Choices[0].Delta.Content)
-			dataChan <- ChatCompletionStreamResponse{resp}
+			dataChan <- resp
 		}
 	}
 }

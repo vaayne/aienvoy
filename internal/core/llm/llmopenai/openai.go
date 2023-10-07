@@ -1,4 +1,4 @@
-package openai
+package llmopenai
 
 // OpenAI is a client for AI services
 type OpenAI struct{}
