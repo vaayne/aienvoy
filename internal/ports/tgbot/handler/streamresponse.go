@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	tb "gopkg.in/telebot.v3"
 	"io"
 	"log/slog"
 	"strings"
+
+	tb "gopkg.in/telebot.v3"
 )
 
 func processResponse(c tb.Context, ctx context.Context, msg *tb.Message, textChan, text, chunk string) (string, string) {
@@ -18,10 +19,12 @@ func processResponse(c tb.Context, ctx context.Context, msg *tb.Message, textCha
 	}
 	if len(newChunk) >= 200 {
 		// slog.DebugContext(ctx, "response with text", "text", text)
+		//nolint
 		newMsg, err := c.Bot().Edit(msg, newText)
 		if err != nil {
 			slog.WarnContext(ctx, "telegram bot edit msg err", "err", err)
 		} else {
+			//nolint
 			msg = newMsg
 		}
 		newChunk = ""

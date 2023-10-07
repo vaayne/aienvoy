@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Vaayne/aienvoy/internal/pkg/config"
-	"github.com/Vaayne/aienvoy/pkg/claudeweb"
 	"io"
 	"strings"
+
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/pkg/claudeweb"
 
 	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaudeweb"
 	tb "gopkg.in/telebot.v3"
