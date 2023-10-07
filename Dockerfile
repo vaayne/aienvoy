@@ -15,4 +15,6 @@ WORKDIR /service/
 
 COPY --from=build /go/bin/app .
 COPY settings.yaml settings.yaml
-CMD ["./app", "serve"]
+
+EXPOSE 8090
+CMD ["./app", "serve", "--http=0.0.0.0:8090"]
