@@ -1,8 +1,11 @@
 package tgbot
 
 import (
+	"context"
 	"log/slog"
 	"sync"
+
+	"github.com/google/uuid"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/internal/ports/tgbot/handler"
@@ -24,22 +27,18 @@ var (
 
 func New(token string, app *pocketbase.PocketBase) *TeleBot {
 	b, err := tb.NewBot(tb.Settings{
-		Token: token,
-		// Poller:  WebHook,
+		Token: token, // Poller:  WebHook,
 		// Verbose: false,
 	})
 	if err != nil {
-		slog.Error("Init telebot error", "err", err)
+		slog.Error("Init telegram bot error", "err", err)
 		return nil
 	}
 
-	teleBot := &TeleBot{
+	return &TeleBot{
 		Bot: b,
 		app: app,
 	}
-	// teleBot.registerHandlers()
-
-	return teleBot
 }
 
 func DefaultBot(app *pocketbase.PocketBase) *TeleBot {
@@ -51,10 +50,16 @@ func DefaultBot(app *pocketbase.PocketBase) *TeleBot {
 	return bot
 }
 
-func appMiddleware(next tb.HandlerFunc) tb.HandlerFunc {
+func contextMiddleware(next tb.HandlerFunc) tb.HandlerFunc {
+	// nolint:staticcheck
 	return func(c tb.Context) error {
-		c.Set("app", bot.app)
-		return next(c) // continue execution chain
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, config.ContextKeyApp, bot.app)
+		ctx = context.WithValue(ctx, config.ContextKeyDao, bot.app.Dao())
+		ctx = context.WithValue(ctx, config.ContextKeyUserId, c.Sender().ID)
+		ctx = context.WithValue(ctx, config.ContextKeyRequestId, uuid.NewString())
+		c.Set(config.ContextKeyContext, ctx)
+		return next(c)
 	}
 }
 
@@ -62,7 +67,7 @@ func registerCommands(b *TeleBot) {
 	cmds := []tb.Command{
 		{
 			Text:        handler.CommandRead,
-			Description: "ReadEase to summary artilcle or vedio using Claude 2",
+			Description: "ReadEase to summary article or video using Claude 2",
 		},
 		{
 			Text:        handler.CommandBard,
@@ -72,22 +77,29 @@ func registerCommands(b *TeleBot) {
 			Text:        handler.CommandClaude,
 			Description: "Chat using Claude Web",
 		},
+		{
+			Text:        handler.CommandChatGPT35,
+			Description: "Chat using ChatGPT 3.5",
+		},
+		{
+			Text:        handler.CommandChatGPT4,
+			Description: "Chat using ChatGPT 4",
+		},
 	}
 	if err := b.SetCommands(cmds); err != nil {
 		slog.Error("set telegram bot commands error", "err", err)
+	} else {
+		slog.Info("success set commands")
 	}
 }
 
 func registerHandlers(b *TeleBot) {
 	b.Handle(tb.OnText, handler.OnText)
-	// b.Handle(commandRead, handler.OnReadEase)
-	// b.Handle(commandBard, handler.BardChat)
-	// b.Handle(commandClaude, handler.ClaudeChat)
 }
 
 func Serve(app *pocketbase.PocketBase) {
 	b := DefaultBot(app)
-	b.Use(appMiddleware)
+	b.Use(contextMiddleware)
 	registerHandlers(b)
 	registerCommands(b)
 	slog.Info("Start telegram bot...")

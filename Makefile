@@ -5,6 +5,7 @@ static:
 
 run: build
 	./app serve
+	rm app
 
 build:
 	go build -ldflags="-s -w" -o ./app main.go

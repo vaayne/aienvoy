@@ -10,7 +10,7 @@ import (
 	"github.com/Vaayne/aienvoy/pkg/cookiecloud"
 )
 
-func New() *bard.BardClient {
+func New() *bard.Client {
 	c, err := cache.CacheFunc(func(params ...any) (any, error) {
 		return newBardClient()
 	}, "bardClientCacheKey", 2*time.Minute)
@@ -18,10 +18,10 @@ func New() *bard.BardClient {
 		slog.Error("get bard client error", "err", err)
 		return nil
 	}
-	return c.(*bard.BardClient)
+	return c.(*bard.Client)
 }
 
-func newBardClient() (*bard.BardClient, error) {
+func newBardClient() (*bard.Client, error) {
 	cfg := config.GetConfig().CookieCloud
 	cc := cookiecloud.New(cfg.Host, cfg.UUID, cfg.Pass)
 

@@ -9,7 +9,7 @@ require (
 	github.com/pkoukk/tiktoken-go v0.1.5
 	github.com/pocketbase/dbx v1.10.0
 	github.com/pocketbase/pocketbase v0.16.8
-	github.com/sashabaranov/go-openai v1.14.1
+	github.com/sashabaranov/go-openai v1.15.4
 	github.com/spf13/viper v1.13.0
 	golang.org/x/sync v0.3.0
 	gopkg.in/telebot.v3 v3.1.3
@@ -95,7 +95,7 @@ require (
 	golang.org/x/oauth2 v0.10.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/term v0.10.0 // indirect
-	golang.org/x/text v0.11.0
+	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.11.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect

@@ -29,7 +29,7 @@ var headers map[string]string = map[string]string{
 	"Referer":       "https://bard.google.com/",
 }
 
-type BardClient struct {
+type Client struct {
 	token   string
 	snlm0e  string
 	cfb2h   string
@@ -38,15 +38,15 @@ type BardClient struct {
 	session *http.Client
 }
 
-type BardClientOption func(*BardClient)
+type ClientOption func(*Client)
 
-func NewBardClient(token string, opts ...BardClientOption) (*BardClient, error) {
+func NewBardClient(token string, opts ...ClientOption) (*Client, error) {
 	if token == "" || !strings.HasSuffix(token, ".") {
 		return nil, fmt.Errorf("__Secure-1PSID value must end with a single dot. Enter correct __Secure-1PSID value: %s", token)
 	}
 
 	jar, _ := cookiejar.New(nil)
-	b := &BardClient{
+	b := &Client{
 		token:   token,
 		timeout: 10 * time.Second,
 		session: &http.Client{
@@ -86,25 +86,25 @@ func NewBardClient(token string, opts ...BardClientOption) (*BardClient, error) 
 	return b, err
 }
 
-func WithTimeout(timeout time.Duration) BardClientOption {
-	return func(bc *BardClient) {
+func WithTimeout(timeout time.Duration) ClientOption {
+	return func(bc *Client) {
 		bc.timeout = timeout
 	}
 }
 
-func WithSession(session *http.Client) BardClientOption {
-	return func(bc *BardClient) {
+func WithSession(session *http.Client) ClientOption {
+	return func(bc *Client) {
 		bc.session = session
 	}
 }
 
-func WithCookies(cookies map[string]string) BardClientOption {
-	return func(bc *BardClient) {
+func WithCookies(cookies map[string]string) ClientOption {
+	return func(bc *Client) {
 		bc.cookies = cookies
 	}
 }
 
-func (b *BardClient) initMeta() error {
+func (b *Client) initMeta() error {
 	req, err := http.NewRequest(http.MethodGet, "https://bard.google.com/", nil)
 	if err != nil {
 		return fmt.Errorf("init request for SNlM0e error: %w", err)
@@ -149,11 +149,11 @@ func (b *BardClient) initMeta() error {
 	return nil
 }
 
-func (b *BardClient) FirstAsk(prompt string) (*BardAnswer, error) {
+func (b *Client) FirstAsk(prompt string) (*Answer, error) {
 	return b.Ask(prompt, "", "", "", 0)
 }
 
-func (b *BardClient) Ask(prompt, conversationID, responseID, choiceID string, reqID int) (*BardAnswer, error) {
+func (b *Client) Ask(prompt, conversationID, responseID, choiceID string, reqID int) (*Answer, error) {
 	// b.mu.Lock()
 	// defer b.mu.Unlock()
 	req, err := b.buildRequest(prompt, conversationID, responseID, choiceID, reqID)
@@ -175,13 +175,13 @@ func (b *BardClient) Ask(prompt, conversationID, responseID, choiceID string, re
 	return parse(string(data1[3]))
 }
 
-func (b *BardClient) setHeaders(req *http.Request) {
+func (b *Client) setHeaders(req *http.Request) {
 	for key, val := range headers {
 		req.Header.Add(key, val)
 	}
 }
 
-func (b *BardClient) buildRequest(prompt, conversationID, responseID, choiceID string, reqID int) (*http.Request, error) {
+func (b *Client) buildRequest(prompt, conversationID, responseID, choiceID string, reqID int) (*http.Request, error) {
 	// build req url
 	if reqID == 0 {
 		reqID = 100000 + rand.Intn(10000)

@@ -8,9 +8,11 @@ import (
 )
 
 const (
-	CommandBard   = "bard"
-	CommandRead   = "read"
-	CommandClaude = "claude"
+	CommandBard      = "bard"
+	CommandRead      = "read"
+	CommandClaude    = "claude"
+	CommandChatGPT35 = "gpt35"
+	CommandChatGPT4  = "gpt4"
 )
 
 func OnText(c tb.Context) error {
@@ -26,6 +28,10 @@ func OnText(c tb.Context) error {
 		return OnClaudeChat(c)
 	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandRead)) {
 		return OnReadEase(c)
+	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandChatGPT35)) {
+		return OnChatGPT35(c)
+	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandChatGPT4)) {
+		return OnChatGPT4(c)
 	}
 
 	// continue conversation
@@ -36,10 +42,12 @@ func OnText(c tb.Context) error {
 
 	switch llmCache.Model {
 	case bardModelName:
-		bardConversationInfos := strings.Split(llmCache.Value, "-")
+		bardConversationInfos := strings.Split(llmCache.Conversation, "-")
 		return askBard(c, text, bardConversationInfos[0], bardConversationInfos[1], bardConversationInfos[2])
 	case claudeModelName:
-		return askClaude(c, llmCache.Value, text)
+		return askClaude(c, llmCache.Conversation, text)
+	case modelNameGPT3Dot5Turbo, modelNameGPT4:
+		return askChatGPT(c, llmCache.Conversation, llmCache.Model, text, llmCache.Messages)
 	}
-	return c.Reply("Unsupport message")
+	return c.Reply("Unsupported message")
 }
