@@ -28,8 +28,8 @@ func askBard(c tb.Context, prompt, conversationID, responseID, choiceID string) 
 	}
 
 	setLLMConversationToCache(LLMCache{
-		Model: bardModelName,
-		Value: fmt.Sprintf("%s-%s-%s", resp.ConversationID, resp.ResponseID, resp.Choices[0].ID),
+		Model:        bardModelName,
+		Conversation: fmt.Sprintf("%s-%s-%s", resp.ConversationID, resp.ResponseID, resp.Choices[0].ID),
 	})
 	return c.Send(resp.Choices[0].Content)
 }

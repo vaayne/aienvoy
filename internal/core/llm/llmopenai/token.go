@@ -54,6 +54,6 @@ func saveUsage(ctx context.Context, model string, tokenUsage int) error {
 		slog.ErrorContext(ctx, "save usage error", "err", err.Error())
 		return err
 	}
-	slog.InfoContext(ctx, "save llm token usgae", "token", tokenUsage, "model", model)
+	slog.InfoContext(ctx, "save llm token usage", "token", tokenUsage, "model", model)
 	return nil
 }

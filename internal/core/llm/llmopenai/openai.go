@@ -18,11 +18,11 @@ func New() *OpenAI {
 }
 
 func (s *OpenAI) GetModels(ctx context.Context) (openai.ModelsList, error) {
-	return getClientByModel(openai.GPT3Dot5Turbo).ListModels(ctx)
+	return getClientByModel(ctx, openai.GPT3Dot5Turbo).ListModels(ctx)
 }
 
 func (s *OpenAI) Chat(ctx context.Context, req openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error) {
-	resp, err := getClientByModel(req.Model).CreateChatCompletion(ctx, req)
+	resp, err := getClientByModel(ctx, req.Model).CreateChatCompletion(ctx, req)
 	if err != nil {
 		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err.Error())
 		return openai.ChatCompletionResponse{}, err
@@ -34,7 +34,7 @@ func (s *OpenAI) Chat(ctx context.Context, req openai.ChatCompletionRequest) (op
 }
 
 func (s *OpenAI) ChatStream(ctx context.Context, req openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error) {
-	stream, err := getClientByModel(req.Model).CreateChatCompletionStream(ctx, req)
+	stream, err := getClientByModel(ctx, req.Model).CreateChatCompletionStream(ctx, req)
 	if err != nil {
 		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err.Error())
 		errChan <- err
@@ -65,6 +65,6 @@ func (s *OpenAI) ChatStream(ctx context.Context, req openai.ChatCompletionReques
 }
 
 func (s *OpenAI) CreateEmbeddings(ctx context.Context, req openai.EmbeddingRequest) (openai.EmbeddingResponse, error) {
-	resp, err := getClientByModel(req.Model.String()).CreateEmbeddings(ctx, req)
+	resp, err := getClientByModel(ctx, req.Model.String()).CreateEmbeddings(ctx, req)
 	return resp, err
 }

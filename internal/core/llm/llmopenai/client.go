@@ -1,6 +1,7 @@
 package llmopenai
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"sync/atomic"
@@ -58,10 +59,10 @@ func init() {
 	}
 }
 
-func getClientByModel(model string) (client *llmClient) {
+func getClientByModel(ctx context.Context, model string) (client *llmClient) {
 	defer func() {
 		if client != nil {
-			slog.Debug("get LLM client", "client", client.String())
+			slog.DebugContext(ctx, "get LLM client", "client", client.String())
 		}
 	}()
 	for i := 0; i < len(clientPoolMap); i++ {

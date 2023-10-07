@@ -34,8 +34,8 @@ func askClaude(c tb.Context, id, prompt string) error {
 		return c.Reply(fmt.Sprintf("claude got an error, %s", err))
 	}
 	setLLMConversationToCache(LLMCache{
-		Model: claudeModelName,
-		Value: id,
+		Model:        claudeModelName,
+		Conversation: id,
 	})
 	return c.Send(resp.Completion)
 }

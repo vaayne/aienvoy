@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+
 	"github.com/Vaayne/aienvoy/internal/core/readease"
 	"github.com/Vaayne/aienvoy/pkg/claudeweb"
 
@@ -17,11 +19,12 @@ import (
 	tb "gopkg.in/telebot.v3"
 )
 
-var InvalidURLError = errors.New("Inavlid url")
+var InvalidURLError = errors.New("invalid url")
 
 func OnReadEase(c tb.Context) error {
 	urlStr := strings.TrimSpace(c.Data())
-	ctx, cancel := context.WithTimeout(context.TODO(), 60*10*time.Second)
+	ctx := c.Get(config.ContextKeyContext).(context.Context)
+	ctx, cancel := context.WithTimeout(ctx, 60*10*time.Second)
 	defer cancel()
 	_, err := url.ParseRequestURI(urlStr)
 	if err != nil || !strings.HasPrefix(urlStr, "http") {
@@ -33,7 +36,7 @@ func OnReadEase(c tb.Context) error {
 		return fmt.Errorf("summary article err: %v", err)
 	}
 
-	reader := readease.NewReader(c.Get("app").(*pocketbase.PocketBase))
+	reader := readease.NewReader(ctx.Value(config.ContextKeyApp).(*pocketbase.PocketBase))
 
 	respChan := make(chan *claudeweb.ChatMessageResponse)
 	errChan := make(chan error)
@@ -54,10 +57,10 @@ func OnReadEase(c tb.Context) error {
 				continue
 			}
 			if len(chunk) > 200 {
-				// slog.Debug("response with text", "text", text)
+				// slog.DebugContext(ctx, "response with text", "text", text)
 				newMsg, err := c.Bot().Edit(msg, text)
 				if err != nil {
-					slog.Warn("onText edit msg err", "err", err)
+					slog.WarnContext(ctx, "onText edit msg err", "err", err)
 				} else {
 					msg = newMsg
 				}
@@ -70,17 +73,17 @@ func OnReadEase(c tb.Context) error {
 
 				// send last message
 				if _, err := c.Bot().Edit(msg, text); err != nil {
-					slog.Error("onText edit msg err", "err", err)
+					slog.ErrorContext(ctx, "onText edit msg err", "err", err)
 					return err
 				}
 				return nil
 			}
 			if _, err = c.Bot().Edit(msg, err.Error()); err != nil {
-				slog.Error("OnText edit msg err", "err", err, "text", text)
+				slog.ErrorContext(ctx, "OnText edit msg err", "err", err, "text", text)
 			}
 			return fmt.Errorf("summary article err: %v", err)
 		case <-ctx.Done():
-			slog.Error("OnText timeout", "err", ctx.Err())
+			slog.ErrorContext(ctx, "OnText timeout", "err", ctx.Err())
 			return fmt.Errorf("summary article timeout, please wait a moment and try again")
 		}
 	}
