@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func parse(data string) (answer *BardAnswer, err error) {
+func parse(data string) (answer *Answer, err error) {
 	defer func() {
 		if err := recover(); err != nil {
 			slog.Error("parse bard response error", "err", err)
@@ -42,7 +42,7 @@ func parse(data string) (answer *BardAnswer, err error) {
 
 	choices := extractChoices(content)
 
-	answer = &BardAnswer{
+	answer = &Answer{
 		Content:           choices[0].Content,
 		ConversationID:    data2[1].([]any)[0].(string),
 		ResponseID:        data2[1].([]any)[1].(string),

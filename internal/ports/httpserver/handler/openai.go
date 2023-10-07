@@ -21,7 +21,7 @@ type OpenAIHandler struct {
 
 func NewOpenAIHandler() *OpenAIHandler {
 	return &OpenAIHandler{
-		openai: &llmopenai.OpenAI{},
+		openai: llmopenai.New(),
 	}
 }
 

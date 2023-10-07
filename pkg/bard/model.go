@@ -3,7 +3,7 @@ package bard
 // BardAnswer represents the response from the Bard AI service. It contains
 // the generated text content, conversation ID, response ID, factuality queries,
 // original text query, and any choices provided.
-type BardAnswer struct {
+type Answer struct {
 	Content           string
 	ConversationID    string
 	ResponseID        string
