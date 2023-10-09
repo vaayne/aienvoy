@@ -3,6 +3,7 @@ module github.com/Vaayne/aienvoy
 go 1.21
 
 require (
+	github.com/bwmarrin/discordgo v0.27.1
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/labstack/echo/v5 v5.0.0-20220201181537-ed2888cfa198
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -20,6 +21,7 @@ require (
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gaukas/godicttls v0.0.3 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/refraction-networking/utls v1.3.2 // indirect
 	github.com/wangluozhe/fhttp v0.0.0-20230512135433-5c2ebfb4868a // indirect

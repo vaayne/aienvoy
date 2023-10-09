@@ -28,3 +28,11 @@ cookiecloud:
   host:
   uuid:
   pass:
+
+midJourney:
+  discordUserToken:
+  discordBotToken:
+  discordServerId:
+  discordChannelId:
+  discordAppId:
+  discordSessionId:
