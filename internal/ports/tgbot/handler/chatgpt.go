@@ -20,7 +20,7 @@ const (
 )
 
 func OnChatGPTChat(c tb.Context, model string) error {
-	text := strings.TrimSpace(c.Data())
+	text := strings.TrimSpace(c.Text()[5:])
 	if text == "" {
 		text = "hello"
 	}

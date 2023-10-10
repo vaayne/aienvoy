@@ -13,7 +13,7 @@ import (
 const bardModelName = "Google Bard"
 
 func OnBardChat(c tb.Context) error {
-	text := strings.TrimSpace(c.Data())
+	text := strings.TrimSpace(c.Text()[1+len(CommandBard):])
 	if text == "" {
 		text = "hello"
 	}

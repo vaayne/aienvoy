@@ -15,7 +15,7 @@ import (
 )
 
 func OnMidJourneyImagine(c tb.Context) error {
-	text := strings.TrimSpace(c.Data())
+	text := strings.TrimSpace(c.Text()[1+len(CommandImagine):])
 	if text == "" {
 		return c.Send("empty prompt")
 	}
@@ -41,7 +41,7 @@ func OnMidJourneyImagine(c tb.Context) error {
 		case <-ctx.Done():
 			return c.Reply("time out error")
 		default:
-			time.Sleep(10 * time.Second)
+			time.Sleep(5 * time.Second)
 			job, err = midjourney.GetJobRecord(mj.Dao, job.Id)
 			if err != nil {
 				slog.Error("could not get midjourney job record by id ")
@@ -77,6 +77,11 @@ func OnMidJourneyImagine(c tb.Context) error {
 						return err
 					}
 					err = c.Reply(photo)
+					if err != nil {
+						slog.Error("send photo error", "photo", photo, "err", err)
+					} else {
+						slog.Info("success send photo", "photo", *photo, "job", job)
+					}
 					if job.TelegramFileId == nil {
 						job.TelegramFileId = &photo.FileID
 						if _, err := midjourney.UpdateJobRecord(mj.Dao, *job); err != nil {
