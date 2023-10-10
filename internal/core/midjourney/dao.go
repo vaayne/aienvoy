@@ -21,20 +21,21 @@ const (
 
 type MjDTO struct {
 	dtoutils.BaseModel
-	Prompt           *string `json:"prompt,omitempty" mapstructure:"prompt,omitempty" db:"prompt"`
-	Action           *string `json:"action,omitempty" mapstructure:"action,omitempty" db:"action"`
-	Status           *string `json:"status,omitempty" mapstructure:"status,omitempty" db:"status"`
-	ChannelID        *int64  `json:"channel_id,omitempty" mapstructure:"channel_id,omitempty" db:"channel_id"`
-	MessageImageIdx  *int64  `json:"message_image_idx,omitempty" mapstructure:"message_image_idx,omitempty" db:"message_image_idx"`
-	MessageID        *string `json:"message_id,omitempty" mapstructure:"message_id,omitempty" db:"message_id"`
-	MessageHash      *string `json:"message_hash,omitempty" mapstructure:"message_hash,omitempty" db:"message_hash"`
-	MessageContent   *string `json:"message_content,omitempty" mapstructure:"message_content,omitempty" db:"message_content"`
-	ImageName        *string `json:"image_name,omitempty" mapstructure:"image_name,omitempty" db:"image_name"`
-	ImageUrl         *string `json:"image_url,omitempty" mapstructure:"image_url,omitempty" db:"image_url"`
-	ImageContentType *string `json:"image_content_type,omitempty" mapstructure:"image_content_type,omitempty" db:"image_content_type"`
-	ImageSize        *int64  `json:"image_size,omitempty" mapstructure:"image_size,omitempty" db:"image_size"`
-	ImageHeight      *int64  `json:"image_height,omitempty" mapstructure:"image_height,omitempty" db:"image_height"`
-	ImageWidth       *int64  `json:"image_width,omitempty" mapstructure:"image_width,omitempty" db:"image_width"`
+	Prompt           *string `json:"prompt,omitempty" db:"prompt"`
+	Action           *string `json:"action,omitempty" db:"action"`
+	Status           *string `json:"status,omitempty" db:"status"`
+	ChannelID        *int64  `json:"channel_id,omitempty" db:"channel_id"`
+	MessageImageIdx  *int64  `json:"message_image_idx,omitempty" db:"message_image_idx"`
+	MessageID        *string `json:"message_id,omitempty" db:"message_id"`
+	MessageHash      *string `json:"message_hash,omitempty" db:"message_hash"`
+	MessageContent   *string `json:"message_content,omitempty" db:"message_content"`
+	ImageName        *string `json:"image_name,omitempty" db:"image_name"`
+	ImageUrl         *string `json:"image_url,omitempty" db:"image_url"`
+	ImageContentType *string `json:"image_content_type,omitempty" db:"image_content_type"`
+	ImageSize        *int64  `json:"image_size,omitempty" db:"image_size"`
+	ImageHeight      *int64  `json:"image_height,omitempty" db:"image_height"`
+	ImageWidth       *int64  `json:"image_width,omitempty" db:"image_width"`
+	TelegramFileId   *string `json:"telegram_file_id,omitempty" db:"telegram_file_id"`
 }
 
 func (m MjDTO) TableName() string {

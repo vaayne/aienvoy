@@ -1,216 +1,118 @@
 package migrations
 
 import (
-	"encoding/json"
-
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/daos"
 	m "github.com/pocketbase/pocketbase/migrations"
 	"github.com/pocketbase/pocketbase/models"
+	"github.com/pocketbase/pocketbase/models/schema"
+	"github.com/pocketbase/pocketbase/tools/types"
+	"log/slog"
 )
+
+const tableNameMidjourneyJobs = "midjourney_jobs"
 
 func init() {
 	m.Register(func(db dbx.Builder) error {
-		jsonData := `{
-			"id": "o4cn6kgaxis96fz",
-			"name": "midjourney_jobs",
-			"type": "base",
-			"system": false,
-			"schema": [
-				{
-					"id": "hxb4uess",
-					"name": "prompt",
-					"type": "text",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null,
-						"pattern": ""
-					}
-				},
-				{
-					"id": "bmvdktae",
-					"name": "action",
-					"type": "select",
-					"system": false,
-					"required": false,
-					"options": {
-						"maxSelect": 1,
-						"values": [
-							"Generate",
-							"Upscale",
-							"Variate",
-							"Reset"
-						]
-					}
-				},
-				{
-					"id": "4vhcphhr",
-					"name": "status",
-					"type": "select",
-					"system": false,
-					"required": false,
-					"options": {
-						"maxSelect": 1,
-						"values": [
-							"Pending",
-							"Processing",
-							"Completed",
-							"Failed"
-						]
-					}
-				},
-				{
-					"id": "fxbwzvwd",
-					"name": "channel_id",
-					"type": "number",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null
-					}
-				},
-				{
-					"id": "wawxsgt0",
-					"name": "message_image_idx",
-					"type": "number",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null
-					}
-				},
-				{
-					"id": "dythkxuk",
-					"name": "message_id",
-					"type": "text",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null,
-						"pattern": ""
-					}
-				},
-				{
-					"id": "uarkaa0m",
-					"name": "message_hash",
-					"type": "text",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null,
-						"pattern": ""
-					}
-				},
-				{
-					"id": "sdhjprmy",
-					"name": "message_content",
-					"type": "text",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null,
-						"pattern": ""
-					}
-				},
-				{
-					"id": "nibeppup",
-					"name": "image_name",
-					"type": "text",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null,
-						"pattern": ""
-					}
-				},
-				{
-					"id": "g7fgixmo",
-					"name": "image_url",
-					"type": "url",
-					"system": false,
-					"required": false,
-					"options": {
-						"exceptDomains": null,
-						"onlyDomains": null
-					}
-				},
-				{
-					"id": "5el3p8t5",
-					"name": "image_content_type",
-					"type": "text",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null,
-						"pattern": ""
-					}
-				},
-				{
-					"id": "t2ylfash",
-					"name": "image_size",
-					"type": "number",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null
-					}
-				},
-				{
-					"id": "dwboojet",
-					"name": "image_height",
-					"type": "number",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null
-					}
-				},
-				{
-					"id": "so7wdfcr",
-					"name": "image_width",
-					"type": "number",
-					"system": false,
-					"required": false,
-					"options": {
-						"min": null,
-						"max": null
-					}
-				}
-			],
-			"indexes": ["CREATE INDEX ` + "`" + `idx_9bL2T8K` + "`" + ` ON ` + "`" + `midjourney_jobs` + "`" + ` (\n  ` + "`" + `channel_id` + "`" + `,\n  ` + "`" + `status` + "`" + `\n)"],
-			"listRule": null,
-			"viewRule": null,
-			"createRule": null,
-			"updateRule": null,
-			"deleteRule": null,
-			"options": {}
-		}`
 
-		collection := &models.Collection{}
-		if err := json.Unmarshal([]byte(jsonData), &collection); err != nil {
+		collection := &models.Collection{
+			Name: tableNameMidjourneyJobs,
+			Type: models.CollectionTypeBase,
+			Indexes: types.JsonArray[string]{
+				"CREATE INDEX idx_channel_status ON midjourney_jobs (channel_id, status)",
+			},
+			Schema: schema.NewSchema(&schema.SchemaField{
+				Name:     "prompt",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "action",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "status",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "channel_id",
+				Type:     schema.FieldTypeNumber,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "message_image_idx",
+				Type:     schema.FieldTypeNumber,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "message_id",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "message_hash",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "message_content",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "image_name",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "image_url",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "image_content_type",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "telegram_file_id",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "image_size",
+				Type:     schema.FieldTypeNumber,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "image_height",
+				Type:     schema.FieldTypeNumber,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "image_width",
+				Type:     schema.FieldTypeNumber,
+				Required: false,
+			}),
+		}
+		if err := daos.New(db).SaveCollection(collection); err != nil {
+			slog.Error("createTableMidjourneyJob error", "err", err)
 			return err
 		}
 
-		return daos.New(db).SaveCollection(collection)
-	}, func(db dbx.Builder) error {
-		dao := daos.New(db)
+		//if _, err := db.NewQuery(createTableMidjourneyJob).Execute(); err != nil {
+		//	slog.Error("createTableMidjourneyJob error", "err", err)
+		//	return err
+		//}
+		//
+		//if _, err := db.NewQuery(createIndexForTableMidjourneyJob).Execute(); err != nil {
+		//	slog.Error("createIndexForTableMidjourneyJob error", "err", err)
+		//	return err
+		//}
 
-		collection, err := dao.FindCollectionByNameOrId("o4cn6kgaxis96fz")
+		return nil
+	}, func(db dbx.Builder) error {
+		collection, err := daos.New(db).FindCollectionByNameOrId(tableNameMidjourneyJobs)
 		if err != nil {
 			return err
 		}
+		if err := daos.New(db).DeleteCollection(collection); err != nil {
+			slog.Error("deleteTableMidjourneyJob error", "err", err)
+			return err
+		}
 
-		return dao.DeleteCollection(collection)
+		//if _, err := db.NewQuery(dropTableMidjourneyJob).Execute(); err != nil {
+		//	slog.Error("dropTableMidjourneyJob error", "err", err)
+		//	return err
+		//}
+		return nil
 	})
 }

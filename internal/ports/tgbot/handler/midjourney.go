@@ -60,18 +60,30 @@ func OnMidJourneyImagine(c tb.Context) error {
 			case midjourney.StatusCompleted:
 				slog.Info("midjourney generate completion")
 				sendPhoto := func() error {
-					resp, err := http.Get(*job.ImageUrl)
-					if err != nil {
-						return err
+					photo := new(tb.Photo)
+					if job.TelegramFileId != nil {
+						photo.File = tb.File{FileID: *job.TelegramFileId}
+					} else {
+						resp, err := http.Get(*job.ImageUrl)
+						if err != nil {
+							return err
+						}
+						defer resp.Body.Close()
+						photo = &tb.Photo{File: tb.File{
+							FileReader: resp.Body,
+						}}
 					}
-					defer resp.Body.Close()
 					if err := c.Bot().Delete(msg); err != nil {
 						return err
 					}
-					photo := &tb.Photo{File: tb.File{
-						FileReader: resp.Body,
-					}}
-					return c.Reply(photo)
+					msg, err = c.Bot().Reply(c.Message(), photo)
+					if job.TelegramFileId == nil {
+						job.TelegramFileId = &msg.Photo.FileID
+						if _, err := midjourney.UpdateJobRecord(mj.Dao, *job); err != nil {
+							slog.Error("update midjourney job record error", "err", err)
+						}
+					}
+					return err
 				}
 				return sendPhoto()
 			case midjourney.StatusFailed:

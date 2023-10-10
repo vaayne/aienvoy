@@ -35,7 +35,7 @@ func main() {
 	app := pocketbase.New()
 	// migrate DB
 	migratecmd.MustRegister(app, app.RootCmd, &migratecmd.Options{
-		Automigrate: config.GetConfig().Service.Env == "dev",
+		Automigrate: false,
 	})
 
 	// scheduled jobs
@@ -66,7 +66,7 @@ func main() {
 
 	// after bootstrap start other service
 	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
-		// start telegram bot readease
+		// start telegram bot
 		go tgbot.Serve(app)
 		// start midjourney bot
 		go func() {
