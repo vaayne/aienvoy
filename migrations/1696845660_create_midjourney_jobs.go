@@ -1,20 +1,20 @@
 package migrations
 
 import (
+	"log/slog"
+
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/daos"
 	m "github.com/pocketbase/pocketbase/migrations"
 	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/models/schema"
 	"github.com/pocketbase/pocketbase/tools/types"
-	"log/slog"
 )
 
 const tableNameMidjourneyJobs = "midjourney_jobs"
 
 func init() {
 	m.Register(func(db dbx.Builder) error {
-
 		collection := &models.Collection{
 			Name: tableNameMidjourneyJobs,
 			Type: models.CollectionTypeBase,
