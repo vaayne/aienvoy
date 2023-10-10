@@ -61,7 +61,7 @@ type MidJourney struct {
 	DiscordUserToken string
 	DiscordBotToken  string
 	DiscordServerId  string
-	DiscordChannelId string
+	DiscordChannelId int64
 	DiscordAppId     string
 	DiscordSessionId string
 }

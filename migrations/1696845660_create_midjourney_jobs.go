@@ -108,6 +108,18 @@ func init() {
 					}
 				},
 				{
+					"id": "sdhjprmy",
+					"name": "message_content",
+					"type": "text",
+					"system": false,
+					"required": false,
+					"options": {
+						"min": null,
+						"max": null,
+						"pattern": ""
+					}
+				},
+				{
 					"id": "nibeppup",
 					"name": "image_name",
 					"type": "text",
@@ -176,7 +188,7 @@ func init() {
 					}
 				}
 			],
-			"indexes": [],
+			"indexes": ["CREATE INDEX ` + "`" + `idx_9bL2T8K` + "`" + ` ON ` + "`" + `midjourney_jobs` + "`" + ` (\n  ` + "`" + `channel_id` + "`" + `,\n  ` + "`" + `status` + "`" + `\n)",],
 			"listRule": null,
 			"viewRule": null,
 			"createRule": null,

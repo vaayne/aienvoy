@@ -71,7 +71,7 @@ func main() {
 		// start midjourney bot
 		go func() {
 			m := midjourney.New(app.Dao())
-			m.Service.Serve()
+			m.Client.Serve()
 		}()
 		return nil
 	})

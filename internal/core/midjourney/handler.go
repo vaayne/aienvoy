@@ -1,6 +1,7 @@
 package midjourney
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
 
@@ -26,7 +27,7 @@ func CreateMsg(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}()
 
 	// filter channel message
-	if m.ChannelID != config.GetConfig().MidJourney.DiscordChannelId {
+	if m.ChannelID != fmt.Sprintf("%d", config.GetConfig().MidJourney.DiscordChannelId) {
 		return
 	}
 
@@ -37,10 +38,21 @@ func CreateMsg(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	slog.Debug("discord new message", "channel_id", m.ChannelID, "content", m.Content, "type", m.Type)
 
+	dto, err := GetProcessingJobRecordByChannelIDAndStatus(defaultClient.Dao, m.ChannelID, StatusPending)
+	if err != nil {
+		slog.Error("get processing job by channel id error", "channel_id", m.ChannelID, "err", err)
+		return
+	}
+	dto.MessageContent = &m.Content
 	// when midjourney bot start to process, the message will contain "(Waiting to start)"
 	if strings.Contains(m.Content, "(Waiting to start)") && !strings.Contains(m.Content, "Rerolling **") {
 		// Notify(m.Message, GenerateStart, uuid.Nil, "")
 		slog.Info("GenerateStart", "message", m.Content)
+		status := StatusProcessing
+		dto.Status = &status
+		if _, err := UpdateJobRecord(defaultClient.Dao, *dto); err != nil {
+			slog.Error("generate start update job record error", "err", err)
+		}
 		return
 	}
 
@@ -48,6 +60,28 @@ func CreateMsg(s *discordgo.Session, m *discordgo.MessageCreate) {
 	for _, attachment := range m.Attachments {
 		if attachment.Width > 0 && attachment.Height > 0 {
 			slog.Info("GenerateEnd", "message", m.Content)
+			status := StatusCompleted
+			dto.Status = &status
+
+			// update image meta
+			attachment := m.Attachments[0]
+			dto.ImageName = &attachment.Filename
+			dto.ImageUrl = &attachment.URL
+			dto.ImageContentType = &attachment.ContentType
+			size := int64(attachment.Size)
+			dto.ImageSize = &size
+			height := int64(attachment.Height)
+			dto.ImageHeight = &height
+			width := int64(attachment.Width)
+			dto.ImageWidth = &width
+
+			// update dto with message meta
+			dto.MessageID = &m.ID
+			hash := generateDiscordMsgHash(attachment.URL)
+			dto.MessageHash = &hash
+			if _, err := UpdateJobRecord(defaultClient.Dao, *dto); err != nil {
+				slog.Error("generate end update job record error", "err", err)
+			}
 			return
 		}
 	}
@@ -61,7 +95,7 @@ func UpdateMsg(s *discordgo.Session, m *discordgo.MessageUpdate) {
 	}()
 
 	// filter channel message
-	if m.ChannelID != config.GetConfig().MidJourney.DiscordChannelId {
+	if m.ChannelID != fmt.Sprintf("%d", config.GetConfig().MidJourney.DiscordChannelId) {
 		return
 	}
 
@@ -72,16 +106,29 @@ func UpdateMsg(s *discordgo.Session, m *discordgo.MessageUpdate) {
 
 	slog.Debug("discord update message", "channel_id", m.ChannelID, "content", m.Content, "type", m.Type)
 
-	// if message contain "(Stopped)", it means midjourney bot failed
-	if strings.Contains(m.Content, "(Stopped)") {
-		slog.Info("GenerateEnd", "message", m.Content)
+	dto, err := GetProcessingJobRecordByChannelIDAndStatus(defaultClient.Dao, m.ChannelID, StatusProcessing)
+	if err != nil || dto == nil {
+		slog.Error("get processing job by channel id error", "channel_id", m.ChannelID, "err", err, "dto", dto)
 		return
 	}
+	dto.MessageContent = &m.Content
 
-	// if message contain "(0%)" or "(31%)" or "(62%)", it means midjourney bot is still processing and return the percentage
-	// re := regexp.MustCompile(`\([1-9][0-9]?\%\)`)
-	// if re.MatchString(m.Content) {
-	// 	Notify(m.Message, GenerateProcessing, uuid.Nil, "")
-	// 	return
-	// }
+	// if message contain "(Stopped)", it means midjourney bot failed
+	if strings.Contains(m.Content, "(Stopped)") {
+		slog.Info("GenerateEnd error", "message", m.Content)
+		status := StatusFailed
+		dto.Status = &status
+		if _, err := UpdateJobRecord(defaultClient.Dao, *dto); err != nil {
+			slog.Error("generate faled update job record error", "err", err)
+		}
+		return
+	}
+	if _, err := UpdateJobRecord(defaultClient.Dao, *dto); err != nil {
+		slog.Error("generate faled update job record error", "err", err)
+	}
+}
+
+func generateDiscordMsgHash(url string) string {
+	_parts := strings.Split(url, "_")
+	return strings.Split(_parts[len(_parts)-1], ".")[0]
 }

@@ -85,6 +85,10 @@ func registerCommands(b *TeleBot) {
 			Text:        handler.CommandChatGPT4,
 			Description: "Chat using ChatGPT 4",
 		},
+		{
+			Text:        handler.CommandImagine,
+			Description: "Generate image using midjourney",
+		},
 	}
 	if err := b.SetCommands(cmds); err != nil {
 		slog.Error("set telegram bot commands error", "err", err)

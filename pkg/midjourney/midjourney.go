@@ -23,7 +23,7 @@ const (
 type MidJourney struct {
 	mu            sync.Mutex
 	GuildID       string        // DiscordServerId
-	ChannelID     string        // DiscordChannelId
+	ChannelID     int64         // DiscordChannelId
 	ApplicationId string        // DiscordAppId
 	SessionId     string        // DiscordSessionId
 	UserToken     string        // DiscordUserToken
@@ -65,7 +65,7 @@ func (m *MidJourney) GenerateImage(prompt string) error {
 	requestBody := ReqTriggerDiscord{
 		Type:          2,
 		GuildId:       m.GuildID,
-		ChannelId:     m.ChannelID,
+		ChannelId:     fmt.Sprintf("%d", m.ChannelID),
 		ApplicationId: m.ApplicationId,
 		SessionId:     m.SessionId,
 		Data: DSCommand{
@@ -98,7 +98,7 @@ func (m *MidJourney) Upscale(index int64, messageId string, messageHash string) 
 	requestBody := ReqUpscaleDiscord{
 		Type:          3,
 		GuildId:       m.GuildID,
-		ChannelId:     m.ChannelID,
+		ChannelId:     fmt.Sprintf("%d", m.ChannelID),
 		ApplicationId: m.ApplicationId,
 		SessionId:     m.SessionId,
 		MessageFlags:  0,
@@ -116,7 +116,7 @@ func (m *MidJourney) MaxUpscale(messageId string, messageHash string) error {
 	requestBody := ReqUpscaleDiscord{
 		Type:          3,
 		GuildId:       m.GuildID,
-		ChannelId:     m.ChannelID,
+		ChannelId:     fmt.Sprintf("%d", m.ChannelID),
 		ApplicationId: m.ApplicationId,
 		SessionId:     m.SessionId,
 		MessageFlags:  0,
@@ -135,7 +135,7 @@ func (m *MidJourney) Variate(index int64, messageId string, messageHash string) 
 	requestBody := ReqVariationDiscord{
 		Type:          3,
 		GuildId:       m.GuildID,
-		ChannelId:     m.ChannelID,
+		ChannelId:     fmt.Sprintf("%d", m.ChannelID),
 		ApplicationId: m.ApplicationId,
 		SessionId:     m.SessionId,
 		MessageFlags:  0,
@@ -153,7 +153,7 @@ func (m *MidJourney) Reset(messageId string, messageHash string) error {
 	requestBody := ReqResetDiscord{
 		Type:          3,
 		GuildId:       m.GuildID,
-		ChannelId:     m.ChannelID,
+		ChannelId:     fmt.Sprintf("%d", m.ChannelID),
 		ApplicationId: m.ApplicationId,
 		SessionId:     m.SessionId,
 		MessageFlags:  0,
