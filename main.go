@@ -3,9 +3,8 @@ package main
 import (
 	"embed"
 	"log/slog"
-	"os"
-	"strings"
 
+	"github.com/Vaayne/aienvoy/internal/core/midjourney"
 	"github.com/Vaayne/aienvoy/internal/core/readease"
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	_ "github.com/Vaayne/aienvoy/internal/pkg/logger"
@@ -33,13 +32,10 @@ func registerRoutes(app *pocketbase.PocketBase) {
 }
 
 func main() {
-	// loosely check if it was executed using "go run"
-	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 	app := pocketbase.New()
-
 	// migrate DB
 	migratecmd.MustRegister(app, app.RootCmd, &migratecmd.Options{
-		Automigrate: isGoRun,
+		Automigrate: config.GetConfig().Service.Env == "dev",
 	})
 
 	// scheduled jobs
@@ -67,8 +63,19 @@ func main() {
 	})
 	// register routes
 	registerRoutes(app)
-	// start telegram bot readease
-	go tgbot.Serve(app)
+
+	// after bootstrap start other service
+	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
+		// start telegram bot readease
+		go tgbot.Serve(app)
+		// start midjourney bot
+		go func() {
+			m := midjourney.New(app.Dao())
+			m.Client.Serve()
+		}()
+		return nil
+	})
+
 	if err := app.Start(); err != nil {
 		slog.Error("failed to start app", "err", err)
 	}

@@ -20,7 +20,7 @@ func (p YoutubeParser) Parse(uri string) (Content, error) {
 		return content, InvalidURLError
 	}
 	if u.Host != HOST_YOUTUBE {
-		return content, fmt.Errorf("Invalid youtube url %s", u.String())
+		return content, fmt.Errorf("invalid youtube url %s", u.String())
 	}
 	return downloadSub(uri)
 }
@@ -83,7 +83,7 @@ func fetchSubMeta(uri string) (*SubTitleParser, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("fetch subtitle error, status code: %d", resp.StatusCode)
 	}
 	var data struct {
 		Response SubTitleParser `json:"response"`
@@ -123,7 +123,7 @@ func download(sub *SubTitleParser) ([]byte, error) {
 
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("download subtitle error, status code: %d", resp.StatusCode)
 	}
 	return io.ReadAll(resp.Body)
 }

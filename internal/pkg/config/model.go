@@ -16,6 +16,7 @@ type Config struct {
 	}
 	ReadEase    ReadEase
 	CookieCloud CookieCloud
+	MidJourney  MidJourney
 }
 
 type ServiceConfig struct {
@@ -54,4 +55,13 @@ type CookieCloud struct {
 	Host string
 	UUID string
 	Pass string
+}
+
+type MidJourney struct {
+	DiscordUserToken string
+	DiscordBotToken  string
+	DiscordServerId  string
+	DiscordChannelId int64
+	DiscordAppId     string
+	DiscordSessionId string
 }

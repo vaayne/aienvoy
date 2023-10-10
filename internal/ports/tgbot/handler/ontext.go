@@ -13,6 +13,7 @@ const (
 	CommandClaude    = "claude"
 	CommandChatGPT35 = "gpt35"
 	CommandChatGPT4  = "gpt4"
+	CommandImagine   = "imagine"
 )
 
 func OnText(c tb.Context) error {
@@ -32,6 +33,8 @@ func OnText(c tb.Context) error {
 		return OnChatGPT35(c)
 	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandChatGPT4)) {
 		return OnChatGPT4(c)
+	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandImagine)) {
+		return OnMidJourneyImagine(c)
 	}
 
 	// continue conversation
