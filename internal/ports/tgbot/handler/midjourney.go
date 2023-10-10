@@ -3,11 +3,12 @@ package handler
 import (
 	"context"
 	"fmt"
-	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
 
 	"github.com/Vaayne/aienvoy/internal/core/midjourney"
 	tb "gopkg.in/telebot.v3"

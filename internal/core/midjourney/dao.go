@@ -1,12 +1,13 @@
 package midjourney
 
 import (
+	"log/slog"
+
 	"github.com/Vaayne/aienvoy/internal/pkg/dtoutils"
 	"github.com/google/uuid"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/daos"
 	"github.com/pocketbase/pocketbase/tools/types"
-	"log/slog"
 )
 
 const tableName = "midjourney_jobs"
