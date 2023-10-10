@@ -76,9 +76,9 @@ func OnMidJourneyImagine(c tb.Context) error {
 					if err := c.Bot().Delete(msg); err != nil {
 						return err
 					}
-					msg, err = c.Bot().Reply(c.Message(), photo)
+					err = c.Reply(photo)
 					if job.TelegramFileId == nil {
-						job.TelegramFileId = &msg.Photo.FileID
+						job.TelegramFileId = &photo.FileID
 						if _, err := midjourney.UpdateJobRecord(mj.Dao, *job); err != nil {
 							slog.Error("update midjourney job record error", "err", err)
 						}
