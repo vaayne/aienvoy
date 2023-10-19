@@ -1,13 +1,24 @@
 package claudeweb
 
+import "time"
+
 type Organization struct {
-	UUID         string   `json:"uuid"`
-	Name         string   `json:"name"`
-	Settings     Settings `json:"settings"`
-	Capabilities []string `json:"capabilities"`
-	CreatedAt    string   `json:"created_at"`
-	UpdatedAt    string   `json:"updated_at"`
-	ActiveFlags  []string `json:"active_flags"`
+	UUID     string `json:"uuid"`
+	Name     string `json:"name"`
+	Settings struct {
+		ClaudeConsolePrivacy string `json:"claude_console_privacy"`
+	} `json:"settings"`
+	Capabilities             []string    `json:"capabilities"`
+	BillableUsagePausedUntil interface{} `json:"billable_usage_paused_until"`
+	CreatedAt                time.Time   `json:"created_at"`
+	UpdatedAt                time.Time   `json:"updated_at"`
+	ActiveFlags              []struct {
+		Id          string      `json:"id"`
+		Type        string      `json:"type"`
+		CreatedAt   time.Time   `json:"created_at"`
+		DismissedAt interface{} `json:"dismissed_at"`
+		ExpiresAt   interface{} `json:"expires_at"`
+	} `json:"active_flags"`
 }
 
 type Settings struct {

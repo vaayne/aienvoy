@@ -59,6 +59,7 @@ func (c *ClaudeWeb) GetOrganizations() ([]*Organization, error) {
 	}
 	err = json.Unmarshal(body, &orgs)
 	if err != nil {
+		slog.Error("Unmarshal error", "body", string(body), "err", err)
 		return nil, fmt.Errorf("GetOrganizations unmarshal response body err: %v", err)
 	}
 
