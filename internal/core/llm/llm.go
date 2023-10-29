@@ -7,16 +7,9 @@ import (
 )
 
 type Service interface {
-	// CreateCompletion one time chat with LLM
-	CreateCompletion(ctx context.Context, req openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error)
-	// CreateCompletionStream one time chat with LLM and stream response
-	CreateCompletionStream(ctx context.Context, req openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error)
-	// Chat with conversation history
-	Chat(ctx context.Context, conversationId string, req openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error)
-	// ChatStream with conversation history and stream response
-	ChatStream(ctx context.Context, conversationId string, req openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error)
-	// GetModels get all models
-	GetModels(ctx context.Context) (openai.ModelsList, error)
-	// CreateEmbeddings embed content
-	CreateEmbeddings(ctx context.Context, req openai.EmbeddingRequest) (openai.EmbeddingResponse, error)
+	CreateChatCompletion(ctx context.Context, req *openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error)
+	CreateChatCompletionStream(ctx context.Context, req *openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error)
+
+	CreateCompletion(ctx context.Context, req *openai.CompletionRequest) (openai.CompletionResponse, error)
+	CreateCompletionStream(ctx context.Context, req *openai.CompletionRequest, dataChan chan openai.CompletionResponse, errChan chan error)
 }

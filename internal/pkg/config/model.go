@@ -17,6 +17,7 @@ type Config struct {
 	ReadEase    ReadEase
 	CookieCloud CookieCloud
 	MidJourney  MidJourney
+	AWS         AWSConfig
 }
 
 type ServiceConfig struct {
@@ -64,4 +65,10 @@ type MidJourney struct {
 	DiscordChannelId int64
 	DiscordAppId     string
 	DiscordSessionId string
+}
+
+type AWSConfig struct {
+	Region          string
+	AccessKeyId     string
+	SecretAccessKey string
 }

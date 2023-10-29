@@ -36,3 +36,8 @@ midJourney:
   discordChannelId:
   discordAppId:
   discordSessionId:
+
+aws:
+  region:
+  accessKeyId:
+  secretAccessKey:
