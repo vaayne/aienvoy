@@ -8,7 +8,10 @@ RUN go mod download
 ENV CGO_ENABLED=0
 
 COPY . .
-RUN go build -ldflags="-s -w" -o /go/bin/app main.go
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg \
+    go build -ldflags="-s -w" -o /go/bin/app main.go
+
 
 FROM gcr.io/distroless/base-debian11
 WORKDIR /service/
