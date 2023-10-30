@@ -9,8 +9,6 @@ import (
 	"net/http"
 
 	"github.com/Vaayne/aienvoy/internal/core/llm"
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
-
 	"github.com/sashabaranov/go-openai"
 
 	"github.com/Vaayne/aienvoy/internal/core/llm/llmopenai"
@@ -18,37 +16,14 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-type LLMHandler struct {
-	openai *llmopenai.OpenAI
-	claude *llmclaude.Claude
-}
+type LLMHandler struct{}
 
 func NewLLMHandler() *LLMHandler {
-	return &LLMHandler{
-		openai: llmopenai.New(),
-		claude: llmclaude.New(),
-	}
-}
-
-func (l *LLMHandler) getService(model string) llm.Service {
-	switch model {
-	// openai base model
-	case openai.GPT3Dot5Turbo, openai.GPT3Dot5Turbo16K, openai.GPT4, openai.GPT432K, openai.GPT3Dot5TurboInstruct:
-		return l.openai
-	// openai time limited model
-	case openai.GPT3Dot5Turbo0301, openai.GPT3Dot5Turbo0613, openai.GPT3Dot5Turbo16K0613, openai.GPT40314, openai.GPT40613, openai.GPT432K0314, openai.GPT432K0613:
-		return l.openai
-	// claude models
-	case llmclaude.ModelClaudeV2, llmclaude.ModelClaudeV1Dot3, llmclaude.ModelClaudeInstantV1Dot2:
-		return l.claude
-	default:
-		slog.Error("unknown model", "model", model)
-		return nil
-	}
+	return &LLMHandler{}
 }
 
 func (l *LLMHandler) GetModels(c echo.Context) error {
-	resp, err := l.openai.GetModels(c.Request().Context())
+	resp, err := llmopenai.New().GetModels(c.Request().Context())
 	if err != nil {
 		slog.ErrorContext(c.Request().Context(), "get models error", "err", err.Error())
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -65,7 +40,7 @@ func (l *LLMHandler) CreateChatCompletion(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	svc := l.getService(req.Model)
+	svc := llm.New(req.Model)
 	if svc == nil {
 		return c.String(http.StatusBadRequest, "unknown model")
 	}
@@ -90,7 +65,7 @@ func (l *LLMHandler) CreateCompletion(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	svc := l.getService(req.Model)
+	svc := llm.New(req.Model)
 	if svc == nil {
 		return c.String(http.StatusBadRequest, "unknown model")
 	}
@@ -114,7 +89,7 @@ func (l *LLMHandler) CreateEmbeddings(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	resp, err := l.openai.CreateEmbeddings(c.Request().Context(), *req)
+	resp, err := llmopenai.New().CreateEmbeddings(c.Request().Context(), *req)
 	if err != nil {
 		slog.ErrorContext(c.Request().Context(), "create embedding error", "err", err.Error())
 		return c.String(http.StatusInternalServerError, err.Error())

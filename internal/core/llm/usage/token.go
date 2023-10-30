@@ -6,7 +6,6 @@ import (
 
 	"github.com/sashabaranov/go-openai"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm"
 	"github.com/Vaayne/aienvoy/internal/pkg/ctxutils"
 	"github.com/pocketbase/pocketbase/daos"
 
@@ -20,7 +19,9 @@ type Token struct {
 func NewTikToken(model string) *Token {
 	tk, err := tiktoken.EncodingForModel(model)
 	if err != nil {
-		slog.Error("tiktoken.EncodingForModel", "err", err)
+		slog.Warn("init tiktoken error, fallback to default model", "err", err)
+		// if the model not supported, default to base model
+		tk, _ = tiktoken.EncodingForModel(openai.GPT3Dot5Turbo)
 	}
 
 	return &Token{
@@ -55,15 +56,14 @@ func SaveFromText(ctx context.Context, model string, text string) error {
 func Save(ctx context.Context, model string, usage int) error {
 	usageDao := ctxutils.GetDao(ctx)
 
-	if err := usageDao.RunInTransaction(
-		func(tx *daos.Dao) error {
-			return llm.SaveLlmUsage(ctx, tx, &llm.LlmUsages{
-				UserId:     ctxutils.GetUserId(ctx),
-				ApiKey:     ctxutils.GetApiKey(ctx),
-				TokenUsage: int64(usage),
-				Model:      model,
-			})
-		}); err != nil {
+	if err := usageDao.RunInTransaction(func(tx *daos.Dao) error {
+		return SaveLlmUsage(ctx, tx, &LlmUsages{
+			UserId:     ctxutils.GetUserId(ctx),
+			ApiKey:     ctxutils.GetApiKey(ctx),
+			TokenUsage: int64(usage),
+			Model:      model,
+		})
+	}); err != nil {
 		slog.ErrorContext(ctx, "save llm token usage error", "err", err.Error())
 		return err
 	}

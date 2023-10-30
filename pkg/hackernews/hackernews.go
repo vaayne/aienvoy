@@ -23,7 +23,7 @@ const (
 	AskPath     = "/v0/askstories.json"
 	ShowPath    = "/v0/showstories.json"
 	UpdatePath  = "/v0/updates.json"
-	HN_HOST     = "https://news.ycombinator.com"
+	HNHost      = "https://news.ycombinator.com"
 )
 
 type Client struct {
@@ -143,7 +143,7 @@ func (c *Client) GetPoll(id int) (Poll, error) {
 	return item.ToPoll(), nil
 }
 
-// GetPoll returns a Poll struct with the information of a poll corresponding to the provided id
+// GetPollOpt returns a Poll struct with the information of a poll corresponding to the provided id
 func (c *Client) GetPollOpt(id int) (PollOpt, error) {
 	item, err := c.GetItem(id)
 	var pollopt PollOpt
