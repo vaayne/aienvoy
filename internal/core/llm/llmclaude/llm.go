@@ -54,7 +54,7 @@ func getAWSConfig() *aws.Config {
 }
 
 func (c *Claude) CreateChatCompletion(ctx context.Context, req *openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error) {
-	slog.InfoContext(ctx, "chat with Claude API start", "req", req)
+	slog.InfoContext(ctx, "chat with Claude API start")
 	bedrockRequest := &BedrockRequest{}
 	bedrockRequest.FromOpenAIChatCompletionRequest(req)
 
@@ -75,7 +75,7 @@ func (c *Claude) CreateChatCompletion(ctx context.Context, req *openai.ChatCompl
 }
 
 func (c *Claude) CreateChatCompletionStream(ctx context.Context, req *openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error) {
-	slog.InfoContext(ctx, "chat with Claude API stream start", "req", req)
+	slog.InfoContext(ctx, "chat with Claude API stream start")
 	bedrockRequest := &BedrockRequest{}
 	bedrockRequest.FromOpenAIChatCompletionRequest(req)
 

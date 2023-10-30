@@ -4,45 +4,53 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Vaayne/aienvoy/internal/core/llm"
+	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
 	"io"
 	"strings"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmopenai"
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/google/uuid"
 	"github.com/sashabaranov/go-openai"
 	tb "gopkg.in/telebot.v3"
 )
 
-const (
-	modelNameGPT3Dot5Turbo = openai.GPT3Dot5Turbo
-	modelNameGPT4          = openai.GPT4
-)
+func OnChatGPT35(c tb.Context) error {
+	return onLLMChat(c, openai.GPT3Dot5Turbo)
+}
 
-func OnChatGPTChat(c tb.Context, model string) error {
+func OnChatGPT4(c tb.Context) error {
+	return onLLMChat(c, openai.GPT4)
+}
+
+func OnClaudeV2(c tb.Context) error {
+	return onLLMChat(c, llmclaude.ModelClaudeV2)
+}
+
+func OnClaudeV1Dot3(c tb.Context) error {
+	return onLLMChat(c, llmclaude.ModelClaudeV1Dot3)
+}
+
+func OnClaudeInstant(c tb.Context) error {
+	return onLLMChat(c, llmclaude.ModelClaudeInstantV1Dot2)
+}
+
+func onLLMChat(c tb.Context, model string) error {
 	text := strings.TrimSpace(c.Text()[5:])
 	if text == "" {
 		text = "hello"
 	}
-	return askChatGPT(c, "", model, text, nil)
+	return askLLM(c, "", model, text, nil)
 }
 
-func OnChatGPT35(c tb.Context) error {
-	return OnChatGPTChat(c, modelNameGPT3Dot5Turbo)
-}
-
-func OnChatGPT4(c tb.Context) error {
-	return OnChatGPTChat(c, modelNameGPT4)
-}
-
-func askChatGPT(c tb.Context, id, model, prompt string, messages []openai.ChatCompletionMessage) error {
+func askLLM(c tb.Context, id, model, prompt string, messages []openai.ChatCompletionMessage) error {
 	if id == "" {
 		id = uuid.New().String()
 	}
 	if messages == nil {
 		messages = make([]openai.ChatCompletionMessage, 0)
 	}
-	llm := llmopenai.New()
+	llmSvc := llm.New(model)
 	ctx := c.Get(config.ContextKeyContext).(context.Context)
 
 	messages = append(messages, openai.ChatCompletionMessage{
@@ -63,7 +71,7 @@ func askChatGPT(c tb.Context, id, model, prompt string, messages []openai.ChatCo
 	if err != nil {
 		return fmt.Errorf("chat with ChatGPT err: %v", err)
 	}
-	go llm.CreateChatCompletionStream(ctx, &req, respChan, errChan)
+	go llmSvc.CreateChatCompletionStream(ctx, &req, respChan, errChan)
 	text := ""
 	chunk := ""
 

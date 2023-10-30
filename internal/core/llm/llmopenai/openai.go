@@ -21,7 +21,7 @@ func New() *OpenAI {
 }
 
 func (s *OpenAI) CreateChatCompletion(ctx context.Context, req *openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error) {
-	slog.InfoContext(ctx, "chat with OpenAI start", "req", req)
+	slog.InfoContext(ctx, "chat with OpenAI start")
 	resp, err := getClientByModel(ctx, req.Model).CreateChatCompletion(ctx, *req)
 	if err != nil {
 		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err)
@@ -33,7 +33,7 @@ func (s *OpenAI) CreateChatCompletion(ctx context.Context, req *openai.ChatCompl
 }
 
 func (s *OpenAI) CreateChatCompletionStream(ctx context.Context, req *openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error) {
-	slog.InfoContext(ctx, "chat with OpenAI stream start", "req", req)
+	slog.InfoContext(ctx, "chat with OpenAI stream start")
 	stream, err := getClientByModel(ctx, req.Model).CreateChatCompletionStream(ctx, *req)
 	if err != nil {
 		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err)

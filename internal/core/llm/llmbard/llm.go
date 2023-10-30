@@ -14,7 +14,7 @@ import (
 const ModelBard = "bard"
 
 func (b *Bard) CreateChatCompletion(ctx context.Context, req *openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error) {
-	slog.InfoContext(ctx, "chat with Google Bard start", "req", req)
+	slog.InfoContext(ctx, "chat with Google Bard start")
 	prompt := buildPrompt(req)
 	resp, err := b.Ask(prompt, "", "", "", 0)
 	if err != nil {
@@ -29,7 +29,7 @@ func (b *Bard) CreateChatCompletion(ctx context.Context, req *openai.ChatComplet
 }
 
 func (b *Bard) CreateChatCompletionStream(ctx context.Context, req *openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error) {
-	slog.InfoContext(ctx, "chat with Google Bard stream start", "req", req)
+	slog.InfoContext(ctx, "chat with Google Bard stream start")
 	prompt := buildPrompt(req)
 	resp, err := b.Ask(prompt, "", "", "", 0)
 	if err != nil {

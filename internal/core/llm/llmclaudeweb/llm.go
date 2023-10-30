@@ -17,7 +17,7 @@ import (
 const ModelClaudeWeb = "claude-2"
 
 func (cw *ClaudeWeb) CreateChatCompletion(ctx context.Context, req *openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error) {
-	slog.InfoContext(ctx, "chat with Claude Web start", "req", req)
+	slog.InfoContext(ctx, "chat with Claude Web start")
 	prompt := buildPrompt(req)
 	cov, err := cw.CreateConversation(prompt[:min(10, len(prompt))])
 	if err != nil {
@@ -37,7 +37,7 @@ func (cw *ClaudeWeb) CreateChatCompletion(ctx context.Context, req *openai.ChatC
 }
 
 func (cw *ClaudeWeb) CreateChatCompletionStream(ctx context.Context, req *openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error) {
-	slog.InfoContext(ctx, "chat with Claude Web stream start", "req", req)
+	slog.InfoContext(ctx, "chat with Claude Web stream start")
 	prompt := buildPrompt(req)
 	cov, err := cw.CreateConversation(prompt[:min(10, len(prompt))])
 	if err != nil {

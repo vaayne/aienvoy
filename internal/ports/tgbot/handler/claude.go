@@ -17,7 +17,7 @@ import (
 const claudeModelName = "claude2"
 
 func OnClaudeChat(c tb.Context) error {
-	text := strings.TrimSpace(c.Text()[1+len(CommandClaude):])
+	text := strings.TrimSpace(c.Text()[1+len(CommandClaudeWeb):])
 	if text == "" {
 		text = "hello"
 	}
