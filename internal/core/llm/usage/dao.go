@@ -1,10 +1,9 @@
-package llm
+package usage
 
 import (
 	"context"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/dtoutils"
-
 	"github.com/pocketbase/pocketbase/daos"
 	"github.com/pocketbase/pocketbase/models"
 )

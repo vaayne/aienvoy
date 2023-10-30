@@ -44,7 +44,7 @@ func main() {
 		// every 5 minutes to run readease job
 		if config.GetConfig().ReadEase.TelegramChannel != 0 {
 			scheduler.MustAdd("readease", "0 * * * *", func() {
-				summaries, err := readease.ReadEasePeriodJob(app)
+				summaries, err := readease.PeriodJob(app)
 				if err != nil {
 					slog.Error("run period readease job error", "err", err)
 				}

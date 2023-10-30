@@ -8,11 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
+	"github.com/sashabaranov/go-openai"
+
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 
 	"github.com/Vaayne/aienvoy/internal/core/readease"
-	"github.com/Vaayne/aienvoy/pkg/claudeweb"
-
 	"github.com/pocketbase/pocketbase"
 	tb "gopkg.in/telebot.v3"
 )
@@ -36,12 +37,12 @@ func OnReadEase(c tb.Context) error {
 
 	reader := readease.NewReader(ctx.Value(config.ContextKeyApp).(*pocketbase.PocketBase))
 
-	respChan := make(chan *claudeweb.ChatMessageResponse)
+	respChan := make(chan openai.ChatCompletionStreamResponse)
 	errChan := make(chan error)
 	defer close(respChan)
 	defer close(errChan)
 
-	go reader.ReadStream(ctx, urlStr, respChan, errChan)
+	go reader.ReadStream(ctx, urlStr, llmclaude.ModelClaudeV1Dot3, respChan, errChan)
 
 	text := ""
 	chunk := ""
@@ -49,7 +50,7 @@ func OnReadEase(c tb.Context) error {
 	for {
 		select {
 		case resp := <-respChan:
-			text, chunk = processResponse(c, ctx, msg, resp.Completion, text, chunk)
+			text, chunk = processResponse(c, ctx, msg, resp.Choices[0].Delta.Content, text, chunk)
 		case err := <-errChan:
 			return processError(c, ctx, msg, text, err)
 		case <-ctx.Done():

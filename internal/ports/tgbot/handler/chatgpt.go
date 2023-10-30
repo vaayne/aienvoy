@@ -63,7 +63,7 @@ func askChatGPT(c tb.Context, id, model, prompt string, messages []openai.ChatCo
 	if err != nil {
 		return fmt.Errorf("chat with ChatGPT err: %v", err)
 	}
-	go llm.ChatStream(ctx, req, respChan, errChan)
+	go llm.CreateChatCompletionStream(ctx, &req, respChan, errChan)
 	text := ""
 	chunk := ""
 

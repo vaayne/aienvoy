@@ -38,7 +38,7 @@ func processError(c tb.Context, ctx context.Context, msg *tb.Message, text strin
 	} else if errors.Is(err, io.EOF) {
 		// send last message
 		if _, err := c.Bot().Edit(msg, text); err != nil {
-			slog.ErrorContext(ctx, "telegram bot edit msg err", "err", err)
+			slog.WarnContext(ctx, "telegram send last msg err", "err", err)
 			return err
 		}
 		return nil

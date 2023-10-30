@@ -12,7 +12,7 @@ import (
 
 const TableReadeaseArticles = "readease_articles"
 
-type ReadeaseArticle struct {
+type Article struct {
 	dtoutils.BaseModel
 	Url            string `json:"url,omitempty" mapstructure:"url,omitempty"`
 	OriginalUrl    string `json:"original_url,omitempty" mapstructure:"original_url,omitempty"`
@@ -25,7 +25,7 @@ type ReadeaseArticle struct {
 	IsReadeaseSent bool   `json:"is_readease_sent,omitempty" mapstructure:"is_readease_sent,omitempty"`
 }
 
-func getReadeaseArticleCollection(tx *daos.Dao) (*models.Collection, error) {
+func getArticleCollection(tx *daos.Dao) (*models.Collection, error) {
 	return tx.FindCollectionByNameOrId(TableReadeaseArticles)
 }
 
@@ -40,7 +40,7 @@ func findArticleByURL(ctx context.Context, tx *daos.Dao, url string) (*models.Re
 	return records[0], nil
 }
 
-func GetReadeaseArticleByUrl(ctx context.Context, tx *daos.Dao, url string) (*ReadeaseArticle, error) {
+func GetArticleByUrl(ctx context.Context, tx *daos.Dao, url string) (*Article, error) {
 	record, err := findArticleByURL(ctx, tx, url)
 	if err != nil {
 		return nil, err
@@ -49,19 +49,19 @@ func GetReadeaseArticleByUrl(ctx context.Context, tx *daos.Dao, url string) (*Re
 		return nil, nil
 	}
 
-	var article ReadeaseArticle
+	var article Article
 	err = dtoutils.FromRecord(record, &article)
 	return &article, err
 }
 
-func UpsertReadeaseArticle(ctx context.Context, tx *daos.Dao, article *ReadeaseArticle) error {
+func UpsertArticle(ctx context.Context, tx *daos.Dao, article *Article) error {
 	record, err := findArticleByURL(ctx, tx, article.Url)
 	if err != nil {
 		return err
 	}
 	// if record not found, create a new one
 	if record == nil {
-		col, err := getReadeaseArticleCollection(tx)
+		col, err := getArticleCollection(tx)
 		if err != nil {
 			return err
 		}

@@ -87,7 +87,7 @@ func GetJobRecord(tx *daos.Dao, id string) (*MjDTO, error) {
 	if err := tx.DB().Select().Model(id, &dto); err != nil {
 		return nil, err
 	}
-	//slog.Debug("get job record", "dto", &dto)
+	// slog.Debug("get job record", "dto", &dto)
 	return &dto, nil
 }
 
@@ -103,6 +103,6 @@ func GetProcessingJobRecordByChannelIDAndStatus(tx *daos.Dao, id, status string)
 		return nil, err
 	}
 
-	//slog.Debug("get job record by channel id and status", "dto", &dto)
+	// slog.Debug("get job record by channel id and status", "dto", &dto)
 	return &dto, nil
 }

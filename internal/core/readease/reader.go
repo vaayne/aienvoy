@@ -2,25 +2,21 @@ package readease
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"log/slog"
 	"strings"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaudeweb"
-	"github.com/Vaayne/aienvoy/internal/pkg/parser"
-	"github.com/Vaayne/aienvoy/pkg/claudeweb"
+	"github.com/Vaayne/aienvoy/internal/core/llm"
+	"github.com/sashabaranov/go-openai"
 
+	"github.com/Vaayne/aienvoy/internal/pkg/parser"
 	"github.com/pocketbase/pocketbase"
 )
 
-var promptTemplate = `
-You are my reading partner, and I have an article enclosed within the XML tag <article>:
-
-<article>
-{{.Content}}
-</article>
-
+var prompt = `
 ----
 Please complete the following tasks and provide responses in Chinese enclosed within corresponding XML tags:
 1. Summarize each paragraph in the article separately. Use <ParagraphSummary> ... </ParagraphSummary> for all paragraph summaries, and label each paragraph with its number.
@@ -49,23 +45,23 @@ A: ...
 Please ensure that you maintain the XML tags in your responses and avoid adding explanations or extra words.
 `
 
-type ReadeaseReader struct {
+type Reader struct {
 	app *pocketbase.PocketBase
 }
 
-func NewReader(app *pocketbase.PocketBase) *ReadeaseReader {
-	return &ReadeaseReader{
+func NewReader(app *pocketbase.PocketBase) *Reader {
+	return &Reader{
 		app: app,
 	}
 }
 
-func (s *ReadeaseReader) read(ctx context.Context, url string) (*ReadeaseArticle, error) {
+func (s *Reader) read(ctx context.Context, url string) (*Article, error) {
 	var content parser.Content
 	var err error
 
-	article, err := GetReadeaseArticleByUrl(ctx, s.app.Dao(), url)
+	article, err := GetArticleByUrl(ctx, s.app.Dao(), url)
 	if err != nil {
-		slog.Error("get article from db error", "err", err)
+		slog.ErrorContext(ctx, "get article from db error", "err", err)
 	}
 	if err == nil && article != nil {
 		content = parser.Content{
@@ -82,7 +78,7 @@ func (s *ReadeaseReader) read(ctx context.Context, url string) (*ReadeaseArticle
 		}
 
 		if content.Content == "" {
-			slog.Warn("did not get any content from the url", "url", url, "title", content.Title)
+			slog.WarnContext(ctx, "did not get any content from the url", "url", url, "title", content.Title)
 			return nil, fmt.Errorf("did not get any content from url %s", url)
 		}
 
@@ -90,23 +86,23 @@ func (s *ReadeaseReader) read(ctx context.Context, url string) (*ReadeaseArticle
 			content.URL = url
 		}
 
-		article = &ReadeaseArticle{
+		article = &Article{
 			Url:         url,
 			OriginalUrl: content.URL,
 			Title:       content.Title,
 			Content:     content.Content,
 		}
 
-		if err := UpsertReadeaseArticle(ctx, s.app.Dao(), article); err != nil {
-			slog.Error("upsertArticle err", "err", err)
+		if err := UpsertArticle(ctx, s.app.Dao(), article); err != nil {
+			slog.ErrorContext(ctx, "upsertArticle err", "err", err)
 		}
 	}
 
-	slog.Info("success read article", "article", content.Title, "url", url, "content", content.Content[:min(100, len(content.Content))])
+	slog.InfoContext(ctx, "success read article", "article", content.Title, "url", url, "content", content.Content[:min(100, len(content.Content))])
 	return article, nil
 }
 
-func (s *ReadeaseReader) Read(ctx context.Context, url string) (*ReadeaseArticle, error) {
+func (s *Reader) Read(ctx context.Context, url, model string) (*Article, error) {
 	// get article content by parse web page
 	article, err := s.read(ctx, url)
 	if err != nil {
@@ -114,45 +110,44 @@ func (s *ReadeaseReader) Read(ctx context.Context, url string) (*ReadeaseArticle
 	}
 
 	if article != nil && article.Summary != "" {
-		slog.Debug("article alreay summaried", "url", url, "title", article.Title, "summary", article.Summary[:100])
+		slog.DebugContext(ctx, "article alreay summaried", "url", url, "title", article.Title, "summary", article.Summary[:100])
 		return article, nil
 	}
 
 	// summary article
-	claude := llmclaudeweb.New()
-	cov, err := claude.CreateConversation(article.Title)
-	if err != nil {
-		return nil, fmt.Errorf("failed create conversation err: %v", err)
-	}
-	slog.Debug("success create conversation", "conversation", cov)
-
-	prompt, err := buildPrompt(article)
-	if err != nil {
-		return nil, fmt.Errorf("failed build prompt for summary, %w", err)
+	llmSvc := llm.New(model)
+	if llmSvc == nil {
+		slog.Error("failed to create llm service", "model", model)
+		return nil, fmt.Errorf("failed to create llm service: %w", err)
 	}
 
-	resp, err := claude.CreateChatMessage(cov.UUID, prompt)
+	req := &openai.ChatCompletionRequest{
+		Model:       model,
+		Messages:    buildMessages(article),
+		MaxTokens:   8192,
+		Temperature: 0.7,
+	}
+	resp, err := llmSvc.CreateChatCompletion(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("summaryArticle create chat message err: %v", err)
 	}
 
-	summary, err := buildSummaryResponse(url, article.Title, resp.Completion)
+	summary, err := buildSummaryResponse(url, article.Title, resp.Choices[0].Message.Content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build summary response %w", err)
 	}
 
 	article.Summary = summary
-	article.LlmCovId = cov.UUID
-	article.LlmModel = "claude"
+	article.LlmModel = model
 
 	// save result to cache
-	if err := UpsertReadeaseArticle(ctx, s.app.Dao(), article); err != nil {
+	if err := UpsertArticle(ctx, s.app.Dao(), article); err != nil {
 		slog.Error("upsertArticle err", "err", err)
 	}
 	return article, nil
 }
 
-func (s *ReadeaseReader) ReadStream(ctx context.Context, url string, respChan chan *claudeweb.ChatMessageResponse, errChan chan error) {
+func (s *Reader) ReadStream(ctx context.Context, url, model string, respChan chan openai.ChatCompletionStreamResponse, errChan chan error) {
 	article, err := s.read(ctx, url)
 	if err != nil {
 		errChan <- err
@@ -160,57 +155,76 @@ func (s *ReadeaseReader) ReadStream(ctx context.Context, url string, respChan ch
 	}
 
 	if article != nil && article.Summary != "" {
-		slog.Debug("article alreay summaried", "url", url, "title", article.Title, "summary", article.Summary[:100])
-		respChan <- &claudeweb.ChatMessageResponse{
-			Completion: article.Summary,
-		}
+		slog.InfoContext(ctx, "article already summaries", "url", url, "title", article.Title, "summary", article.Summary[:100])
+		respChan <- openai.ChatCompletionStreamResponse{}
 		return
 	}
 
-	claude := llmclaudeweb.New()
-	cov, err := claude.CreateConversation(article.Title)
-	if err != nil {
-		errChan <- fmt.Errorf("failed create conversation err: %w", err)
-		return
-	}
-	prompt, err := buildPrompt(article)
-	if err != nil {
-		errChan <- fmt.Errorf("failed build prompt for summary, %w", err)
+	llmSvc := llm.New(model)
+	if llmSvc == nil {
+		slog.ErrorContext(ctx, "failed to create llm service", "model", model)
+		errChan <- fmt.Errorf("failed to create llm service: %w", err)
 		return
 	}
 
-	fullRespChan := make(chan string)
-	defer close(fullRespChan)
-	go claude.CreateChatMessageStreamWithFullResponse(cov.UUID, prompt, respChan, fullRespChan, errChan)
+	req := &openai.ChatCompletionRequest{
+		Model:       model,
+		Messages:    buildMessages(article),
+		MaxTokens:   8192,
+		Temperature: 0.7,
+		Stream:      true,
+	}
 
-	select {
-	case resp := <-fullRespChan:
-		// save summary from AI
-		summary, err := buildSummaryResponse(url, article.Title, resp)
-		if err != nil {
-			errChan <- fmt.Errorf("failed to build summary response %w", err)
+	dataChan := make(chan openai.ChatCompletionStreamResponse)
+	// defer close(dataChan)
+	innerErrChan := make(chan error)
+	// defer close(innerErrChan)
+
+	go llmSvc.CreateChatCompletionStream(ctx, req, dataChan, innerErrChan)
+	sb := strings.Builder{}
+	for {
+		select {
+		case resp := <-dataChan:
+			sb.WriteString(resp.Choices[0].Delta.Content)
+			respChan <- resp
+		case err := <-innerErrChan:
+			if errors.Is(err, io.EOF) {
+				summary, err := buildSummaryResponse(url, article.Title, sb.String())
+				if err != nil {
+					errChan <- fmt.Errorf("failed to build summary response %w", err)
+					return
+				}
+				article.Summary = summary
+				article.LlmModel = req.Model
+
+				if err := UpsertArticle(ctx, s.app.Dao(), article); err != nil {
+					slog.ErrorContext(ctx, "upsertArticle err", "err", err)
+				}
+				slog.InfoContext(ctx, "success stream summary article", "url", url, "title", article.Title, "summary", article.Summary[:100])
+			}
+			errChan <- err
 			return
+		case <-ctx.Done():
+			slog.WarnContext(ctx, "readease reader stream context done")
 		}
-
-		article.Summary = summary
-		article.LlmCovId = cov.UUID
-		article.LlmModel = "claude"
-
-		if err := UpsertReadeaseArticle(ctx, s.app.Dao(), article); err != nil {
-			slog.Error("upsertArticle err", "err", err)
-		}
-	case <-ctx.Done():
-		slog.Warn("context done")
 	}
 }
 
-func buildPrompt(article *ReadeaseArticle) (string, error) {
-	t := template.Must(template.New("promptTemplate").Parse(promptTemplate))
-	var prompt strings.Builder
-	if err := t.Execute(&prompt, article); err != nil {
-		return "", fmt.Errorf("summaryArticle execute template err: %v", err)
+func buildMessages(article *Article) []openai.ChatCompletionMessage {
+	return []openai.ChatCompletionMessage{
+		{
+			Role:    openai.ChatMessageRoleSystem,
+			Content: "You are my reading partner, you will help me summarize the article enclosed within the XML tag <article>.",
+		},
+		{
+			Role:    openai.ChatMessageRoleUser,
+			Content: fmt.Sprintf("Here is my article enclosed within the XML tag <article>.\n<article>%s</article>", article.Content),
+		},
+		{
+			Role:    openai.ChatMessageRoleUser,
+			Content: prompt,
+		},
 	}
-	return prompt.String(), nil
 }
 
 func buildSummaryResponse(url, title, summary string) (string, error) {
