@@ -31,3 +31,4 @@ bin/
 dist/
 settings_*.yaml
 app
+.DS_Store

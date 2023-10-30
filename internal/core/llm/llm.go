@@ -4,7 +4,9 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/Vaayne/aienvoy/internal/core/llm/llmbard"
 	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
+	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaudeweb"
 	"github.com/Vaayne/aienvoy/internal/core/llm/llmopenai"
 
 	"github.com/sashabaranov/go-openai"
@@ -29,6 +31,10 @@ func New(model string) Service {
 	// claude models
 	case llmclaude.ModelClaudeV2, llmclaude.ModelClaudeV1Dot3, llmclaude.ModelClaudeInstantV1Dot2:
 		return llmclaude.New()
+	case llmclaudeweb.ModelClaudeWeb:
+		return llmclaudeweb.New()
+	case llmbard.ModelBard:
+		return llmbard.New()
 	default:
 		slog.Error("unknown model", "model", model)
 		return nil

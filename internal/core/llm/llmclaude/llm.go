@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/Vaayne/aienvoy/internal/core/llm/dto"
 	"github.com/Vaayne/aienvoy/internal/core/llm/usage"
 
 	"github.com/sashabaranov/go-openai"
@@ -53,6 +54,7 @@ func getAWSConfig() *aws.Config {
 }
 
 func (c *Claude) CreateChatCompletion(ctx context.Context, req *openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error) {
+	slog.InfoContext(ctx, "chat with Claude API start", "req", req)
 	bedrockRequest := &BedrockRequest{}
 	bedrockRequest.FromOpenAIChatCompletionRequest(req)
 
@@ -63,14 +65,17 @@ func (c *Claude) CreateChatCompletion(ctx context.Context, req *openai.ChatCompl
 		ContentType: aws.String("application/json"),
 	})
 	if err != nil {
+		slog.ErrorContext(ctx, "chat with Claude API error", "err", err)
 		return openai.ChatCompletionResponse{}, err
 	}
 	resp := &BedrockResponse{}
 	resp.Unmarshal(output.Body)
+	slog.InfoContext(ctx, "chat with Claude API success")
 	return resp.ToOpenAIChatCompletionResponse(), nil
 }
 
 func (c *Claude) CreateChatCompletionStream(ctx context.Context, req *openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error) {
+	slog.InfoContext(ctx, "chat with Claude API stream start", "req", req)
 	bedrockRequest := &BedrockRequest{}
 	bedrockRequest.FromOpenAIChatCompletionRequest(req)
 
@@ -106,59 +111,35 @@ func (c *Claude) CreateChatCompletionStream(ctx context.Context, req *openai.Cha
 		}
 	}
 	_ = usage.SaveFromText(ctx, req.Model, sb.String())
+	slog.InfoContext(ctx, "chat with Claude API stream success")
 	errChan <- io.EOF
 }
 
 func (c *Claude) CreateCompletion(ctx context.Context, req *openai.CompletionRequest) (openai.CompletionResponse, error) {
-	bedrockRequest := &BedrockRequest{}
-	bedrockRequest.FromOpenAICompletionRequest(req)
-
-	output, err := c.client.InvokeModel(ctx, &bedrockruntime.InvokeModelInput{
-		ModelId:     aws.String(req.Model),
-		Body:        bedrockRequest.Marshal(),
-		ContentType: aws.String("application/json"),
-	})
+	chatReq := dto.CompletionRequestToChatCompletionRequest(*req)
+	resp, err := c.CreateChatCompletion(ctx, &chatReq)
 	if err != nil {
 		return openai.CompletionResponse{}, err
 	}
-	resp := &BedrockResponse{}
-	resp.Unmarshal(output.Body)
-	return resp.ToOpenAICompletionResponse(), nil
+	return dto.ChatCompletionResponseToCompletionResponse(resp), nil
 }
 
 func (c *Claude) CreateCompletionStream(ctx context.Context, req *openai.CompletionRequest, dataChan chan openai.CompletionResponse, errChan chan error) {
-	bedrockRequest := &BedrockRequest{}
-	bedrockRequest.FromOpenAICompletionRequest(req)
+	chatReq := dto.CompletionRequestToChatCompletionRequest(*req)
 
-	output, err := c.client.InvokeModelWithResponseStream(ctx, &bedrockruntime.InvokeModelWithResponseStreamInput{
-		ModelId:     aws.String(req.Model),
-		Body:        bedrockRequest.Marshal(),
-		ContentType: aws.String("application/json"),
-	})
-	if err != nil {
-		errChan <- err
-		return
-	}
-	sb := &strings.Builder{}
-	for event := range output.GetStream().Events() {
-		switch v := event.(type) {
-		case *types.ResponseStreamMemberChunk:
-			var resp BedrockResponse
-			err := json.NewDecoder(bytes.NewReader(v.Value.Bytes)).Decode(&resp)
-			if err != nil {
-				errChan <- err
-				return
-			}
-			sb.WriteString(resp.Completion)
-			dataChan <- resp.ToOpenAICompletionResponse()
-		case *types.UnknownUnionMember:
-			errChan <- fmt.Errorf("unknown union member: %s", v.Tag)
-			return
-		default:
-			errChan <- fmt.Errorf("unknown event type: %T", v)
+	respChan := make(chan openai.ChatCompletionStreamResponse)
+	innerErrorChan := make(chan error)
+
+	go c.CreateChatCompletionStream(ctx, &chatReq, respChan, innerErrorChan)
+
+	for {
+		select {
+		case resp := <-respChan:
+			data := dto.ChatCompletionStreamResponseToCompletionResponse(resp)
+			dataChan <- data
+		case err := <-innerErrorChan:
+			errChan <- err
 			return
 		}
 	}
-	_ = usage.SaveFromText(ctx, req.Model, sb.String())
-	errChan <- io.EOF
 }

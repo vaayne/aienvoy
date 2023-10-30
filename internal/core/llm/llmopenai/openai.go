@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/Vaayne/aienvoy/internal/core/llm/dto"
 	"github.com/Vaayne/aienvoy/internal/core/llm/usage"
 
 	"github.com/sashabaranov/go-openai"
@@ -20,19 +21,22 @@ func New() *OpenAI {
 }
 
 func (s *OpenAI) CreateChatCompletion(ctx context.Context, req *openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error) {
+	slog.InfoContext(ctx, "chat with OpenAI start", "req", req)
 	resp, err := getClientByModel(ctx, req.Model).CreateChatCompletion(ctx, *req)
 	if err != nil {
-		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err.Error())
+		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err)
 		return openai.ChatCompletionResponse{}, err
 	}
 	_ = usage.Save(ctx, req.Model, resp.Usage.TotalTokens)
+	slog.InfoContext(ctx, "chat with OpenAI success")
 	return resp, nil
 }
 
 func (s *OpenAI) CreateChatCompletionStream(ctx context.Context, req *openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error) {
+	slog.InfoContext(ctx, "chat with OpenAI stream start", "req", req)
 	stream, err := getClientByModel(ctx, req.Model).CreateChatCompletionStream(ctx, *req)
 	if err != nil {
-		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err.Error())
+		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err)
 		errChan <- err
 		return
 	}
@@ -44,10 +48,11 @@ func (s *OpenAI) CreateChatCompletionStream(ctx context.Context, req *openai.Cha
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				_ = usage.SaveFromText(ctx, req.Model, sb.String())
+				slog.InfoContext(ctx, "chat with OpenAI stream success")
 				errChan <- err
 				return
 			}
-			slog.ErrorContext(ctx, "chat stream receive error", "err", err.Error())
+			slog.ErrorContext(ctx, "chat with OpenAI stream error", "err", err)
 			errChan <- err
 			return
 		}
@@ -59,40 +64,28 @@ func (s *OpenAI) CreateChatCompletionStream(ctx context.Context, req *openai.Cha
 }
 
 func (s *OpenAI) CreateCompletion(ctx context.Context, req *openai.CompletionRequest) (openai.CompletionResponse, error) {
-	resp, err := getClientByModel(ctx, req.Model).CreateCompletion(ctx, *req)
+	chatReq := dto.CompletionRequestToChatCompletionRequest(*req)
+	resp, err := s.CreateChatCompletion(ctx, &chatReq)
 	if err != nil {
-		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err.Error())
 		return openai.CompletionResponse{}, err
 	}
-	_ = usage.Save(ctx, req.Model, resp.Usage.TotalTokens)
-	return resp, nil
+	return dto.ChatCompletionResponseToCompletionResponse(resp), nil
 }
 
 func (s *OpenAI) CreateCompletionStream(ctx context.Context, req *openai.CompletionRequest, dataChan chan openai.CompletionResponse, errChan chan error) {
-	stream, err := getClientByModel(ctx, req.Model).CreateCompletionStream(ctx, *req)
-	if err != nil {
-		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err.Error())
-		errChan <- err
-		return
-	}
+	chatReq := dto.CompletionRequestToChatCompletionRequest(*req)
+	respChan := make(chan openai.ChatCompletionStreamResponse)
+	innerErrorChan := make(chan error)
 
-	// log chat stream response
-	sb := &strings.Builder{}
+	go s.CreateChatCompletionStream(ctx, &chatReq, respChan, innerErrorChan)
+
 	for {
-		resp, err := stream.Recv()
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				_ = usage.SaveFromText(ctx, req.Model, sb.String())
-				errChan <- err
-				return
-			}
-			slog.ErrorContext(ctx, "chat stream receive error", "err", err.Error())
+		select {
+		case resp := <-respChan:
+			dataChan <- dto.ChatCompletionStreamResponseToCompletionResponse(resp)
+		case err := <-innerErrorChan:
 			errChan <- err
 			return
-		}
-		if len(resp.Choices) > 0 {
-			sb.WriteString(resp.Choices[0].Text)
-			dataChan <- resp
 		}
 	}
 }

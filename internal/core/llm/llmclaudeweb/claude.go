@@ -10,11 +10,15 @@ import (
 	"github.com/Vaayne/aienvoy/pkg/cookiecloud"
 )
 
-func New() *claudeweb.ClaudeWeb {
+type ClaudeWeb struct {
+	*claudeweb.ClaudeWeb
+}
+
+func New() *ClaudeWeb {
 	client, _ := cache.CacheFunc(func(params ...any) (any, error) {
-		return newClient(), nil
+		return &ClaudeWeb{newClient()}, nil
 	}, "claudeWebClientCacheKey", 2*time.Minute)
-	return client.(*claudeweb.ClaudeWeb)
+	return client.(*ClaudeWeb)
 }
 
 func newClient() *claudeweb.ClaudeWeb {

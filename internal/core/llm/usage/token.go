@@ -55,6 +55,10 @@ func SaveFromText(ctx context.Context, model string, text string) error {
 
 func Save(ctx context.Context, model string, usage int) error {
 	usageDao := ctxutils.GetDao(ctx)
+	if usageDao == nil {
+		slog.Error("save llm token usage error, dao is nil")
+		return nil
+	}
 
 	if err := usageDao.RunInTransaction(func(tx *daos.Dao) error {
 		return SaveLlmUsage(ctx, tx, &LlmUsages{
