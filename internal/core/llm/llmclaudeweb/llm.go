@@ -8,8 +8,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm/dto"
 	"github.com/Vaayne/aienvoy/internal/core/llm/usage"
+	"github.com/Vaayne/aienvoy/internal/core/llm/utils"
 	"github.com/Vaayne/aienvoy/pkg/claudeweb"
 	"github.com/sashabaranov/go-openai"
 )
@@ -72,30 +72,9 @@ func (cw *ClaudeWeb) CreateChatCompletionStream(ctx context.Context, req *openai
 }
 
 func (cw *ClaudeWeb) CreateCompletion(ctx context.Context, req *openai.CompletionRequest) (openai.CompletionResponse, error) {
-	chatReq := dto.CompletionRequestToChatCompletionRequest(*req)
-	resp, err := cw.CreateChatCompletion(ctx, &chatReq)
-	if err != nil {
-		return openai.CompletionResponse{}, err
-	}
-	return dto.ChatCompletionResponseToCompletionResponse(resp), nil
+	return utils.CreateCompletion(ctx, req, cw.CreateChatCompletion)
 }
 
 func (cw *ClaudeWeb) CreateCompletionStream(ctx context.Context, req *openai.CompletionRequest, dataChan chan openai.CompletionResponse, errChan chan error) {
-	chatReq := dto.CompletionRequestToChatCompletionRequest(*req)
-
-	respChan := make(chan openai.ChatCompletionStreamResponse)
-	innerErrorChan := make(chan error)
-
-	go cw.CreateChatCompletionStream(ctx, &chatReq, respChan, innerErrorChan)
-
-	for {
-		select {
-		case resp := <-respChan:
-			data := dto.ChatCompletionStreamResponseToCompletionResponse(resp)
-			dataChan <- data
-		case err := <-innerErrorChan:
-			errChan <- err
-			return
-		}
-	}
+	utils.CreateCompletionStream(ctx, req, dataChan, errChan, cw.CreateChatCompletionStream)
 }

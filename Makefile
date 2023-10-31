@@ -1,6 +1,6 @@
 
 static:
-	golangci-lint run --fix gofumpt ./...
+	golangci-lint run --fix ./...
 	pre-commit run --all-files
 
 run: build
