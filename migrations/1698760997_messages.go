@@ -11,94 +11,80 @@ import (
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
-const tableNameMidjourneyJobs = "midjourney_jobs"
+const tableNameMessages = "conversation_messages"
 
 func init() {
 	m.Register(func(db dbx.Builder) error {
 		collection := &models.Collection{
-			Name: tableNameMidjourneyJobs,
+			Name: tableNameMessages,
 			Type: models.CollectionTypeBase,
 			Indexes: types.JsonArray[string]{
-				"CREATE INDEX idx_channel_status ON midjourney_jobs (channel_id, status)",
+				"CREATE INDEX idx_conversation_id ON midjourney_jobs (conversation_id, created, updated)",
+				"CREATE INDEX idx_origin_message_id ON midjourney_jobs (origin_message_id, created)",
+				"CREATE INDEX idx_updated ON midjourney_jobs (updated, model)",
 			},
 			Schema: schema.NewSchema(&schema.SchemaField{
+				Name:     "user_id",
+				Type:     schema.FieldTypeText,
+				Required: true,
+			}, &schema.SchemaField{
+				Name:     "conversation_id",
+				Type:     schema.FieldTypeText,
+				Required: true,
+			}, &schema.SchemaField{
+				Name:     "origin_message_id",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "model",
+				Type:     schema.FieldTypeText,
+				Required: true,
+			}, &schema.SchemaField{
 				Name:     "prompt",
 				Type:     schema.FieldTypeText,
-				Required: false,
+				Required: true,
 			}, &schema.SchemaField{
-				Name:     "action",
+				Name:     "completion",
 				Type:     schema.FieldTypeText,
 				Required: false,
 			}, &schema.SchemaField{
-				Name:     "status",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "channel_id",
+				Name:     "max_tokens",
 				Type:     schema.FieldTypeNumber,
 				Required: false,
 			}, &schema.SchemaField{
-				Name:     "message_image_idx",
+				Name:     "temperature",
 				Type:     schema.FieldTypeNumber,
 				Required: false,
 			}, &schema.SchemaField{
-				Name:     "message_id",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "message_hash",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "message_content",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "image_name",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "image_url",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "image_content_type",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "telegram_file_id",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "image_size",
+				Name:     "prompt_token",
 				Type:     schema.FieldTypeNumber,
 				Required: false,
 			}, &schema.SchemaField{
-				Name:     "image_height",
+				Name:     "completion_token",
 				Type:     schema.FieldTypeNumber,
 				Required: false,
 			}, &schema.SchemaField{
-				Name:     "image_width",
+				Name:     "description",
 				Type:     schema.FieldTypeNumber,
 				Required: false,
 			}),
 		}
 		if err := daos.New(db).SaveCollection(collection); err != nil {
-			slog.Error("create table error", "err", err, "table", tableNameMidjourneyJobs)
+			slog.Error("create table error", "err", err, "table", tableNameMessages)
 			return err
 		}
-		slog.Info("create table success", "table", tableNameMidjourneyJobs)
+		slog.Info("create table success", "table", tableNameMessages)
 		return nil
 	}, func(db dbx.Builder) error {
-		collection, err := daos.New(db).FindCollectionByNameOrId(tableNameMidjourneyJobs)
+		collection, err := daos.New(db).FindCollectionByNameOrId(tableNameMessages)
 		if err != nil {
 			return err
 		}
 		if err := daos.New(db).DeleteCollection(collection); err != nil {
-			slog.Error("drop table error", "err", err, "table", tableNameMidjourneyJobs)
+			slog.Error("drop table error", "err", err, "table", tableNameMessages)
 			return err
 		}
-		slog.Info("drop table success", "table", tableNameMidjourneyJobs)
+		slog.Info("drop table success", "table", tableNameMessages)
 		return nil
 	})
 }
