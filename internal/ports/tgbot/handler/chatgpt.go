@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Vaayne/aienvoy/internal/core/llm"
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
 	"io"
 	"strings"
+
+	"github.com/Vaayne/aienvoy/internal/core/llm"
+	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/google/uuid"

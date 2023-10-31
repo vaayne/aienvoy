@@ -2,9 +2,10 @@ package handler
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
 	"github.com/sashabaranov/go-openai"
-	"strings"
 
 	tb "gopkg.in/telebot.v3"
 )

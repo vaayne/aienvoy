@@ -13,10 +13,10 @@ import (
 )
 
 func main() {
-	//model := llmclaude.ModelClaudeV1Dot3
-	//model := llmclaudeweb.ModelClaudeWeb
+	// model := llmclaude.ModelClaudeV1Dot3
+	// model := llmclaudeweb.ModelClaudeWeb
 	model := openai.GPT3Dot5Turbo
-	//model := llmbard.ModelBard
+	// model := llmbard.ModelBard
 	svc := llm.New(model)
 
 	ctx := context.Background()
