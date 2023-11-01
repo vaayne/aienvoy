@@ -46,7 +46,7 @@ func (p *Phind) CreateChatCompletion(ctx context.Context, req *openai.ChatComple
 							Message: openai.ChatCompletionMessage{
 								Role:    "assistant",
 								Content: sb.String(),
-								//FunctionCall: &openai.FunctionCall{Arguments: funcCallArgsBuilder.String(), Name: data.Choices[0].Delta.FunctionCall.Name},
+								// FunctionCall: &openai.FunctionCall{Arguments: funcCallArgsBuilder.String(), Name: data.Choices[0].Delta.FunctionCall.Name},
 							},
 							FinishReason: openai.FinishReason(data.Choices[0].FinishReason),
 						},

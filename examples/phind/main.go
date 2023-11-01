@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/Vaayne/aienvoy/pkg/phind"
 	"github.com/sashabaranov/go-openai"
-	"log/slog"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/cookiecloud"
