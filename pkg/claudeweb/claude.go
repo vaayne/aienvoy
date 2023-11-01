@@ -2,58 +2,69 @@ package claudeweb
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 
+	"github.com/Vaayne/aienvoy/pkg/session"
 	"github.com/google/uuid"
-	"github.com/wangluozhe/requests/models"
+	utls "github.com/refraction-networking/utls"
 )
 
 const (
-	DEFAULT_MODEL    = "claude-2"
-	DEFAULT_TIMEZONE = "Asia/Shanghai"
+	defaultModel     = "claude-2"
+	defaultTimezone  = "Asia/Shanghai"
+	defaultHost      = "https://claude.ai"
+	defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
 )
 
+// ClaudeWeb is a Claude request client
 type ClaudeWeb struct {
-	Client
-	orgId string
+	mu         sync.Mutex
+	session    *session.Session
+	sessionKey string
+	orgId      string
+	model      string
 }
 
-// NewClaudeWeb returns a new ClaudeWeb client
-func NewClaudeWeb(token string, opts ...Option) *ClaudeWeb {
-	opts = append(opts, WithSessionKey(token))
-	client := &ClaudeWeb{
-		Client: *NewClient(opts...),
+// New will return a Claude request client
+func New(sessionKey string) *ClaudeWeb {
+	claudeWeb := &ClaudeWeb{
+		session:    session.New(session.WithClientHelloID(utls.HelloChrome_100_PSK)),
+		sessionKey: sessionKey,
+		model:      defaultModel,
 	}
-	orgs, err := client.GetOrganizations()
+
+	orgs, err := claudeWeb.GetOrganizations()
 	if err != nil {
-		slog.Error("get organization err", "err", err)
+		slog.Error("GetOrganizations error", "err", err)
 		return nil
 	}
 	if len(orgs) == 0 {
-		slog.Error("no organization found")
+		slog.Error("GetOrganizations empty")
 		return nil
 	}
-	client.orgId = orgs[0].UUID
-	slog.Info(fmt.Sprintf("org info: %v", orgs[0]))
-	return client
+	slog.Info("success get claude org info", "org", orgs[0])
+	claudeWeb.orgId = orgs[0].UUID
+	return claudeWeb
 }
 
 func (c *ClaudeWeb) GetOrganizations() ([]*Organization, error) {
-	uri := "/api/organizations"
-
-	resp, err := c.Get(uri)
+	uri := fmt.Sprintf("%s/api/organizations", defaultHost)
+	req, _ := http.NewRequest(http.MethodGet, uri, nil)
+	resp, _, err := c.request(req)
 	if err != nil {
 		return nil, err
 	}
 
+	defer resp.Close()
 	var orgs []*Organization
-	body, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	body, err := io.ReadAll(resp)
 	if err != nil {
 		return nil, fmt.Errorf("GetOrganizations read response body err: %v", err)
 	}
@@ -66,17 +77,56 @@ func (c *ClaudeWeb) GetOrganizations() ([]*Organization, error) {
 	return orgs, nil
 }
 
-func (c *ClaudeWeb) ListConversations() ([]*Conversation, error) {
-	uri := fmt.Sprintf("/api/organizations/%s/chat_conversations", c.orgId)
+func (c *ClaudeWeb) request(req *http.Request) (io.ReadCloser, int, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.setReqHeaders(req)
+	r, err := c.session.Do(req)
+	if err != nil {
+		return nil, 0, fmt.Errorf("%s %s err: %v", req.Method, req.URL.String(), err)
+	}
+	if r.StatusCode >= http.StatusBadRequest {
+		return nil, r.StatusCode, fmt.Errorf("%s %s err: %v", req.Method, req.URL.String(), r.Status)
+	}
+	return r.Body, r.StatusCode, nil
+}
 
-	resp, err := c.Get(uri)
+func (c *ClaudeWeb) setReqHeaders(req *http.Request) {
+	req.Header.Set("User-Agent", defaultUserAgent)
+	req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+	req.Header.Set("Referer", defaultHost)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Sec-Fetch-Dest", "empty")
+	req.Header.Set("Sec-Fetch-Mode", "cors")
+	req.Header.Set("Sec-Fetch-Site", "same-origin")
+	req.Header.Set("Connection", "keep-alive")
+
+	req.AddCookie(&http.Cookie{
+		Name:  "sessionKey",
+		Value: c.sessionKey,
+	})
+}
+
+// GetOrgId will get organization id
+func (c *ClaudeWeb) GetOrgId() string {
+	return c.orgId
+}
+
+// GetModel will get default model
+func (c *ClaudeWeb) GetModel() string {
+	return c.model
+}
+
+func (c *ClaudeWeb) ListConversations() ([]*Conversation, error) {
+	uri := fmt.Sprintf("%s/api/organizations/%s/chat_conversations", defaultHost, c.orgId)
+	req, _ := http.NewRequest(http.MethodGet, uri, nil)
+	resp, _, err := c.request(req)
 	if err != nil {
 		return nil, err
 	}
-
 	var conversations []*Conversation
-	body, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	body, err := io.ReadAll(resp)
+	defer resp.Close()
 	if err != nil {
 		return nil, fmt.Errorf("ListConversations read response body err: %v", err)
 	}
@@ -92,15 +142,16 @@ func (c *ClaudeWeb) ListConversations() ([]*Conversation, error) {
 
 // GetConversation is used to get conversation
 func (c *ClaudeWeb) GetConversation(id string) (*Conversation, error) {
-	uri := fmt.Sprintf("/api/organizations/%s/chat_conversations/%s", c.orgId, id)
-	resp, err := c.Get(uri)
+	uri := fmt.Sprintf("%s/api/organizations/%s/chat_conversations/%s", defaultHost, c.orgId, id)
+	req, _ := http.NewRequest(http.MethodGet, uri, nil)
+	resp, _, err := c.request(req)
 	if err != nil {
-		return nil, fmt.Errorf("GetConversation err: %v", err)
+		return nil, err
 	}
 
 	var conversation Conversation
-	body, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	body, err := io.ReadAll(resp)
+	defer resp.Close()
 	if err != nil {
 		return nil, fmt.Errorf("GetConversation read response body err: %v", err)
 	}
@@ -114,30 +165,31 @@ func (c *ClaudeWeb) GetConversation(id string) (*Conversation, error) {
 
 // DeleteConversation is used to delete conversation
 func (c *ClaudeWeb) DeleteConversation(id string) error {
-	uri := fmt.Sprintf("/api/organizations/%s/chat_conversations/%s", c.orgId, id)
-	_, err := c.Delete(uri)
-	if err != nil {
-		return fmt.Errorf("DeleteConversation err: %v", err)
-	}
-
-	return nil
+	uri := fmt.Sprintf("%s/api/organizations/%s/chat_conversations/%s", defaultHost, c.orgId, id)
+	req, _ := http.NewRequest(http.MethodDelete, uri, nil)
+	_, _, err := c.request(req)
+	return err
 }
 
 // CreateConversation is used to create conversation
 func (c *ClaudeWeb) CreateConversation(name string) (*Conversation, error) {
-	uri := fmt.Sprintf("/api/organizations/%s/chat_conversations", c.orgId)
-	params := MixMap{
+	uri := fmt.Sprintf("%s/api/organizations/%s/chat_conversations", defaultHost, c.orgId)
+	params := map[string]any{
 		"name": name,
 		"uuid": uuid.NewString(),
 	}
-	resp, err := c.Post(uri, params, nil)
+
+	paramsBytes, _ := json.Marshal(params)
+	req, _ := http.NewRequest(http.MethodPost, uri, bytes.NewReader(paramsBytes))
+
+	resp, statusCode, err := c.request(req)
 	if err != nil {
-		return nil, fmt.Errorf("CreateConversation err: %v", err)
+		return nil, fmt.Errorf("CreateConversation status_code %d err: %v", statusCode, err)
 	}
 
 	var conversation Conversation
-	body, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	body, err := io.ReadAll(resp)
+	defer resp.Close()
 	if err != nil {
 		return nil, fmt.Errorf("CreateConversation read response body err: %v", err)
 	}
@@ -145,13 +197,13 @@ func (c *ClaudeWeb) CreateConversation(name string) (*Conversation, error) {
 	if err != nil {
 		return nil, fmt.Errorf("CreateConversation unmarshal response body err: %v", err)
 	}
-	slog.Debug("CreateConversation", "status_code", resp.StatusCode, "conversation", conversation)
+	slog.Debug("CreateConversation", "status_code", statusCode, "conversation", conversation)
 	return &conversation, nil
 }
 
 // UpdateConversation is used to update conversation
 func (c *ClaudeWeb) UpdateConversation(id string, name string) error {
-	uri := "/api/rename_chat"
+	uri := defaultHost + "/api/rename_chat"
 
 	updateReq := UpdateConversationRequest{
 		OrganizationUUID: c.orgId,
@@ -159,23 +211,24 @@ func (c *ClaudeWeb) UpdateConversation(id string, name string) error {
 		Title:            name,
 	}
 
-	params := NewMixMap(updateReq)
-	resp, err := c.Post(uri, params, nil)
+	paramsBytes, _ := json.Marshal(updateReq)
+	req, _ := http.NewRequest(http.MethodPost, uri, bytes.NewReader(paramsBytes))
+	_, statusCode, err := c.request(req)
 	if err != nil {
-		return fmt.Errorf("UpdateConversation status_code %d err: %v", resp.StatusCode, err)
+		return fmt.Errorf("UpdateConversation status_code %d err: %v", statusCode, err)
 	}
-	slog.Info("update conversation", "status_code", resp.StatusCode)
+	slog.Info("update conversation", "status_code", statusCode)
 	return nil
 }
 
-func (c *ClaudeWeb) createChatMessage(id, prompt string) (*models.Response, error) {
-	uri := "/api/append_message"
+func (c *ClaudeWeb) createChatMessage(id, prompt string) (io.ReadCloser, int, error) {
+	uri := defaultHost + "/api/append_message"
 
 	payload := CreateChatMessageRequest{
 		Completion: Completion{
 			Prompt:   prompt,
-			Timezone: DEFAULT_TIMEZONE,
-			Model:    DEFAULT_MODEL,
+			Timezone: defaultTimezone,
+			Model:    defaultModel,
 		},
 		OrganizationUUID: c.orgId,
 		ConversationUUID: id,
@@ -183,30 +236,28 @@ func (c *ClaudeWeb) createChatMessage(id, prompt string) (*models.Response, erro
 		Attachments:      []Attachment{},
 	}
 
-	params := NewMixMap(payload)
-	headers := map[string]string{
-		"Content-Type": "text/event-stream",
-	}
-	return c.Post(uri, params, headers)
+	paramsBytes, _ := json.Marshal(payload)
+	req, _ := http.NewRequest(http.MethodPost, uri, bytes.NewReader(paramsBytes))
+	req.Header.Set("Content-Type", "text/event-stream")
+	return c.request(req)
 }
 
 func (c *ClaudeWeb) CreateChatMessage(id, prompt string) (*ChatMessageResponse, error) {
-	resp, err := c.createChatMessage(id, prompt)
+	resp, statusCode, err := c.createChatMessage(id, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("CreateChatMessage err: %v", err)
 	}
 
-	if resp.StatusCode >= http.StatusBadRequest {
-		slog.Error("CreateChatMessage", "status_code", resp.StatusCode, "text", resp.Text)
-		return nil, fmt.Errorf("CreateChatMessage status_code %d err: %v", resp.StatusCode, err)
+	if statusCode >= http.StatusBadRequest {
+		slog.Error("CreateChatMessage", "status_code", statusCode, "text", "")
+		return nil, fmt.Errorf("CreateChatMessage status_code %d err: %v", statusCode, err)
 	}
-	slog.Info("CreateChatMessage", "status_code", resp.StatusCode)
+	slog.Info("CreateChatMessage", "status_code", statusCode)
 
 	var chatMessageResponse ChatMessageResponse
 	sb := strings.Builder{}
-	reader := bufio.NewReader(resp.Body)
-
-	defer resp.Body.Close()
+	reader := bufio.NewReader(resp)
+	defer resp.Close()
 
 	for {
 		line, err := reader.ReadBytes('\n')
@@ -229,35 +280,26 @@ func (c *ClaudeWeb) CreateChatMessage(id, prompt string) (*ChatMessageResponse, 
 }
 
 func (c *ClaudeWeb) CreateChatMessageStream(id, prompt string, streamChan chan *ChatMessageResponse, errChan chan error) {
-	c.CreateChatMessageStreamWithFullResponse(id, prompt, streamChan, nil, errChan)
-}
-
-func (c *ClaudeWeb) CreateChatMessageStreamWithFullResponse(id, prompt string, streamChan chan *ChatMessageResponse, fullRespChan chan string, errChan chan error) {
-	resp, err := c.createChatMessage(id, prompt)
+	resp, statusCode, err := c.createChatMessage(id, prompt)
 	if err != nil {
-		errChan <- fmt.Errorf("CreateChatMessage err: %v", err)
+		errChan <- fmt.Errorf("CreateChatMessage failed with status_code %d, err: %v", statusCode, err)
 		return
 	}
 
-	if resp.StatusCode >= http.StatusBadRequest {
-		slog.Error("CreateChatMessageStream", "status_code", resp.StatusCode, "text", resp.Text)
-		errChan <- fmt.Errorf("CreateChatMessage status_code %d err: %v", resp.StatusCode, err)
+	if statusCode >= http.StatusBadRequest {
+		slog.Error("CreateChatMessageStream", "status_code", statusCode, "text", "")
+		errChan <- fmt.Errorf("CreateChatMessage status_code %d err: %v", statusCode, err)
 		return
 	}
-	slog.Info("CreateChatMessageStream", "status_code", resp.StatusCode)
+	slog.Info("CreateChatMessageStream", "status_code", statusCode)
 
-	reader := bufio.NewReader(resp.Body)
-
-	defer resp.Body.Close()
-	fullResp := strings.Builder{}
+	reader := bufio.NewReader(resp)
+	defer resp.Close()
 
 	for {
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
-				if fullRespChan != nil {
-					fullRespChan <- fullResp.String()
-				}
 				slog.Info("done with CreateChatMessageStream", "cov_id", id)
 				errChan <- io.EOF
 				return
@@ -272,9 +314,6 @@ func (c *ClaudeWeb) CreateChatMessageStreamWithFullResponse(id, prompt string, s
 			if err != nil {
 				errChan <- fmt.Errorf("createChatMessageStream unmarshal response body err: %v", err)
 				return
-			}
-			if fullRespChan != nil {
-				fullResp.WriteString(chatMessageResponse.Completion)
 			}
 			streamChan <- &chatMessageResponse
 		}

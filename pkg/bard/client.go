@@ -13,6 +13,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Vaayne/aienvoy/pkg/session"
+	utls "github.com/refraction-networking/utls"
 )
 
 const (
@@ -35,7 +38,7 @@ type Client struct {
 	cfb2h   string
 	cookies map[string]string
 	timeout time.Duration
-	session *http.Client
+	session *session.Session
 }
 
 type ClientOption func(*Client)
@@ -48,18 +51,11 @@ func NewBardClient(token string, opts ...ClientOption) (*Client, error) {
 	jar, _ := cookiejar.New(nil)
 	b := &Client{
 		token:   token,
-		timeout: 10 * time.Second,
-		session: &http.Client{
-			Jar: jar,
-		},
+		session: session.New(session.WithCookieJar(jar), session.WithClientHelloID(utls.HelloChrome_100_PSK)),
 	}
 
 	for _, opt := range opts {
 		opt(b)
-	}
-
-	if b.timeout != 0 {
-		b.session.Timeout = b.timeout
 	}
 
 	// set cookies
@@ -89,12 +85,6 @@ func NewBardClient(token string, opts ...ClientOption) (*Client, error) {
 func WithTimeout(timeout time.Duration) ClientOption {
 	return func(bc *Client) {
 		bc.timeout = timeout
-	}
-}
-
-func WithSession(session *http.Client) ClientOption {
-	return func(bc *Client) {
-		bc.session = session
 	}
 }
 

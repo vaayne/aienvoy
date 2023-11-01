@@ -31,5 +31,5 @@ func newClient() *claudeweb.ClaudeWeb {
 		return nil
 	}
 
-	return claudeweb.NewClaudeWeb(sessionKey.Value)
+	return claudeweb.New(sessionKey.Value)
 }

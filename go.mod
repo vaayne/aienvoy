@@ -10,6 +10,7 @@ require (
 	github.com/pkoukk/tiktoken-go v0.1.5
 	github.com/pocketbase/dbx v1.10.0
 	github.com/pocketbase/pocketbase v0.16.8
+	github.com/refraction-networking/utls v1.3.2
 	github.com/sashabaranov/go-openai v1.15.4
 	github.com/spf13/viper v1.13.0
 	golang.org/x/sync v0.3.0
@@ -18,13 +19,10 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
-	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gaukas/godicttls v0.0.3 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/refraction-networking/utls v1.3.2 // indirect
-	github.com/wangluozhe/fhttp v0.0.0-20230512135433-5c2ebfb4868a // indirect
 )
 
 require (
@@ -88,7 +86,6 @@ require (
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	github.com/wangluozhe/requests v1.1.15
 	go.opencensus.io v0.24.0 // indirect
 	gocloud.dev v0.30.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect

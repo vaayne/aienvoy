@@ -18,7 +18,7 @@ func main() {
 		return
 	}
 
-	claude := claudeweb.NewClaudeWeb(sessionKey.Value)
+	claude := claudeweb.New(sessionKey.Value)
 	cov, err := claude.CreateConversation("new conversation")
 	if err != nil {
 		slog.Error("create claude conversation error", "err", err)
