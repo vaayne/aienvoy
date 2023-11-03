@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Vaayne/aienvoy/pkg/llm/bard"
@@ -30,25 +29,54 @@ func OnText(c tb.Context) error {
 		return c.Reply("empty message")
 	}
 
-	// start new conversation
-	if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandBard)) {
-		return onLLMChat(c, bard.ModelBard)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandRead)) {
-		return OnReadEase(c)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandChatGPT35)) {
-		return onLLMChat(c, openai.ModelGPT3Dot5Turbo)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandChatGPT4)) {
-		return onLLMChat(c, openai.ModelGPT4)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeWeb)) {
-		return onLLMChat(c, claudeweb.ModelClaudeWeb)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeV2)) {
-		return onLLMChat(c, claude.ModelClaudeV2)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeV1)) {
-		return onLLMChat(c, claude.ModelClaudeV1Dot3)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeInstant)) {
-		return onLLMChat(c, claude.ModelClaudeInstantV1Dot2)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandImagine)) {
-		return OnMidJourneyImagine(c)
+	model := ""
+	prompt := text
+	if text[0] == '/' {
+		texts := strings.Split(text, " ")
+		model = texts[0][1:]
+		if len(texts) > 1 {
+			prompt = strings.Join(texts[1:], " ")
+		} else {
+			prompt = "hello"
+		}
+
+		switch model {
+		case CommandBard:
+			model = bard.ModelBard
+		case CommandRead:
+			return OnReadEase(c)
+		case CommandChatGPT35:
+			model = openai.ModelGPT3Dot5Turbo
+		case CommandChatGPT4:
+			model = openai.ModelGPT4
+		case CommandClaudeWeb:
+			model = claudeweb.ModelClaudeWeb
+		case CommandClaudeV2:
+			model = claude.ModelClaudeV2
+		case CommandClaudeV1:
+			model = claude.ModelClaudeV1Dot3
+		case CommandClaudeInstant:
+			model = claude.ModelClaudeInstantV1Dot2
+		case CommandImagine:
+			return OnMidJourneyImagine(c)
+		default:
+			return c.Reply("Unsupported command!")
+		}
 	}
+
+	// 1. create new conversation, no cache, model != ""
+	// 2. create new conversation, use cache, model != ""
+	// 3. use cache, model == ""
+	llmCache, ok := getLLMConversationFromCache()
+	if ok {
+		if model == "" {
+			model = llmCache.Model
+		}
+		return onLLMChat(c, llmCache.ConversationId, model, prompt)
+	}
+	if model != "" {
+		return onLLMChat(c, "", model, prompt)
+	}
+
 	return c.Reply("Unsupported message")
 }

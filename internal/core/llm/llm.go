@@ -75,6 +75,10 @@ func init() {
 	}
 }
 
+func newDao() llm.Dao {
+	return llm.DefaultDao
+}
+
 func New(model string) Service {
 	createCli, ok := modelClientMappings[model]
 	if ok {

@@ -13,21 +13,18 @@ import (
 )
 
 type Phind struct {
-	*Client
-	llm.LLM
+	*llm.LLM
 }
 
-func New(cookies []*http.Cookie) *Phind {
-	cli := NewClient(cookies)
+func New(cookies []*http.Cookie, dao llm.Dao) *Phind {
 	return &Phind{
-		Client: cli,
-		LLM:    llm.LLM{},
+		LLM: llm.New(dao, NewClient(cookies)),
 	}
 }
 
 const ModelPhindV1 = "phind"
 
-func (p *Phind) ListModels() []string {
+func (p *Client) ListModels() []string {
 	return ListModels()
 }
 
@@ -35,7 +32,7 @@ func ListModels() []string {
 	return []string{ModelPhindV1}
 }
 
-func (p *Phind) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
+func (p *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
 	slog.InfoContext(ctx, "chat start", "llm", req.Model, "is_stream", false)
 	payload := &Request{}
 	payload.FromChatCompletionRequest(req)
@@ -79,7 +76,7 @@ func (p *Phind) CreateChatCompletion(ctx context.Context, req llm.ChatCompletion
 	}
 }
 
-func (p *Phind) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
+func (p *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	slog.InfoContext(ctx, "chat start", "llm", req.Model, "is_stream", true)
 	payload := &Request{}
 	payload.FromChatCompletionRequest(req)
@@ -87,7 +84,7 @@ func (p *Phind) CreateChatCompletionStream(ctx context.Context, req llm.ChatComp
 	messageChan := make(chan llm.ChatCompletionStreamResponse)
 	innerErrChan := make(chan error)
 
-	go p.Client.CreateCompletion(ctx, payload, messageChan, innerErrChan)
+	go p.CreateCompletion(ctx, payload, messageChan, innerErrChan)
 	sb := strings.Builder{}
 
 	for {

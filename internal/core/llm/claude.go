@@ -12,7 +12,7 @@ import (
 )
 
 func newClaude() *claude.Claude {
-	return claude.New(getAWSConfig())
+	return claude.New(getAWSConfig(), newDao())
 }
 
 func getAWSConfig() aws.Config {

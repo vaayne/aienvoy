@@ -182,7 +182,7 @@ func (r *ChatCompletionStreamResponse) ToChatCompletionResponse() ChatCompletion
 			Index: choice.Index,
 			Message: ChatCompletionMessage{
 				Content: choice.Delta.Content,
-				Role:    choice.Delta.Role,
+				Role:    ChatMessageRoleAssistant,
 			},
 			FinishReason: choice.FinishReason,
 		}

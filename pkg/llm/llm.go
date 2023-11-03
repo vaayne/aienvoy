@@ -11,20 +11,22 @@ import (
 
 var NotImplementError = errors.New("the method not implement")
 
+type client interface {
+	ListModels() []string
+	CreateChatCompletion(ctx context.Context, req ChatCompletionRequest) (ChatCompletionResponse, error)
+	CreateChatCompletionStream(ctx context.Context, req ChatCompletionRequest, respChan chan ChatCompletionStreamResponse, errChan chan error)
+}
+
 type LLM struct {
+	client
 	dao Dao
 }
 
-func (l *LLM) ListModels() []string {
-	panic(NotImplementError)
-}
-
-func (l *LLM) CreateChatCompletion(ctx context.Context, req ChatCompletionRequest) (ChatCompletionResponse, error) {
-	panic(NotImplementError)
-}
-
-func (l *LLM) CreateChatCompletionStream(ctx context.Context, req ChatCompletionRequest, respChan chan ChatCompletionStreamResponse, errChan chan error) {
-	panic(NotImplementError)
+func New(dao Dao, c client) *LLM {
+	return &LLM{
+		dao:    dao,
+		client: c,
+	}
 }
 
 func (l *LLM) CreateConversation(ctx context.Context, name string) (Conversation, error) {
@@ -80,7 +82,7 @@ func (l *LLM) CreateMessage(ctx context.Context, conversationId string, req Chat
 	}
 	reqMessages = append(reqMessages, originReqMessages...)
 	req.Messages = reqMessages
-	resp, err := l.CreateChatCompletion(ctx, req)
+	resp, err := l.client.CreateChatCompletion(ctx, req)
 	if err != nil {
 		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId)
 		return Message{}, err
@@ -104,14 +106,14 @@ func (l *LLM) CreateMessageStream(ctx context.Context, conversationId string, re
 		errChan <- errors.New("conversation id is empty")
 		return
 	}
-	cov, err := l.dao.GetConversation(ctx, conversationId)
+	_, err := l.dao.GetConversation(ctx, conversationId)
 	if err != nil {
 		slog.ErrorContext(ctx, "get conversation for create message error", "err", err, "conversation_id", conversationId)
 		errChan <- err
 		return
 	}
 
-	messages, err := l.ListMessages(ctx, cov.Id)
+	messages, err := l.ListMessages(ctx, conversationId)
 	if err != nil {
 		slog.ErrorContext(ctx, "list messages for create message error", "err", err, "conversation_id", conversationId)
 		errChan <- err
@@ -129,7 +131,12 @@ func (l *LLM) CreateMessageStream(ctx context.Context, conversationId string, re
 	reqMessages = append(reqMessages, originReqMessages...)
 	req.Messages = reqMessages
 
-	go l.CreateChatCompletionStream(ctx, req, respChan, errChan)
+	slog.Info("create message stream", "req", req)
+
+	innerDataChan := make(chan ChatCompletionStreamResponse)
+	innerErrChan := make(chan error)
+
+	go l.client.CreateChatCompletionStream(ctx, req, innerDataChan, innerErrChan)
 
 	sb := strings.Builder{}
 
@@ -137,9 +144,10 @@ func (l *LLM) CreateMessageStream(ctx context.Context, conversationId string, re
 
 	for {
 		select {
-		case resp = <-respChan:
+		case resp = <-innerDataChan:
 			sb.WriteString(resp.Choices[0].Delta.Content)
-		case err := <-errChan:
+			respChan <- resp
+		case err := <-innerErrChan:
 			if errors.Is(err, io.EOF) {
 				req.Messages = originReqMessages
 				chatCompletionResponse := resp.ToChatCompletionResponse()
@@ -153,7 +161,7 @@ func (l *LLM) CreateMessageStream(ctx context.Context, conversationId string, re
 					Response:       chatCompletionResponse,
 				})
 			} else {
-				slog.Error("create message error", "err", err, "conversation_id", conversationId)
+				slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId)
 			}
 			errChan <- err
 			return
@@ -165,18 +173,18 @@ func (l *LLM) CreateMessageStream(ctx context.Context, conversationId string, re
 
 func (l *LLM) ListMessages(ctx context.Context, conversationId string) ([]Message, error) {
 	messages, err := l.dao.ListMessages(ctx, conversationId)
-	slog.Info("list messages", "conversation_id", conversationId, "err", err)
+	slog.InfoContext(ctx, "list messages", "conversation_id", conversationId, "err", err)
 	return messages, err
 }
 
 func (l *LLM) GetMessage(ctx context.Context, id string) (Message, error) {
 	message, err := l.dao.GetMessage(ctx, id)
-	slog.Info("get message", "message_id", message, "err", err)
+	slog.InfoContext(ctx, "get message", "message_id", message, "err", err)
 	return message, err
 }
 
 func (l *LLM) DeleteMessage(ctx context.Context, id string) error {
 	err := l.dao.DeleteMessage(ctx, id)
-	slog.Info("delete message", "id", id, "err", err)
+	slog.InfoContext(ctx, "delete message", "id", id, "err", err)
 	return err
 }

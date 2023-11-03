@@ -5,16 +5,12 @@ import (
 	"log/slog"
 
 	"github.com/Vaayne/aienvoy/internal/core/midjourney"
-	"github.com/Vaayne/aienvoy/internal/core/readease"
-	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	_ "github.com/Vaayne/aienvoy/internal/pkg/logger"
 	"github.com/Vaayne/aienvoy/internal/ports/httpserver"
 	"github.com/Vaayne/aienvoy/internal/ports/tgbot"
 	_ "github.com/Vaayne/aienvoy/migrations"
 
 	"github.com/pocketbase/pocketbase/tools/cron"
-
-	tb "gopkg.in/telebot.v3"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -42,22 +38,22 @@ func main() {
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		scheduler := cron.New()
 		// every 5 minutes to run readease job
-		if config.GetConfig().ReadEase.TelegramChannel != 0 {
-			scheduler.MustAdd("readease", "0 * * * *", func() {
-				summaries, err := readease.PeriodJob(app)
-				if err != nil {
-					slog.Error("run period readease job error", "err", err)
-				}
-				bot := tgbot.DefaultBot(app)
-				channel := tb.ChatID(config.GetConfig().ReadEase.TelegramChannel)
-				for _, summary := range summaries {
-					msg, err := bot.Send(channel, summary)
-					if err != nil {
-						slog.Error("failed to send readease message to channel", "err", err, "msg", msg)
-					}
-				}
-			})
-		}
+		// if config.GetConfig().ReadEase.TelegramChannel != 0 {
+		// 	scheduler.MustAdd("readease", "0 * * * *", func() {
+		// 		summaries, err := readease.PeriodJob(app)
+		// 		if err != nil {
+		// 			slog.Error("run period readease job error", "err", err)
+		// 		}
+		// 		bot := tgbot.DefaultBot(app)
+		// 		channel := tb.ChatID(config.GetConfig().ReadEase.TelegramChannel)
+		// 		for _, summary := range summaries {
+		// 			msg, err := bot.Send(channel, summary)
+		// 			if err != nil {
+		// 				slog.Error("failed to send readease message to channel", "err", err, "msg", msg)
+		// 			}
+		// 		}
+		// 	})
+		// }
 		scheduler.Start()
 		return nil
 	})

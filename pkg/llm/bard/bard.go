@@ -16,26 +16,24 @@ func ListModels() []string {
 }
 
 type Bard struct {
-	*Client
 	*llm.LLM
 }
 
-func New(token string, opts ...ClientOption) (*Bard, error) {
+func New(token string, dao llm.Dao, opts ...ClientOption) (*Bard, error) {
 	client, err := NewClient(token, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return &Bard{
-		Client: client,
-		LLM:    &llm.LLM{},
+		LLM: llm.New(dao, client),
 	}, nil
 }
 
-func (c *Bard) ListModels() []string {
+func (c *Client) ListModels() []string {
 	return ListModels()
 }
 
-func (c *Bard) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
+func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
 	slog.InfoContext(ctx, "chat with Google Bard start")
 	prompt := req.ToPrompt()
 	resp, err := c.Ask(prompt, "", "", "", 0)
@@ -48,7 +46,7 @@ func (c *Bard) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionR
 	return res, nil
 }
 
-func (c *Bard) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
+func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	slog.InfoContext(ctx, "chat with Google Bard stream start")
 	prompt := req.ToPrompt()
 	resp, err := c.Ask(prompt, "", "", "", 0)

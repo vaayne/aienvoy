@@ -35,7 +35,7 @@ func newBardClient() (*bard.Bard, error) {
 		return val.Value
 	}
 
-	return bard.New(getCookie("__Secure-1PSID"), bard.WithCookies(map[string]string{
+	return bard.New(getCookie("__Secure-1PSID"), newDao(), bard.WithCookies(map[string]string{
 		"__Secure-1PSID":   getCookie("__Secure-1PSID"),
 		"__Secure-1PSIDCC": getCookie("__Secure-1PSIDCC"),
 		"__Secure-1PSIDTS": getCookie("__Secure-1PSIDTS"),

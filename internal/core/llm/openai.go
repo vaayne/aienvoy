@@ -33,5 +33,5 @@ func newOpenai() *openai.OpenAI {
 		return nil
 	}
 
-	return openai.New(clientCfg)
+	return openai.New(clientCfg, newDao())
 }

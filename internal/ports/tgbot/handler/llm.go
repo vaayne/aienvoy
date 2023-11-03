@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 
 	innerllm "github.com/Vaayne/aienvoy/internal/core/llm"
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
@@ -13,21 +12,7 @@ import (
 	tb "gopkg.in/telebot.v3"
 )
 
-func onLLMChat(c tb.Context, model string) error {
-	text := strings.TrimSpace(c.Text()[5:])
-	if text == "" {
-		text = "hello"
-	}
-	llmCache, ok := getLLMConversationFromCache()
-	conversationId := ""
-	if ok && llmCache.Model != model {
-		conversationId = llmCache.ConversationId
-	}
-
-	return askLLM(c, conversationId, model, text)
-}
-
-func askLLM(c tb.Context, conversationId, model, prompt string) error {
+func onLLMChat(c tb.Context, conversationId, model, prompt string) error {
 	ctx := c.Get(config.ContextKeyContext).(context.Context)
 	svc := innerllm.New(model)
 	if conversationId == "" {

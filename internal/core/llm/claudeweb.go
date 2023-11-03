@@ -28,5 +28,5 @@ func newClaudeWebClient() *claudeweb.ClaudeWeb {
 		return nil
 	}
 
-	return claudeweb.New(sessionKey.Value)
+	return claudeweb.New(sessionKey.Value, newDao())
 }

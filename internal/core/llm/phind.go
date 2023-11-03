@@ -34,5 +34,5 @@ func newPhindClient() *phind.Phind {
 		return nil
 	}
 	cookies = append(cookies, cookies1...)
-	return phind.New(cookies)
+	return phind.New(cookies, newDao())
 }

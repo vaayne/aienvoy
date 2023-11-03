@@ -19,15 +19,12 @@ const (
 )
 
 type OpenAI struct {
-	*Client
-	llm.LLM
+	*llm.LLM
 }
 
-func New(cfg openai.ClientConfig) *OpenAI {
-	cli := openai.NewClientWithConfig(cfg)
+func New(cfg openai.ClientConfig, dao llm.Dao) *OpenAI {
 	return &OpenAI{
-		Client: &Client{cli},
-		LLM:    llm.LLM{},
+		llm.New(dao, NewClient(cfg)),
 	}
 }
 
@@ -37,11 +34,11 @@ func ListModels() []string {
 	}
 }
 
-func (s *OpenAI) ListModels() []string {
+func (s *Client) ListModels() []string {
 	return ListModels()
 }
 
-func (s *OpenAI) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
+func (s *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
 	slog.InfoContext(ctx, "chat with OpenAI start")
 	openaiReq := toOpenAIChatCompletionRequest(req)
 	resp, err := s.Client.CreateChatCompletion(ctx, openaiReq)
@@ -53,7 +50,7 @@ func (s *OpenAI) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 	return toLLMChatCompletionResponse(resp), nil
 }
 
-func (s *OpenAI) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
+func (s *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	slog.InfoContext(ctx, "chat with OpenAI stream start")
 	openaiReq := toOpenAIChatCompletionRequest(req)
 	stream, err := s.Client.CreateChatCompletionStream(ctx, openaiReq)
@@ -83,4 +80,3 @@ func (s *OpenAI) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 		}
 	}
 }
-
