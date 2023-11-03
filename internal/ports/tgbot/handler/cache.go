@@ -3,15 +3,12 @@ package handler
 import (
 	"time"
 
-	"github.com/sashabaranov/go-openai"
-
 	"github.com/Vaayne/aienvoy/pkg/cache"
 )
 
 type LLMCache struct {
-	Model        string                         // Model name
-	Conversation string                         // Conversation ID info
-	Messages     []openai.ChatCompletionMessage // history messages
+	Model          string // Model name
+	ConversationId string // Conversation ID info
 }
 
 const llmCacheKey = "telegramLLMCacheKey"

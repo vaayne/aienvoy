@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
-	"github.com/sashabaranov/go-openai"
+	"github.com/Vaayne/aienvoy/pkg/llm/bard"
+	"github.com/Vaayne/aienvoy/pkg/llm/claude"
+	"github.com/Vaayne/aienvoy/pkg/llm/claudeweb"
+	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 
 	tb "gopkg.in/telebot.v3"
 )
@@ -30,39 +32,23 @@ func OnText(c tb.Context) error {
 
 	// start new conversation
 	if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandBard)) {
-		return OnBardChat(c)
+		return onLLMChat(c, bard.ModelBard)
 	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandRead)) {
 		return OnReadEase(c)
 	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandChatGPT35)) {
-		return OnChatGPT35(c)
+		return onLLMChat(c, openai.ModelGPT3Dot5Turbo)
 	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandChatGPT4)) {
-		return OnChatGPT4(c)
+		return onLLMChat(c, openai.ModelGPT4)
 	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeWeb)) {
-		return OnClaudeChat(c)
+		return onLLMChat(c, claudeweb.ModelClaudeWeb)
 	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeV2)) {
-		return OnClaudeV2(c)
+		return onLLMChat(c, claude.ModelClaudeV2)
 	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeV1)) {
-		return OnClaudeV1Dot3(c)
+		return onLLMChat(c, claude.ModelClaudeV1Dot3)
 	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeInstant)) {
-		return OnClaudeInstant(c)
+		return onLLMChat(c, claude.ModelClaudeInstantV1Dot2)
 	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandImagine)) {
 		return OnMidJourneyImagine(c)
-	}
-
-	// continue conversation
-	llmCache, ok := getLLMConversationFromCache()
-	if !ok {
-		return c.Reply("Do not have any conversation, please use command to start a new conversation")
-	}
-
-	switch llmCache.Model {
-	case bardModelName:
-		bardConversationInfos := strings.Split(llmCache.Conversation, "-")
-		return askBard(c, text, bardConversationInfos[0], bardConversationInfos[1], bardConversationInfos[2])
-	case claudeModelName:
-		return askClaude(c, llmCache.Conversation, text)
-	case openai.GPT4, openai.GPT3Dot5Turbo, llmclaude.ModelClaudeV1Dot3, llmclaude.ModelClaudeV2, llmclaude.ModelClaudeInstantV1Dot2:
-		return askLLM(c, llmCache.Conversation, llmCache.Model, text, llmCache.Messages)
 	}
 	return c.Reply("Unsupported message")
 }

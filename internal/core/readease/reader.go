@@ -9,10 +9,9 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm"
-	"github.com/sashabaranov/go-openai"
-
+	innerllm "github.com/Vaayne/aienvoy/internal/core/llm"
 	"github.com/Vaayne/aienvoy/internal/pkg/parser"
+	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/pocketbase/pocketbase"
 )
 
@@ -115,13 +114,13 @@ func (s *Reader) Read(ctx context.Context, url, model string) (*Article, error) 
 	}
 
 	// summary article
-	llmSvc := llm.New(model)
+	llmSvc := innerllm.New(model)
 	if llmSvc == nil {
 		slog.Error("failed to create llm service", "model", model)
 		return nil, fmt.Errorf("failed to create llm service: %w", err)
 	}
 
-	req := &openai.ChatCompletionRequest{
+	req := llm.ChatCompletionRequest{
 		Model:       model,
 		Messages:    buildMessages(article),
 		MaxTokens:   8192,
@@ -147,7 +146,7 @@ func (s *Reader) Read(ctx context.Context, url, model string) (*Article, error) 
 	return article, nil
 }
 
-func (s *Reader) ReadStream(ctx context.Context, url, model string, respChan chan openai.ChatCompletionStreamResponse, errChan chan error) {
+func (s *Reader) ReadStream(ctx context.Context, url, model string, respChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	article, err := s.read(ctx, url)
 	if err != nil {
 		errChan <- err
@@ -156,18 +155,18 @@ func (s *Reader) ReadStream(ctx context.Context, url, model string, respChan cha
 
 	if article != nil && article.Summary != "" {
 		slog.InfoContext(ctx, "article already summaries", "url", url, "title", article.Title, "summary", article.Summary[:100])
-		respChan <- openai.ChatCompletionStreamResponse{}
+		respChan <- llm.ChatCompletionStreamResponse{}
 		return
 	}
 
-	llmSvc := llm.New(model)
+	llmSvc := innerllm.New(model)
 	if llmSvc == nil {
 		slog.ErrorContext(ctx, "failed to create llm service", "model", model)
 		errChan <- fmt.Errorf("failed to create llm service: %w", err)
 		return
 	}
 
-	req := &openai.ChatCompletionRequest{
+	req := llm.ChatCompletionRequest{
 		Model:       model,
 		Messages:    buildMessages(article),
 		MaxTokens:   8192,
@@ -175,7 +174,7 @@ func (s *Reader) ReadStream(ctx context.Context, url, model string, respChan cha
 		Stream:      true,
 	}
 
-	dataChan := make(chan openai.ChatCompletionStreamResponse)
+	dataChan := make(chan llm.ChatCompletionStreamResponse)
 	// defer close(dataChan)
 	innerErrChan := make(chan error)
 	// defer close(innerErrChan)
@@ -210,18 +209,18 @@ func (s *Reader) ReadStream(ctx context.Context, url, model string, respChan cha
 	}
 }
 
-func buildMessages(article *Article) []openai.ChatCompletionMessage {
-	return []openai.ChatCompletionMessage{
+func buildMessages(article *Article) []llm.ChatCompletionMessage {
+	return []llm.ChatCompletionMessage{
 		{
-			Role:    openai.ChatMessageRoleSystem,
+			Role:    llm.ChatMessageRoleSystem,
 			Content: "You are my reading partner, you will help me summarize the article enclosed within the XML tag <article>.",
 		},
 		{
-			Role:    openai.ChatMessageRoleUser,
+			Role:    llm.ChatMessageRoleUser,
 			Content: fmt.Sprintf("Here is my article enclosed within the XML tag <article>.\n<article>%s</article>", article.Content),
 		},
 		{
-			Role:    openai.ChatMessageRoleUser,
+			Role:    llm.ChatMessageRoleUser,
 			Content: prompt,
 		},
 	}

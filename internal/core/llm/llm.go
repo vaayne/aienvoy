@@ -4,39 +4,82 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmbard"
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaudeweb"
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmopenai"
-
-	"github.com/sashabaranov/go-openai"
+	"github.com/Vaayne/aienvoy/pkg/llm"
+	"github.com/Vaayne/aienvoy/pkg/llm/bard"
+	"github.com/Vaayne/aienvoy/pkg/llm/claude"
+	"github.com/Vaayne/aienvoy/pkg/llm/claudeweb"
+	"github.com/Vaayne/aienvoy/pkg/llm/openai"
+	"github.com/Vaayne/aienvoy/pkg/llm/phind"
 )
 
 type Service interface {
-	CreateChatCompletion(ctx context.Context, req *openai.ChatCompletionRequest) (openai.ChatCompletionResponse, error)
-	CreateChatCompletionStream(ctx context.Context, req *openai.ChatCompletionRequest, dataChan chan openai.ChatCompletionStreamResponse, errChan chan error)
+	ListModels() []string
+	CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error)
+	CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, respChan chan llm.ChatCompletionStreamResponse, errChan chan error)
 
-	CreateCompletion(ctx context.Context, req *openai.CompletionRequest) (openai.CompletionResponse, error)
-	CreateCompletionStream(ctx context.Context, req *openai.CompletionRequest, dataChan chan openai.CompletionResponse, errChan chan error)
+	CreateConversation(ctx context.Context, name string) (llm.Conversation, error)
+	ListConversations(ctx context.Context) ([]llm.Conversation, error)
+	GetConversation(ctx context.Context, id string) (llm.Conversation, error)
+	DeleteConversation(ctx context.Context, id string) error
+
+	CreateMessageStream(ctx context.Context, conversationId string, req llm.ChatCompletionRequest, respChan chan llm.ChatCompletionStreamResponse, errChan chan error)
+	CreateMessage(ctx context.Context, conversationId string, req llm.ChatCompletionRequest) (llm.Message, error)
+	ListMessages(ctx context.Context, conversationId string) ([]llm.Message, error)
+	GetMessage(ctx context.Context, id string) (llm.Message, error)
+	DeleteMessage(ctx context.Context, id string) error
+}
+
+var modelClientMappings map[string]func() Service
+
+func init() {
+	modelClientMappings = make(map[string]func() Service)
+
+	// bard
+	createBard := func() Service {
+		return newBard()
+	}
+	for _, model := range bard.ListModels() {
+		modelClientMappings[model] = createBard
+	}
+
+	// claude
+	createClaude := func() Service {
+		return newClaude()
+	}
+	for _, model := range claude.ListModels() {
+		modelClientMappings[model] = createClaude
+	}
+
+	// claude web
+	createClaudeWeb := func() Service {
+		return newClaudeWeb()
+	}
+	for _, model := range claudeweb.ListModels() {
+		modelClientMappings[model] = createClaudeWeb
+	}
+
+	// openai
+	createOpenai := func() Service {
+		return newOpenai()
+	}
+	for _, model := range openai.ListModels() {
+		modelClientMappings[model] = createOpenai
+	}
+
+	// phind
+	createPhind := func() Service {
+		return newPhind()
+	}
+	for _, model := range phind.ListModels() {
+		modelClientMappings[model] = createPhind
+	}
 }
 
 func New(model string) Service {
-	switch model {
-	// openai base model
-	case openai.GPT3Dot5Turbo, openai.GPT3Dot5Turbo16K, openai.GPT4, openai.GPT432K, openai.GPT3Dot5TurboInstruct:
-		return llmopenai.New()
-	// openai time limited model
-	case openai.GPT3Dot5Turbo0301, openai.GPT3Dot5Turbo0613, openai.GPT3Dot5Turbo16K0613, openai.GPT40314, openai.GPT40613, openai.GPT432K0314, openai.GPT432K0613:
-		return llmopenai.New()
-	// claude models
-	case llmclaude.ModelClaudeV2, llmclaude.ModelClaudeV1Dot3, llmclaude.ModelClaudeInstantV1Dot2:
-		return llmclaude.New()
-	case llmclaudeweb.ModelClaudeWeb:
-		return llmclaudeweb.New()
-	case llmbard.ModelBard:
-		return llmbard.New()
-	default:
-		slog.Error("unknown model", "model", model)
-		return nil
+	createCli, ok := modelClientMappings[model]
+	if ok {
+		return createCli()
 	}
+	slog.Error("unknown model", "model", model)
+	return nil
 }
