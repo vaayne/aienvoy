@@ -10,6 +10,7 @@ import (
 	"github.com/Vaayne/aienvoy/pkg/llm/claudeweb"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 	"github.com/Vaayne/aienvoy/pkg/llm/phind"
+	"github.com/pocketbase/pocketbase/daos"
 )
 
 type Service interface {

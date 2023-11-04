@@ -44,6 +44,7 @@ func (l *LLMHandler) ListConversations(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, covs)
 }
+
 func (l *LLMHandler) GetConversation(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.PathParam("id")
@@ -137,6 +138,7 @@ func (l *LLMHandler) ListMessages(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, msgs)
 }
+
 func (l *LLMHandler) GetMessage(c echo.Context) error {
 	ctx := c.Request().Context()
 	// conversationId := c.PathParam("conversationId")
