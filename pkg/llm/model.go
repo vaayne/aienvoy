@@ -84,13 +84,34 @@ type ChatCompletionRequest struct {
 }
 
 func (r *ChatCompletionRequest) ToPrompt() string {
+	return r.toPrompt(true)
+}
+
+
+func (r *ChatCompletionRequest) ToPromptWithoutRole() string {
+	return r.toPrompt(false)
+}
+
+func (r *ChatCompletionRequest) toPrompt(withRole bool) string {
 	sb := strings.Builder{}
 	for _, message := range r.Messages {
-		sb.WriteString(fmt.Sprintf("\n\n%s: ", message.Role))
+		if withRole {
+			sb.WriteString(fmt.Sprintf("\n\n%s: ", message.Role))
+		}
 		sb.WriteString(message.Content)
 	}
 
 	return sb.String()
+}
+
+func (r *ChatCompletionRequest) FromPrompt(model, prompt string) {
+	r.Model = model
+	r.Messages = []ChatCompletionMessage{
+		{
+			Role:    ChatMessageRoleUser,
+			Content: prompt,
+		},
+	}
 }
 
 type FunctionDefinition struct {
@@ -205,6 +226,7 @@ type Conversation struct {
 	Name      string    `json:"name"`
 	Model     string    `json:"model"`
 	Summary   string    `json:"summary"`
+	ExtraInfo string    `json:"extra_info"`
 }
 
 type Message struct {
@@ -220,4 +242,5 @@ type Message struct {
 	Description     string                 `json:"description"`
 	Request         ChatCompletionRequest  `json:"request"`
 	Response        ChatCompletionResponse `json:"response"`
+	RawResponse     []byte                 `json:"raw_response"`
 }

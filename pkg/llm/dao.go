@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 	"time"
 
@@ -20,6 +21,8 @@ type Dao interface {
 	GetMessage(ctx context.Context, id string) (Message, error)
 	ListMessages(ctx context.Context, conversationId string) ([]Message, error)
 	DeleteMessage(ctx context.Context, id string) error
+
+	GetConversationLastMessage(ctx context.Context, id string) (Message, error)
 }
 
 const (
@@ -118,4 +121,20 @@ func (d *MemoryDao) ListMessages(ctx context.Context, conversationId string) ([]
 func (d *MemoryDao) DeleteMessage(ctx context.Context, id string) error {
 	d.client.Delete(messageCacheKey(id))
 	return nil
+}
+
+func (d *MemoryDao) GetConversationLastMessage(ctx context.Context, id string) (Message, error) {
+	messages, err := d.ListMessages(ctx, id)
+	if err != nil {
+		return Message{}, err
+	}
+	if len(messages) == 0 {
+		return Message{}, errors.New("conversation not found")
+	}
+
+	sort.Slice(messages, func(i, j int) bool {
+		return messages[i].CreatedAt.Before(messages[j].CreatedAt)
+	})
+
+	return messages[0], nil
 }

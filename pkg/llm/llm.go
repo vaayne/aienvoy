@@ -84,7 +84,7 @@ func (l *LLM) CreateMessage(ctx context.Context, conversationId string, req Chat
 	req.Messages = reqMessages
 	resp, err := l.client.CreateChatCompletion(ctx, req)
 	if err != nil {
-		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId)
+		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId, "model", req.Model)
 		return Message{}, err
 	}
 	req.Messages = originReqMessages
