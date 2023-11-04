@@ -34,9 +34,8 @@ func RegisterRoutes(e *echo.Echo, app *pocketbase.PocketBase, staticFiles embed.
 	v1 := e.Group("/v1", mds...)
 	llmHandler := handler.NewLLMHandler()
 	v1.POST("/chat/completions", llmHandler.CreateChatCompletion)
-	v1.POST("/completions", llmHandler.CreateCompletion)
-	v1.POST("/embeddings", llmHandler.CreateEmbeddings)
-	v1.GET("/models", llmHandler.GetModels)
+	// v1.POST("/embeddings", llmHandler.CreateEmbeddings)
+	// v1.GET("/models", llmHandler.GetModels)
 	v1.GET("/status", func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	})

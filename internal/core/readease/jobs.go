@@ -6,10 +6,9 @@ import (
 	"log/slog"
 	"runtime"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
-
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/hackernews"
+	"github.com/Vaayne/aienvoy/pkg/llm/claude"
 
 	"github.com/pocketbase/pocketbase"
 	"golang.org/x/sync/semaphore"
@@ -44,7 +43,7 @@ func PeriodJob(app *pocketbase.PocketBase) ([]string, error) {
 			slog.InfoContext(ctx, "start read hackernews item", "url", itemUrl)
 			// get from cache
 
-			article, err := reader.Read(ctx, itemUrl, llmclaude.ModelClaudeV1Dot3)
+			article, err := reader.Read(ctx, itemUrl, claude.ModelClaudeV1Dot3)
 			if err != nil {
 				slog.ErrorContext(ctx, "read artilce error", "err", err)
 				return

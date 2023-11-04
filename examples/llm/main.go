@@ -2,50 +2,59 @@ package main
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"io"
 	"log/slog"
-	"strings"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm"
-	"github.com/sashabaranov/go-openai"
+	innerllm "github.com/Vaayne/aienvoy/internal/core/llm"
+	"github.com/Vaayne/aienvoy/pkg/llm"
+	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 )
 
 func main() {
-	// model := llmclaude.ModelClaudeV1Dot3
-	// model := llmclaudeweb.ModelClaudeWeb
-	model := openai.GPT3Dot5Turbo
-	// model := llmbard.ModelBard
-	svc := llm.New(model)
-
+	// bard.ModelBard
+	// claude.ModelClaudeV1Dot3
+	// claudeweb.ModelClaudeWeb
+	// openai.ModelGPT3Dot5Turbo
+	// phind.ModelPhindV1
+	model := openai.ModelGPT3Dot5Turbo
+	svc := innerllm.New(model)
 	ctx := context.Background()
-	req := &openai.CompletionRequest{
-		Model:  model,
-		Prompt: "hello, please introduce yourself",
-		Stream: true,
+
+	cov, err := svc.CreateConversation(ctx, "test")
+	if err != nil {
+		slog.Error("create conversation error", "err", err)
+		return
+	}
+	slog.Info("create conversation success", "conversation", cov)
+
+	req := llm.ChatCompletionRequest{
+		Model: model,
+		Messages: []llm.ChatCompletionMessage{
+			{
+				Content: "what's the latest news",
+				Role:    llm.ChatMessageRoleUser,
+			},
+		},
+		Stream: false,
 	}
 
-	if req.Stream {
-		dataChan := make(chan openai.CompletionResponse)
-		errChan := make(chan error)
-		sb := &strings.Builder{}
-		go svc.CreateCompletionStream(ctx, req, dataChan, errChan)
-		for {
-			select {
-			case data := <-dataChan:
-				fmt.Print(data.Choices[0].Text)
-				sb.WriteString(data.Choices[0].Text)
-			case err := <-errChan:
-				if errors.Is(err, io.EOF) {
-					return
-				}
-				slog.Error("get response from llm error", "err", err)
-				return
-			}
-		}
-	} else {
-		resp, err := svc.CreateCompletion(ctx, req)
-		slog.Info("get response from llm success", "model", model, "resp", resp.Choices[0].Text, "err", err)
+	resp, err := svc.CreateChatCompletion(ctx, req)
+	if err != nil {
+		slog.Error("create chat completion error", "err", err)
+		return
 	}
+	slog.Info("get response from llm success", "model", model, "resp", resp.Choices[0].Message.Content)
+
+	covs, err := svc.ListConversations(ctx)
+	if err != nil {
+		slog.Error("list conversations error", "err", err)
+		return
+	}
+	slog.Info("list conversations success", "conversations", covs)
+
+	msgs, err := svc.ListMessages(ctx, cov.Id)
+	if err != nil {
+		slog.Error("list messages error", "err", err)
+		return
+	}
+	slog.Info("list messages success", "messages", msgs)
 }

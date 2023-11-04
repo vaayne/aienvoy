@@ -1,11 +1,12 @@
 package handler
 
 import (
-	"fmt"
 	"strings"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
-	"github.com/sashabaranov/go-openai"
+	"github.com/Vaayne/aienvoy/pkg/llm/bard"
+	"github.com/Vaayne/aienvoy/pkg/llm/claude"
+	"github.com/Vaayne/aienvoy/pkg/llm/claudeweb"
+	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 
 	tb "gopkg.in/telebot.v3"
 )
@@ -28,41 +29,54 @@ func OnText(c tb.Context) error {
 		return c.Reply("empty message")
 	}
 
-	// start new conversation
-	if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandBard)) {
-		return OnBardChat(c)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandRead)) {
-		return OnReadEase(c)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandChatGPT35)) {
-		return OnChatGPT35(c)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandChatGPT4)) {
-		return OnChatGPT4(c)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeWeb)) {
-		return OnClaudeChat(c)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeV2)) {
-		return OnClaudeV2(c)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeV1)) {
-		return OnClaudeV1Dot3(c)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandClaudeInstant)) {
-		return OnClaudeInstant(c)
-	} else if strings.HasPrefix(text, fmt.Sprintf("/%s", CommandImagine)) {
-		return OnMidJourneyImagine(c)
+	model := ""
+	prompt := text
+	if text[0] == '/' {
+		texts := strings.Split(text, " ")
+		model = texts[0][1:]
+		if len(texts) > 1 {
+			prompt = strings.Join(texts[1:], " ")
+		} else {
+			prompt = "hello"
+		}
+
+		switch model {
+		case CommandBard:
+			model = bard.ModelBard
+		case CommandRead:
+			return OnReadEase(c)
+		case CommandChatGPT35:
+			model = openai.ModelGPT3Dot5Turbo
+		case CommandChatGPT4:
+			model = openai.ModelGPT4
+		case CommandClaudeWeb:
+			model = claudeweb.ModelClaudeWeb
+		case CommandClaudeV2:
+			model = claude.ModelClaudeV2
+		case CommandClaudeV1:
+			model = claude.ModelClaudeV1Dot3
+		case CommandClaudeInstant:
+			model = claude.ModelClaudeInstantV1Dot2
+		case CommandImagine:
+			return OnMidJourneyImagine(c)
+		default:
+			return c.Reply("Unsupported command!")
+		}
 	}
 
-	// continue conversation
+	// 1. create new conversation, no cache, model != ""
+	// 2. create new conversation, use cache, model != ""
+	// 3. use cache, model == ""
 	llmCache, ok := getLLMConversationFromCache()
-	if !ok {
-		return c.Reply("Do not have any conversation, please use command to start a new conversation")
+	if ok {
+		if model == "" {
+			model = llmCache.Model
+		}
+		return onLLMChat(c, llmCache.ConversationId, model, prompt)
+	}
+	if model != "" {
+		return onLLMChat(c, "", model, prompt)
 	}
 
-	switch llmCache.Model {
-	case bardModelName:
-		bardConversationInfos := strings.Split(llmCache.Conversation, "-")
-		return askBard(c, text, bardConversationInfos[0], bardConversationInfos[1], bardConversationInfos[2])
-	case claudeModelName:
-		return askClaude(c, llmCache.Conversation, text)
-	case openai.GPT4, openai.GPT3Dot5Turbo, llmclaude.ModelClaudeV1Dot3, llmclaude.ModelClaudeV2, llmclaude.ModelClaudeInstantV1Dot2:
-		return askLLM(c, llmCache.Conversation, llmCache.Model, text, llmCache.Messages)
-	}
 	return c.Reply("Unsupported message")
 }

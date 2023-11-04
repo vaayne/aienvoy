@@ -8,10 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Vaayne/aienvoy/internal/core/llm/llmclaude"
-	"github.com/sashabaranov/go-openai"
-
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/pkg/llm"
+	"github.com/Vaayne/aienvoy/pkg/llm/claude"
 
 	"github.com/Vaayne/aienvoy/internal/core/readease"
 	"github.com/pocketbase/pocketbase"
@@ -37,12 +36,12 @@ func OnReadEase(c tb.Context) error {
 
 	reader := readease.NewReader(ctx.Value(config.ContextKeyApp).(*pocketbase.PocketBase))
 
-	respChan := make(chan openai.ChatCompletionStreamResponse)
+	respChan := make(chan llm.ChatCompletionStreamResponse)
 	errChan := make(chan error)
 	defer close(respChan)
 	defer close(errChan)
 
-	go reader.ReadStream(ctx, urlStr, llmclaude.ModelClaudeV1Dot3, respChan, errChan)
+	go reader.ReadStream(ctx, urlStr, claude.ModelClaudeV1Dot3, respChan, errChan)
 
 	text := ""
 	chunk := ""
