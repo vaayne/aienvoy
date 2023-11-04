@@ -87,7 +87,6 @@ func (r *ChatCompletionRequest) ToPrompt() string {
 	return r.toPrompt(true)
 }
 
-
 func (r *ChatCompletionRequest) ToPromptWithoutRole() string {
 	return r.toPrompt(false)
 }

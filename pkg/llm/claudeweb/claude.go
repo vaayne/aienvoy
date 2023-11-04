@@ -89,7 +89,6 @@ func (cw *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCo
 }
 
 func (c *ClaudeWeb) CreateConversation(ctx context.Context, name string) (llm.Conversation, error) {
-
 	cov, err := c.client.CreateConversation(name)
 	if err != nil {
 		return llm.Conversation{}, fmt.Errorf("create new claude conversiton error: %w", err)
