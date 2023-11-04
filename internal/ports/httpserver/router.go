@@ -39,4 +39,16 @@ func RegisterRoutes(e *echo.Echo, app *pocketbase.PocketBase, staticFiles embed.
 	v1.GET("/status", func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	})
+
+	// conversation
+	v1.POST("/conversations", llmHandler.CreateConversation)
+	v1.GET("/conversations", llmHandler.ListConversations)
+	v1.GET("/conversations/:id", llmHandler.GetConversation)
+	v1.DELETE("/conversations/:id", llmHandler.DeleteConversation)
+
+	// converation message
+	v1.POST("/conversations/:id/messages", llmHandler.CreateMessage)
+	v1.GET("/conversations/:conversationId/messages", llmHandler.ListMessages)
+	v1.GET("/conversations/:conversationId/messages/:messageId", llmHandler.GetMessage)
+	v1.DELETE("/conversations/:conversationId/messages/:messageId", llmHandler.DeleteMessage)
 }
