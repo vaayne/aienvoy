@@ -121,7 +121,7 @@ func (b *Bard) CreateMessage(ctx context.Context, conversationId string, req llm
 		return llm.Message{}, err
 	}
 	message, err := b.saveAnswer(ctx, conversationId, req, answer)
-	slog.Info("create message", "message", message, "err", err, "model", req.Model)
+	slog.InfoContext(ctx, "create message", "message", message, "err", err, "model", req.Model)
 	return message, err
 }
 

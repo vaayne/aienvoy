@@ -39,6 +39,15 @@ type Conversation struct {
 	ChatMessages []ChatMessage `json:"chat_messages"`
 }
 
+func (c Conversation) ToLLMConversation() llm.Conversation {
+	return llm.Conversation{
+		Id:      c.UUID,
+		Name:    c.Name,
+		Summary: c.Summary,
+		Model:   ModelClaudeWeb,
+	}
+}
+
 type Attachment struct {
 	FileName         string `json:"file_name"`
 	FileType         string `json:"file_type"`
