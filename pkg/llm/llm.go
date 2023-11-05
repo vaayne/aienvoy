@@ -56,7 +56,7 @@ func (l *LLM) GetConversation(ctx context.Context, id string) (Conversation, err
 
 func (l *LLM) DeleteConversation(ctx context.Context, id string) error {
 	err := l.dao.DeleteConversation(ctx, id)
-	slog.Info("delete conversation", "id", id, "err", err)
+	slog.InfoContext(ctx, "delete conversation", "id", id, "err", err)
 	return err
 }
 
