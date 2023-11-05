@@ -12,12 +12,12 @@ import (
 
 const (
 	tableNameConversations = "conversations"
-	tableNameMessages      = "messages"
+	tableNameMessages      = "conversation_messages"
 )
 
 type ConversationDTO struct {
 	dtoutils.BaseModel
-	UserId    string `json:"user_id"  db:"prompt"`
+	UserId    string `json:"user_id"  db:"user_id"`
 	Name      string `json:"name,omitempty"  db:"name"`
 	Model     string `json:"model,omitempty" db:"model"`
 	Summary   string `json:"summary,omitempty" db:"summary"`

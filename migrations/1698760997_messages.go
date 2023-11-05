@@ -20,7 +20,6 @@ func init() {
 			Type: models.CollectionTypeBase,
 			Indexes: types.JsonArray[string]{
 				"CREATE INDEX idx_conversation_id ON midjourney_jobs (conversation_id, created, updated)",
-				"CREATE INDEX idx_origin_message_id ON midjourney_jobs (origin_message_id, created)",
 				"CREATE INDEX idx_updated ON midjourney_jobs (updated, model)",
 			},
 			Schema: schema.NewSchema(&schema.SchemaField{

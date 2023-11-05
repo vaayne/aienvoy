@@ -11,7 +11,7 @@ import (
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
-const tableNameConversations = "conversions"
+const tableNameConversations = "conversations"
 
 // id, created_on, updated_on, deleted, name, model, origin_id, description
 
@@ -21,7 +21,6 @@ func init() {
 			Name: tableNameConversations,
 			Type: models.CollectionTypeBase,
 			Indexes: types.JsonArray[string]{
-				"CREATE INDEX idx_origin_conversation_id ON midjourney_jobs (origin_conversation_id)",
 				"CREATE INDEX idx_created ON midjourney_jobs (created, model)",
 				"CREATE INDEX idx_updated ON midjourney_jobs (updated, model)",
 				"CREATE INDEX idx_user_id ON midjourney_jobs (updated, model)",

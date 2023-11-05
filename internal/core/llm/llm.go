@@ -3,13 +3,21 @@ package llm
 import (
 	"context"
 	"log/slog"
+	"time"
 
+	"github.com/Vaayne/aienvoy/internal/pkg/cache"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
+	"github.com/Vaayne/aienvoy/pkg/cookiecloud"
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/Vaayne/aienvoy/pkg/llm/bard"
 	"github.com/Vaayne/aienvoy/pkg/llm/claude"
 	"github.com/Vaayne/aienvoy/pkg/llm/claudeweb"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 	"github.com/Vaayne/aienvoy/pkg/llm/phind"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	goopenai "github.com/sashabaranov/go-openai"
 )
 
 type Service interface {
@@ -29,61 +37,131 @@ type Service interface {
 	DeleteMessage(ctx context.Context, id string) error
 }
 
-var modelClientMappings map[string]func() Service
+const (
+	modelClientCacheKeyPrefix = "llm:"
+	llmTypeAzureOpenAI        = "azure-openai"
+	llmTypeOpenAI             = "openai"
+)
 
-func init() {
-	modelClientMappings = make(map[string]func() Service)
+func New(model string, dao llm.Dao) Service {
+	cachekey := modelClientCacheKeyPrefix + model
 
-	// bard
-	createBard := func() Service {
-		return newBard()
-	}
-	for _, model := range bard.ListModels() {
-		modelClientMappings[model] = createBard
-	}
-
-	// claude
-	createClaude := func() Service {
-		return newClaude()
-	}
-	for _, model := range claude.ListModels() {
-		modelClientMappings[model] = createClaude
-	}
-
-	// claude web
-	createClaudeWeb := func() Service {
-		return newClaudeWeb()
-	}
-	for _, model := range claudeweb.ListModels() {
-		modelClientMappings[model] = createClaudeWeb
-	}
-
-	// openai
-	createOpenai := func() Service {
-		return newOpenai()
-	}
-	for _, model := range openai.ListModels() {
-		modelClientMappings[model] = createOpenai
-	}
-
-	// phind
-	createPhind := func() Service {
-		return newPhind()
-	}
-	for _, model := range phind.ListModels() {
-		modelClientMappings[model] = createPhind
-	}
-}
-
-func newDao() llm.Dao {
-	return llm.DefaultDao
-}
-
-func New(model string) Service {
-	createCli, ok := modelClientMappings[model]
+	client, ok := cache.DefaultClient.Get(cachekey)
 	if ok {
-		return createCli()
+		return client.(Service)
 	}
-	slog.Error("unknown model", "model", model)
-	return nil
+	var cli Service
+	switch model {
+	case phind.ModelPhindV1:
+		cli = newPhind(dao)
+	case openai.ModelGPT3Dot5Turbo:
+		cli = newOpenai(dao)
+	case claudeweb.ModelClaudeWeb:
+		cli = newClaudeWeb(dao)
+	case claude.ModelClaudeInstantV1Dot2:
+		cli = newClaude(dao)
+	case bard.ModelBard:
+		cli = newBard(dao)
+	default:
+		slog.Error("unsupported model: " + model)
+	}
+
+	cache.DefaultClient.Set(cachekey, cli, 5*time.Minute)
+	return cli
+}
+
+func newPhind(dao llm.Dao) *phind.Phind {
+	cfg := config.GetConfig().CookieCloud
+	cc := cookiecloud.New(cfg.Host, cfg.UUID, cfg.Pass)
+
+	cookies, err := cc.GetHttpCookies("www.phind.com")
+	if err != nil {
+		slog.Error("get cookies error", "err", err, "domain", "www.phind.com")
+		return nil
+	}
+
+	cookies1, err := cc.GetHttpCookies(".phind.com")
+	if err != nil {
+		slog.Error("get cookies error", "err", err, "domain", ".phind.com")
+		return nil
+	}
+	cookies = append(cookies, cookies1...)
+	return phind.New(cookies, dao)
+}
+
+func newOpenai(dao llm.Dao) *openai.OpenAI {
+	var clientCfg goopenai.ClientConfig
+	cfg := config.GetConfig().LLMs[0]
+	if cfg.Type == llmTypeAzureOpenAI {
+		clientCfg = goopenai.DefaultAzureConfig(cfg.ApiKey, cfg.ApiEndpoint)
+		if cfg.ApiVersion != "" {
+			clientCfg.APIVersion = cfg.ApiVersion
+		}
+	} else if cfg.Type == llmTypeOpenAI {
+		clientCfg = goopenai.DefaultConfig(cfg.ApiKey)
+		if cfg.ApiEndpoint != "" {
+			clientCfg.BaseURL = cfg.ApiEndpoint
+		}
+	} else {
+		slog.Error("unknown LLM type", "type", cfg.Type)
+		return nil
+	}
+
+	return openai.New(clientCfg, dao)
+}
+
+func newClaudeWeb(dao llm.Dao) *claudeweb.ClaudeWeb {
+	cfg := config.GetConfig().CookieCloud
+	cc := cookiecloud.New(cfg.Host, cfg.UUID, cfg.Pass)
+
+	sessionKey, err := cc.GetCookie("claude.ai", "sessionKey")
+	if err != nil {
+		slog.Error("get cookie error", "err", err)
+		return nil
+	}
+
+	return claudeweb.New(sessionKey.Value, dao)
+}
+
+func newClaude(dao llm.Dao) *claude.Claude {
+	getAWSConfig := func() aws.Config {
+		cfg, err := awsconfig.LoadDefaultConfig(context.Background(),
+			awsconfig.WithRegion(config.GetConfig().AWS.Region),
+			awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+				config.GetConfig().AWS.AccessKeyId,
+				config.GetConfig().AWS.SecretAccessKey,
+				"",
+			)))
+		if err != nil {
+			slog.Error("get aws config error", "err", err)
+			return aws.Config{}
+		}
+		return cfg
+	}
+	return claude.New(getAWSConfig(), dao)
+}
+
+func newBard(dao llm.Dao) *bard.Bard {
+	cfg := config.GetConfig().CookieCloud
+	cc := cookiecloud.New(cfg.Host, cfg.UUID, cfg.Pass)
+
+	getCookie := func(key string) string {
+		val, err := cc.GetCookie(".google.com", key)
+		if err != nil {
+			slog.Error("get cookie error", "err", err)
+			return ""
+		}
+		return val.Value
+	}
+
+	cli, err := bard.New(getCookie("__Secure-1PSID"), dao, bard.WithCookies(map[string]string{
+		"__Secure-1PSID":   getCookie("__Secure-1PSID"),
+		"__Secure-1PSIDCC": getCookie("__Secure-1PSIDCC"),
+		"__Secure-1PSIDTS": getCookie("__Secure-1PSIDTS"),
+	}), bard.WithTimeout(120*time.Second))
+	if err != nil {
+		slog.Error("init bard client error", "err", err)
+		return nil
+	}
+	return cli
 }

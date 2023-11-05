@@ -9,7 +9,9 @@ import (
 	"net/http"
 
 	innerllm "github.com/Vaayne/aienvoy/internal/core/llm"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/llm"
+	"github.com/pocketbase/pocketbase/daos"
 
 	"github.com/labstack/echo/v5"
 )
@@ -38,7 +40,7 @@ func (l *LLMHandler) CreateChatCompletion(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	svc := innerllm.New(req.Model)
+	svc := innerllm.New(req.Model, innerllm.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 	if svc == nil {
 		return c.String(http.StatusBadRequest, "unknown model")
 	}

@@ -9,9 +9,11 @@ import (
 	"net/http"
 
 	innerllm "github.com/Vaayne/aienvoy/internal/core/llm"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/pocketbase/daos"
 )
 
 type CreateConversationRequest struct {
@@ -26,7 +28,7 @@ func (l *LLMHandler) CreateConversation(c echo.Context) error {
 		slog.ErrorContext(ctx, "bind create conversation request body error", "err", err.Error())
 		return c.String(http.StatusBadRequest, "bad request")
 	}
-	svc := innerllm.New(req.Model)
+	svc := innerllm.New(req.Model, innerllm.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 
 	cov, err := svc.CreateConversation(ctx, req.Name)
 	if err != nil {
@@ -37,7 +39,7 @@ func (l *LLMHandler) CreateConversation(c echo.Context) error {
 
 func (l *LLMHandler) ListConversations(c echo.Context) error {
 	ctx := c.Request().Context()
-	svc := innerllm.New(openai.ModelGPT3Dot5Turbo)
+	svc := innerllm.New(openai.ModelGPT3Dot5Turbo, innerllm.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 	covs, err := svc.ListConversations(ctx)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -48,7 +50,7 @@ func (l *LLMHandler) ListConversations(c echo.Context) error {
 func (l *LLMHandler) GetConversation(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.PathParam("id")
-	svc := innerllm.New(openai.ModelGPT3Dot5Turbo)
+	svc := innerllm.New(openai.ModelGPT3Dot5Turbo, innerllm.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 	cov, err := svc.GetConversation(ctx, id)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -59,7 +61,7 @@ func (l *LLMHandler) GetConversation(c echo.Context) error {
 func (l *LLMHandler) DeleteConversation(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.PathParam("id")
-	svc := innerllm.New(openai.ModelGPT3Dot5Turbo)
+	svc := innerllm.New(openai.ModelGPT3Dot5Turbo, innerllm.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 	err := svc.DeleteConversation(ctx, id)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -81,7 +83,7 @@ func (l *LLMHandler) CreateMessage(c echo.Context) error {
 		return l.createMessageStream(c, conversationId, req)
 	}
 
-	svc := innerllm.New(req.Model)
+	svc := innerllm.New(req.Model, innerllm.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 	msg, err := svc.CreateMessage(ctx, conversationId, *req)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -90,7 +92,7 @@ func (l *LLMHandler) CreateMessage(c echo.Context) error {
 }
 
 func (l *LLMHandler) createMessageStream(c echo.Context, conversationId string, req *llm.ChatCompletionRequest) error {
-	svc := innerllm.New(req.Model)
+	svc := innerllm.New(req.Model, innerllm.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 	dataChan := make(chan llm.ChatCompletionStreamResponse)
 	defer close(dataChan)
 	errChan := make(chan error)
@@ -131,7 +133,7 @@ func (l *LLMHandler) createMessageStream(c echo.Context, conversationId string, 
 func (l *LLMHandler) ListMessages(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.PathParam("conversationId")
-	svc := innerllm.New(openai.ModelGPT3Dot5Turbo)
+	svc := innerllm.New(openai.ModelGPT3Dot5Turbo, innerllm.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 	msgs, err := svc.ListMessages(ctx, id)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -143,7 +145,7 @@ func (l *LLMHandler) GetMessage(c echo.Context) error {
 	ctx := c.Request().Context()
 	// conversationId := c.PathParam("conversationId")
 	messageId := c.PathParam("messageId")
-	svc := innerllm.New(openai.ModelGPT3Dot5Turbo)
+	svc := innerllm.New(openai.ModelGPT3Dot5Turbo, innerllm.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 	msg, err := svc.GetMessage(ctx, messageId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -155,7 +157,7 @@ func (l *LLMHandler) DeleteMessage(c echo.Context) error {
 	ctx := c.Request().Context()
 	// conversationId := c.PathParam("conversationId")
 	messageId := c.PathParam("messageId")
-	svc := innerllm.New(openai.ModelGPT3Dot5Turbo)
+	svc := innerllm.New(openai.ModelGPT3Dot5Turbo, innerllm.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 	err := svc.DeleteMessage(ctx, messageId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())

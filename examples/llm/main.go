@@ -16,7 +16,7 @@ func main() {
 	// openai.ModelGPT3Dot5Turbo
 	// phind.ModelPhindV1
 	model := openai.ModelGPT3Dot5Turbo
-	svc := innerllm.New(model)
+	svc := innerllm.New(model, llm.NewMemoryDao())
 	ctx := context.Background()
 
 	cov, err := svc.CreateConversation(ctx, "test")

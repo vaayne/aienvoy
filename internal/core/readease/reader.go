@@ -114,7 +114,7 @@ func (s *Reader) Read(ctx context.Context, url, model string) (*Article, error) 
 	}
 
 	// summary article
-	llmSvc := innerllm.New(model)
+	llmSvc := innerllm.New(model, innerllm.NewDao(s.app.Dao()))
 	if llmSvc == nil {
 		slog.Error("failed to create llm service", "model", model)
 		return nil, fmt.Errorf("failed to create llm service: %w", err)
@@ -159,7 +159,7 @@ func (s *Reader) ReadStream(ctx context.Context, url, model string, respChan cha
 		return
 	}
 
-	llmSvc := innerllm.New(model)
+	llmSvc := innerllm.New(model, innerllm.NewDao(s.app.Dao()))
 	if llmSvc == nil {
 		slog.ErrorContext(ctx, "failed to create llm service", "model", model)
 		errChan <- fmt.Errorf("failed to create llm service: %w", err)

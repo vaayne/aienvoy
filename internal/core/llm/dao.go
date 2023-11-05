@@ -3,8 +3,10 @@ package llm
 import (
 	"context"
 
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/internal/pkg/dtoutils"
 	"github.com/Vaayne/aienvoy/pkg/llm"
+	"github.com/google/uuid"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/daos"
 )
@@ -20,6 +22,14 @@ func NewDao(tx *daos.Dao) *Dao {
 func (d *Dao) SaveConversation(ctx context.Context, conversation llm.Conversation) (llm.Conversation, error) {
 	var cov ConversationDTO
 	cov.FromLLMConversation(conversation)
+
+	if cov.UserId == "" {
+		cov.UserId = ctx.Value(config.ContextKeyUserId).(string)
+	}
+
+	if cov.Id == "" {
+		cov.Id = uuid.NewString()
+	}
 
 	if err := d.tx.DB().Model(&cov).Insert(); err != nil {
 		return llm.Conversation{}, err
@@ -57,6 +67,12 @@ func (d *Dao) DeleteConversation(ctx context.Context, id string) error {
 func (d *Dao) SaveMessage(ctx context.Context, message llm.Message) (llm.Message, error) {
 	var msg MessageDTO
 	msg.FromLLMMessage(message)
+	if msg.UserId == "" {
+		msg.UserId = ctx.Value(config.ContextKeyUserId).(string)
+	}
+	if msg.Id == "" {
+		msg.Id = uuid.NewString()
+	}
 
 	if err := d.tx.DB().Model(&msg).Insert(); err != nil {
 		return llm.Message{}, err
@@ -73,9 +89,9 @@ func (d *Dao) GetMessage(ctx context.Context, id string) (llm.Message, error) {
 	return dto.ToLLMMessage(), nil
 }
 
-func (d *Dao) ListMessages(ctx context.Context) ([]llm.Message, error) {
+func (d *Dao) ListMessages(ctx context.Context, conversationId string) ([]llm.Message, error) {
 	var dtos []MessageDTO
-	if err := d.tx.DB().Select().All(&dtos); err != nil {
+	if err := d.tx.DB().Select().Where(dbx.HashExp{"conversation_id": conversationId}).All(&dtos); err != nil {
 		return nil, err
 	}
 

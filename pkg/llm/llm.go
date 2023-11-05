@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var NotImplementError = errors.New("the method not implement")
@@ -31,21 +33,24 @@ func New(dao Dao, c client) *LLM {
 
 func (l *LLM) CreateConversation(ctx context.Context, name string) (Conversation, error) {
 	cov, err := l.dao.SaveConversation(ctx, Conversation{
-		Name: name,
+		Id:        uuid.NewString(),
+		Name:      name,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	})
-	slog.Info("create conversation", "cov", cov, "err", err)
+	slog.InfoContext(ctx, "create conversation", "cov", cov, "err", err)
 	return cov, err
 }
 
 func (l *LLM) ListConversations(ctx context.Context) ([]Conversation, error) {
 	conversations, err := l.dao.ListConversations(ctx)
-	slog.Info("list conversations", "conversations", conversations, "err", err)
+	slog.InfoContext(ctx, "list conversations", "conversations", conversations, "err", err)
 	return conversations, err
 }
 
 func (l *LLM) GetConversation(ctx context.Context, id string) (Conversation, error) {
 	cov, err := l.dao.GetConversation(ctx, id)
-	slog.Info("get conversation", "cov", cov, "err", err)
+	slog.InfoContext(ctx, "get conversation", "cov", cov, "err", err)
 	return cov, err
 }
 
@@ -96,7 +101,7 @@ func (l *LLM) CreateMessage(ctx context.Context, conversationId string, req Chat
 		Request:        req,
 		Response:       resp,
 	})
-	slog.Info("create message", "message", message, "err", err)
+	slog.InfoContext(ctx, "create message", "message", message, "err", err)
 	return message, err
 }
 
@@ -131,7 +136,7 @@ func (l *LLM) CreateMessageStream(ctx context.Context, conversationId string, re
 	reqMessages = append(reqMessages, originReqMessages...)
 	req.Messages = reqMessages
 
-	slog.Info("create message stream", "req", req)
+	slog.InfoContext(ctx, "create message stream", "req", req)
 
 	innerDataChan := make(chan ChatCompletionStreamResponse)
 	innerErrChan := make(chan error)
@@ -152,14 +157,17 @@ func (l *LLM) CreateMessageStream(ctx context.Context, conversationId string, re
 				req.Messages = originReqMessages
 				chatCompletionResponse := resp.ToChatCompletionResponse()
 				chatCompletionResponse.Choices[0].Message.Content = sb.String()
-				_, _ = l.dao.SaveMessage(ctx, Message{
+				if _, err := l.dao.SaveMessage(ctx, Message{
+					Id:             resp.ID,
 					CreatedAt:      time.Now(),
 					UpdatedAt:      time.Now(),
 					ConversationId: conversationId,
 					Model:          req.Model,
 					Request:        req,
 					Response:       chatCompletionResponse,
-				})
+				}); err != nil {
+					slog.ErrorContext(ctx, "save message error", "err", err)
+				}
 			} else {
 				slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId)
 			}
