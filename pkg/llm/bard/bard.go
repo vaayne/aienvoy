@@ -165,7 +165,7 @@ func (b *Bard) CreateMessageStream(ctx context.Context, conversationId string, r
 		slog.ErrorContext(ctx, "save answer error", "err", err, "conversation_id", conversationId, "model", req.Model)
 	}
 
-	slog.Info("create message success", "model", req.Model)
+	slog.InfoContext(ctx, "create message success", "model", req.Model)
 	errChan <- io.EOF
 }
 

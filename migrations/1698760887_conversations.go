@@ -11,7 +11,7 @@ import (
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 
-const tableNameConversations = "conversions"
+const tableNameConversations = "conversations"
 
 // id, created_on, updated_on, deleted, name, model, origin_id, description
 
@@ -21,12 +21,15 @@ func init() {
 			Name: tableNameConversations,
 			Type: models.CollectionTypeBase,
 			Indexes: types.JsonArray[string]{
-				"CREATE INDEX idx_origin_conversation_id ON midjourney_jobs (origin_conversation_id)",
 				"CREATE INDEX idx_created ON midjourney_jobs (created, model)",
 				"CREATE INDEX idx_updated ON midjourney_jobs (updated, model)",
 				"CREATE INDEX idx_user_id ON midjourney_jobs (updated, model)",
 			},
 			Schema: schema.NewSchema(&schema.SchemaField{
+				Name:     "user_id",
+				Type:     schema.FieldTypeText,
+				Required: true,
+			}, &schema.SchemaField{
 				Name:     "name",
 				Type:     schema.FieldTypeText,
 				Required: false,
@@ -35,17 +38,13 @@ func init() {
 				Type:     schema.FieldTypeText,
 				Required: true,
 			}, &schema.SchemaField{
-				Name:     "origin_conversation_id",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "description",
+				Name:     "summary",
 				Type:     schema.FieldTypeNumber,
 				Required: false,
 			}, &schema.SchemaField{
-				Name:     "user_id",
+				Name:     "extra_info",
 				Type:     schema.FieldTypeText,
-				Required: true,
+				Required: false,
 			}),
 		}
 		if err := daos.New(db).SaveCollection(collection); err != nil {

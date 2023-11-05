@@ -2,6 +2,7 @@ package tgbot
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"sync"
 
@@ -56,7 +57,7 @@ func contextMiddleware(next tb.HandlerFunc) tb.HandlerFunc {
 		ctx := context.Background()
 		ctx = context.WithValue(ctx, config.ContextKeyApp, bot.app)
 		ctx = context.WithValue(ctx, config.ContextKeyDao, bot.app.Dao())
-		ctx = context.WithValue(ctx, config.ContextKeyUserId, c.Sender().ID)
+		ctx = context.WithValue(ctx, config.ContextKeyUserId, fmt.Sprintf("%d", c.Sender().ID))
 		ctx = context.WithValue(ctx, config.ContextKeyRequestId, uuid.NewString())
 		c.Set(config.ContextKeyContext, ctx)
 		return next(c)

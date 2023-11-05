@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	innerllm "github.com/Vaayne/aienvoy/internal/core/llm"
+	"github.com/Vaayne/aienvoy/internal/core/llmservice"
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 )
@@ -16,7 +16,7 @@ func main() {
 	// openai.ModelGPT3Dot5Turbo
 	// phind.ModelPhindV1
 	model := openai.ModelGPT3Dot5Turbo
-	svc := innerllm.New(model)
+	svc := llmservice.New(model, llm.NewMemoryDao())
 	ctx := context.Background()
 
 	cov, err := svc.CreateConversation(ctx, "test")

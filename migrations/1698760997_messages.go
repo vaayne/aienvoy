@@ -20,7 +20,6 @@ func init() {
 			Type: models.CollectionTypeBase,
 			Indexes: types.JsonArray[string]{
 				"CREATE INDEX idx_conversation_id ON midjourney_jobs (conversation_id, created, updated)",
-				"CREATE INDEX idx_origin_message_id ON midjourney_jobs (origin_message_id, created)",
 				"CREATE INDEX idx_updated ON midjourney_jobs (updated, model)",
 			},
 			Schema: schema.NewSchema(&schema.SchemaField{
@@ -32,29 +31,9 @@ func init() {
 				Type:     schema.FieldTypeText,
 				Required: true,
 			}, &schema.SchemaField{
-				Name:     "origin_message_id",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
 				Name:     "model",
 				Type:     schema.FieldTypeText,
 				Required: true,
-			}, &schema.SchemaField{
-				Name:     "prompt",
-				Type:     schema.FieldTypeText,
-				Required: true,
-			}, &schema.SchemaField{
-				Name:     "completion",
-				Type:     schema.FieldTypeText,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "max_tokens",
-				Type:     schema.FieldTypeNumber,
-				Required: false,
-			}, &schema.SchemaField{
-				Name:     "temperature",
-				Type:     schema.FieldTypeNumber,
-				Required: false,
 			}, &schema.SchemaField{
 				Name:     "prompt_token",
 				Type:     schema.FieldTypeNumber,
@@ -66,6 +45,18 @@ func init() {
 			}, &schema.SchemaField{
 				Name:     "description",
 				Type:     schema.FieldTypeNumber,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "request",
+				Type:     schema.FieldTypeText,
+				Required: true,
+			}, &schema.SchemaField{
+				Name:     "response",
+				Type:     schema.FieldTypeText,
+				Required: false,
+			}, &schema.SchemaField{
+				Name:     "raw_response",
+				Type:     schema.FieldTypeText,
 				Required: false,
 			}),
 		}
