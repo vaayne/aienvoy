@@ -18,6 +18,11 @@ const (
 	ModelGPT3Dot5Turbo    = "gpt-3.5-turbo"
 )
 
+var modelMappings = map[string]string{
+	openai.GPT3Dot5Turbo: openai.GPT3Dot5Turbo1106,
+	openai.GPT4:          openai.GPT4TurboPreview,
+}
+
 type OpenAI struct {
 	*llm.LLM
 }
@@ -30,7 +35,13 @@ func New(cfg openai.ClientConfig, dao llm.Dao) *OpenAI {
 
 func ListModels() []string {
 	return []string{
-		ModelGPT432K, ModelGPT4, ModelGPT3Dot5Turbo16K, ModelGPT3Dot5Turbo,
+		openai.GPT3Dot5Turbo, openai.GPT3Dot5Turbo0301, openai.GPT3Dot5Turbo0613, openai.GPT3Dot5Turbo1106,
+		openai.GPT3Dot5Turbo16K, openai.GPT3Dot5Turbo16K0613,
+		openai.GPT3Dot5TurboInstruct,
+		openai.GPT4, openai.GPT40314, openai.GPT40613,
+		openai.GPT4TurboPreview,
+		openai.GPT4VisionPreview,
+		openai.GPT432K, openai.GPT432K0314, openai.GPT432K0613,
 	}
 }
 
@@ -39,23 +50,24 @@ func (s *Client) ListModels() []string {
 }
 
 func (s *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	slog.InfoContext(ctx, "chat with OpenAI start")
 	openaiReq := toOpenAIChatCompletionRequest(req)
+	slog.InfoContext(ctx, "chat start", "llm", openaiReq.Model, "is_stream", openaiReq.Stream)
 	resp, err := s.Client.CreateChatCompletion(ctx, openaiReq)
 	if err != nil {
 		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err)
 		return llm.ChatCompletionResponse{}, err
 	}
-	slog.InfoContext(ctx, "chat with OpenAI success")
+	slog.InfoContext(ctx, "chat success", "llm", openaiReq.Model, "is_stream", openaiReq.Stream)
+
 	return toLLMChatCompletionResponse(resp), nil
 }
 
 func (s *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
-	slog.InfoContext(ctx, "chat with OpenAI stream start")
 	openaiReq := toOpenAIChatCompletionRequest(req)
+	slog.InfoContext(ctx, "chat start", "llm", openaiReq.Model, "is_stream", openaiReq.Stream)
 	stream, err := s.Client.CreateChatCompletionStream(ctx, openaiReq)
 	if err != nil {
-		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err)
+		slog.InfoContext(ctx, "chat error", "llm", openaiReq.Model, "is_stream", openaiReq.Stream, "err", err)
 		errChan <- err
 		return
 	}
@@ -66,11 +78,11 @@ func (s *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 		resp, err := stream.Recv()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				slog.InfoContext(ctx, "chat with OpenAI stream success")
+				slog.InfoContext(ctx, "chat success", "llm", openaiReq.Model, "is_stream", openaiReq.Stream)
 				errChan <- err
 				return
 			}
-			slog.ErrorContext(ctx, "chat with OpenAI stream error", "err", err)
+			slog.InfoContext(ctx, "chat error", "llm", openaiReq.Model, "is_stream", openaiReq.Stream, "err", err)
 			errChan <- err
 			return
 		}

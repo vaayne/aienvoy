@@ -10,7 +10,7 @@ require (
 	github.com/pocketbase/dbx v1.10.0
 	github.com/pocketbase/pocketbase v0.16.8
 	github.com/refraction-networking/utls v1.3.2
-	github.com/sashabaranov/go-openai v1.15.4
+	github.com/sashabaranov/go-openai v1.17.5
 	github.com/spf13/viper v1.13.0
 	golang.org/x/sync v0.3.0
 	gopkg.in/telebot.v3 v3.1.3

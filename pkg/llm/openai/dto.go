@@ -11,6 +11,10 @@ func toOpenAIChatCompletionRequest(req llm.ChatCompletionRequest) openai.ChatCom
 	data, _ := json.Marshal(req)
 	var resp openai.ChatCompletionRequest
 	_ = json.Unmarshal(data, &resp)
+	newModel, ok := modelMappings[resp.Model]
+	if ok {
+		resp.Model = newModel
+	}
 	return resp
 }
 

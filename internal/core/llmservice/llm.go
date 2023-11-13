@@ -3,6 +3,7 @@ package llmservice
 import (
 	"context"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/cache"
@@ -51,22 +52,24 @@ func New(model string, dao llm.Dao) Service {
 		return client.(Service)
 	}
 	var cli Service
-	switch model {
-	case phind.ModelPhindV1:
+
+	phind.ListModels()
+	if slices.Contains(phind.ListModels(), model) {
 		cli = newPhind(dao)
-	case openai.ModelGPT3Dot5Turbo:
+	} else if slices.Contains(openai.ListModels(), model) {
 		cli = newOpenai(dao)
-	case claudeweb.ModelClaudeWeb:
+	} else if slices.Contains(claudeweb.ListModels(), model) {
 		cli = newClaudeWeb(dao)
-	case claude.ModelClaudeInstantV1Dot2:
+	} else if slices.Contains(claude.ListModels(), model) {
 		cli = newClaude(dao)
-	case bard.ModelBard:
+	} else if slices.Contains(bard.ListModels(), model) {
 		cli = newBard(dao)
-	default:
+	} else {
 		slog.Error("unsupported model: " + model)
 	}
-
-	cache.DefaultClient.Set(cachekey, cli, 5*time.Minute)
+	if cli != nil {
+		cache.DefaultClient.Set(cachekey, cli, 5*time.Minute)
+	}
 	return cli
 }
 
