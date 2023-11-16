@@ -3,8 +3,11 @@ package main
 import (
 	"embed"
 	"log/slog"
+	"os/exec"
+	"runtime"
 
 	"github.com/Vaayne/aienvoy/internal/core/midjourney"
+	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	_ "github.com/Vaayne/aienvoy/internal/pkg/logger"
 	"github.com/Vaayne/aienvoy/internal/ports/httpserver"
 	"github.com/Vaayne/aienvoy/internal/ports/tgbot"
@@ -25,6 +28,25 @@ func registerRoutes(app *pocketbase.PocketBase) {
 		httpserver.RegisterRoutes(e.Router, app, staticFiles)
 		return nil
 	})
+}
+
+func openBrowser(url string) error {
+	var cmd string
+	var args []string
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "cmd"
+		args = []string{"/c", "start", url}
+	case "darwin":
+		cmd = "open"
+		args = []string{url}
+	default: // "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
+		args = []string{url}
+	}
+
+	return exec.Command(cmd, args...).Start()
 }
 
 func main() {
@@ -71,7 +93,11 @@ func main() {
 		}()
 		return nil
 	})
-
+	go func() {
+		if err := openBrowser(config.GetConfig().Service.URL); err != nil {
+			slog.Error("Open browser error", "err", err)
+		}
+	}()
 	if err := app.Start(); err != nil {
 		slog.Error("failed to start app", "err", err)
 	}
