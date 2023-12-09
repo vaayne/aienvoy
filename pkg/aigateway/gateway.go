@@ -16,6 +16,7 @@ import (
 	"github.com/Vaayne/aienvoy/pkg/llm/claude"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
+	"github.com/mitchellh/mapstructure"
 )
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
@@ -100,8 +101,8 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 		return
 	}
 
-	var innerDataChan chan any
-	var innerErrChan chan error
+	innerDataChan := make(chan any)
+	innerErrChan := make(chan error)
 
 	go llm.ParseSSE[any](resp.Body, innerDataChan, innerErrChan)
 	for {
@@ -111,15 +112,17 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 		case data := <-innerDataChan:
 			switch config.Provider {
 			case AWSBedrock:
-				val, ok := data.(claude.BedrockResponse)
-				if !ok {
+				var val claude.BedrockResponse
+				if err := mapstructure.Decode(data, &val); err != nil {
 					errChan <- fmt.Errorf("parse response error: %w", err)
 					return
 				}
 				dataChan <- val.ToChatCompletionStreamResponse()
 			case OpenAI, AzureOpenAI:
-				val, ok := data.(llm.ChatCompletionStreamResponse)
-				if !ok {
+				// convert any to ChatCompletionStreamResponse
+				// the any may response as map[string]interface{}, so we have to convert it manually
+				var val llm.ChatCompletionStreamResponse
+				if err := mapstructure.Decode(data, &val); err != nil {
 					errChan <- fmt.Errorf("parse response error: %w", err)
 					return
 				}
