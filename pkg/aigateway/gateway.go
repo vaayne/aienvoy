@@ -58,7 +58,6 @@ func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 	return processResponse(ctx, resp.Body, config)
 }
 
-
 func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	req.Stream = true
 	config, ok := c.Mapping[req.Model]
@@ -100,7 +99,39 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 		errChan <- fmt.Errorf("chat error, status: %s, body: %s, headers: %v", resp.Status, string(respBody), resp.Header)
 		return
 	}
-	
+
+	var innerDataChan chan any
+	var innerErrChan chan error
+
+	go llm.ParseSSE[any](resp.Body, innerDataChan, innerErrChan)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case data := <-innerDataChan:
+			switch config.Provider {
+			case AWSBedrock:
+				val, ok := data.(claude.BedrockResponse)
+				if !ok {
+					errChan <- fmt.Errorf("parse response error: %w", err)
+					return
+				}
+				dataChan <- val.ToChatCompletionStreamResponse()
+			case OpenAI, AzureOpenAI:
+				val, ok := data.(llm.ChatCompletionStreamResponse)
+				if !ok {
+					errChan <- fmt.Errorf("parse response error: %w", err)
+					return
+				}
+				dataChan <- val
+			default:
+				errChan <- fmt.Errorf("provider %s not supported", config.Provider)
+			}
+		case err := <-innerErrChan:
+			errChan <- err
+			return
+		}
+	}
 }
 
 func buildRequestPayload(req llm.ChatCompletionRequest, config Config) ([]byte, error) {
@@ -120,7 +151,6 @@ func buildRequestPayload(req llm.ChatCompletionRequest, config Config) ([]byte, 
 }
 
 func setRequestHeaders(ctx context.Context, request *http.Request, config Config, stream bool, requestBody io.Reader) error {
-
 	// set auth header
 	for k, v := range config.GetAuthHeader() {
 		request.Header.Set(k, v)
