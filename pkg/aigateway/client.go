@@ -37,29 +37,29 @@ var defaultAwsBedrockModels = []string{"anthropic.claude-v1", "anthropic.claude-
 
 type Config struct {
 	// AccountTag is the account tag for the AI Gateway
-	AccountTag string `json:"account_tag"`
+	AccountTag string `json:"account_tag" mapstructure:"account_tag"`
 	// GatewayName is the name of the gateway
-	GatewayName string `json:"gateway_name"`
+	GatewayName string `json:"gateway_name" mapstructure:"gateway_name"`
 	// Provider is the provider type of AI Gateway
-	Provider Provider `json:"provider"`
+	Provider Provider `json:"provider" mapstructure:"provider"`
 	// ApiKey is the API key for the provider
-	ApiKey string `json:"api_key"`
+	ApiKey string `json:"api_key" mapstructure:"api_key"`
 	// Models is a list of valid model ids for this config
-	Models []string `json:"models"`
+	Models []string `json:"models" mapstructure:"models"`
 	// ResourceName is the name of the resource group, without the .openai.azure.com
 	// e.g. "openai-rg"
-	AzureOpenAIResourceName string `json:"azure_openai_resource_name"`
+	AzureOpenAIResourceName string `json:"azure_openai_resource_name" mapstructure:"azure_openai_resource_name"`
 	// ModelMapping is a map of model id to deployed model name
 	// e.g. {"gpt-3.5-trurbo": "gpt-35", "gpt-4-turbo": "gpt-4"}
-	AzureModelMapping map[string]string
+	AzureModelMapping map[string]string `json:"azure_model_mapping" mapstructure:"azure_model_mapping"`
 	// AzureVersion is the version of the Azure API to use
-	AzureVersion string `json:"azure_version"`
+	AzureVersion string `json:"azure_version" mapstructure:"azure_version"`
 	// AWSBedrockAccessKey is the access key for AWS Bedrock
-	AwsBedrockAccessKey string `json:"aws_bedrock_access_key"`
+	AwsBedrockAccessKey string `json:"aws_bedrock_access_key" mapstructure:"aws_bedrock_access_key"`
 	// AWSBedrockSecretKey is the secret key for AWS Bedrock
-	AwsBedrockSecretKey string `json:"aws_bedrock_secret_key"`
+	AwsBedrockSecretKey string `json:"aws_bedrock_secret_key" mapstructure:"aws_bedrock_secret_key"`
 	// AWSBedrockRegion is the region for AWS Bedrock
-	AwsBedrockRegion string `json:"aws_bedrock_region"`
+	AwsBedrockRegion string `json:"aws_bedrock_region" mapstructure:"aws_bedrock_region"`
 }
 
 func (c *Config) GetBaseURL(model string) string {

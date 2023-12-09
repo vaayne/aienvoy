@@ -13,21 +13,21 @@ import (
 
 var NotImplementError = errors.New("the method not implement")
 
-type client interface {
+type Client interface {
 	ListModels() []string
 	CreateChatCompletion(ctx context.Context, req ChatCompletionRequest) (ChatCompletionResponse, error)
 	CreateChatCompletionStream(ctx context.Context, req ChatCompletionRequest, respChan chan ChatCompletionStreamResponse, errChan chan error)
 }
 
 type LLM struct {
-	client
+	Client
 	dao Dao
 }
 
-func New(dao Dao, c client) *LLM {
+func New(dao Dao, c Client) *LLM {
 	return &LLM{
 		dao:    dao,
-		client: c,
+		Client: c,
 	}
 }
 
@@ -87,7 +87,7 @@ func (l *LLM) CreateMessage(ctx context.Context, conversationId string, req Chat
 	}
 	reqMessages = append(reqMessages, originReqMessages...)
 	req.Messages = reqMessages
-	resp, err := l.client.CreateChatCompletion(ctx, req)
+	resp, err := l.Client.CreateChatCompletion(ctx, req)
 	if err != nil {
 		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId, "model", req.Model)
 		return Message{}, err
@@ -141,7 +141,7 @@ func (l *LLM) CreateMessageStream(ctx context.Context, conversationId string, re
 	innerDataChan := make(chan ChatCompletionStreamResponse)
 	innerErrChan := make(chan error)
 
-	go l.client.CreateChatCompletionStream(ctx, req, innerDataChan, innerErrChan)
+	go l.Client.CreateChatCompletionStream(ctx, req, innerDataChan, innerErrChan)
 
 	sb := strings.Builder{}
 

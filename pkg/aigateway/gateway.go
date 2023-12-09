@@ -19,6 +19,14 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+func (c *Client) ListModels() []string {
+	var models []string
+	for _, config := range c.Mapping {
+		models = append(models, config.Models...)
+	}
+	return models
+}
+
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
 	config, ok := c.Mapping[req.Model]
 	if !ok {
