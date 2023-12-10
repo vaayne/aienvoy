@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/Vaayne/aienvoy/pkg/session"
 	"github.com/google/uuid"
 	utls "github.com/refraction-networking/utls"
@@ -291,30 +292,6 @@ func (cw *Client) CreateChatMessageStream(id, prompt string, streamChan chan *Ch
 		return
 	}
 	slog.Info("CreateChatMessageStream", "status_code", statusCode)
-
-	reader := bufio.NewReader(resp)
 	defer resp.Close()
-
-	for {
-		line, err := reader.ReadBytes('\n')
-		if err != nil {
-			if err == io.EOF {
-				slog.Info("done with CreateChatMessageStream", "cov_id", id)
-				errChan <- io.EOF
-				return
-			}
-			errChan <- fmt.Errorf("createChatMessageStream read response body err: %v", err)
-			return
-		}
-
-		if len(line) > 6 {
-			var chatMessageResponse ChatMessageResponse
-			err = json.Unmarshal(line[6:], &chatMessageResponse)
-			if err != nil {
-				errChan <- fmt.Errorf("createChatMessageStream unmarshal response body err: %v", err)
-				return
-			}
-			streamChan <- &chatMessageResponse
-		}
-	}
+	llm.ParseSSE[*ChatMessageResponse](resp, streamChan, errChan)
 }

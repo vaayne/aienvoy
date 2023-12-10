@@ -1,13 +1,10 @@
 package phind
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/Vaayne/aienvoy/pkg/llm"
@@ -62,28 +59,7 @@ func (p *Client) CreateCompletion(ctx context.Context, payload *Request, respCha
 		errChan <- fmt.Errorf("phind create completion response error, status code: %d", resp.StatusCode)
 		return
 	}
-	var data llm.ChatCompletionStreamResponse
-	reader := bufio.NewReader(resp.Body)
-	for {
-		line, err := reader.ReadBytes('\n')
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				errChan <- err
-				return
-			}
-			errChan <- fmt.Errorf("phind create completion read response body err: %w", err)
-			return
-		}
-		if len(line) > 6 {
-			err = json.Unmarshal(line[6:], &data)
-
-			if err != nil {
-				errChan <- fmt.Errorf("phind create completion unmarshal response body err: %w", err)
-				return
-			}
-			respChan <- data
-		}
-	}
+	llm.ParseSSE[llm.ChatCompletionStreamResponse](resp.Body, respChan, errChan)
 }
 
 func (p *Client) request(req *http.Request) (*http.Response, error) {
