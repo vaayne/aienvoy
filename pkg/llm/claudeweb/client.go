@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	ModelClaudeWeb   = "claude-2"
+	ModelClaude2     = "claude-2"
+	ModelClaude2Dot1 = "claude-2.1"
 	defaultTimezone  = "Asia/Shanghai"
 	defaultHost      = "https://claude.ai"
 	defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
@@ -37,7 +38,7 @@ func NewClient(sessionKey string) *Client {
 	claudeWeb := &Client{
 		session:    session.New(session.WithClientHelloID(utls.HelloChrome_100_PSK)),
 		sessionKey: sessionKey,
-		model:      ModelClaudeWeb,
+		model:      ModelClaude2,
 	}
 
 	orgs, err := claudeWeb.GetOrganizations()

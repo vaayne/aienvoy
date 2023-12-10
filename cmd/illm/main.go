@@ -11,10 +11,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Vaayne/aienvoy/internal/core/llms"
 	"github.com/Vaayne/aienvoy/internal/pkg/parser"
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
-	llmservice "github.com/Vaayne/aienvoy/pkg/llm/service"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -214,7 +214,7 @@ func builsMessages(system, prompt string, files, urls, texts []string) ([]llm.Ch
 
 func completions(ctx context.Context, model, system, prompt string, files, urls, texts []string) {
 	var client llm.Client
-	client, err := llmservice.NewWithMemoryDao(model)
+	client, err := llms.DefaultLLM(model)
 	if err != nil {
 		slog.Error("create llm service error", "err", err)
 		os.Exit(1)

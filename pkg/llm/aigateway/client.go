@@ -43,6 +43,9 @@ func NewClient(cfg llmconfig.Config) (*Client, error) {
 }
 
 func (c *Client) ListModels() []string {
+	if len(c.Models) == 0 {
+		c.Models = c.config.ListModels()
+	}
 	return c.Models
 }
 

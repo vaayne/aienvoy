@@ -25,10 +25,6 @@ func New(cookies []*http.Cookie, dao llm.Dao) *Phind {
 const ModelPhindV1 = "phind"
 
 func (p *Client) ListModels() []string {
-	return ListModels()
-}
-
-func ListModels() []string {
 	return []string{ModelPhindV1}
 }
 

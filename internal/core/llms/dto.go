@@ -1,4 +1,4 @@
-package llmdao
+package llms
 
 import (
 	"encoding/json"

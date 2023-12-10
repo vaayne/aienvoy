@@ -44,7 +44,7 @@ func (c Conversation) ToLLMConversation() llm.Conversation {
 		Id:      c.UUID,
 		Name:    c.Name,
 		Summary: c.Summary,
-		Model:   ModelClaudeWeb,
+		Model:   ModelClaude2,
 	}
 }
 

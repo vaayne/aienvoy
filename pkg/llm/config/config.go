@@ -1,6 +1,8 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type LLMType string
 
@@ -91,6 +93,10 @@ func (c Config) Validate() error {
 	return nil
 }
 
+func (c *Config) ListModels() []string {
+	return c.Models
+}
+
 type AzureOpenAIConfig struct {
 	ApiKey       string            `json:"api_key" mapstructure:"api_key" yaml:"api_key"`
 	ResourceName string            `json:"resource_name" mapstructure:"resource_name"`
@@ -106,6 +112,14 @@ func (c *AzureOpenAIConfig) validate() error {
 		return fmt.Errorf("azure_openai.resource_name is required")
 	}
 	return nil
+}
+
+func (c *AzureOpenAIConfig) ListModels() []string {
+	models := make([]string, 0)
+	for k := range c.ModelMapping {
+		models = append(models, k)
+	}
+	return models
 }
 
 type AWSBedrockConfig struct {
@@ -207,4 +221,26 @@ func (c AiGatewayConfig) GetAuthHeader() map[string]string {
 		}
 	}
 	return nil
+}
+
+func (c AiGatewayConfig) ListModels() []string {
+	models := make([]string, 0)
+	switch c.Provider.Type {
+	case AiGatewayProviderWorkersAI:
+		// TODO: get models from workers.ai
+		return models
+	case AiGatewayProviderAzureOpenAI:
+		for k := range c.Provider.AzureOpenAI.ModelMapping {
+			models = append(models, k)
+		}
+		return models
+	case AiGatewayProviderAWSBedrock:
+		// TODO: get models from AWS Bedrock
+		return models
+	case AiGatewayProviderOpenAI:
+		// TODO: get models from OpenAI
+		return models
+	default:
+		return models
+	}
 }

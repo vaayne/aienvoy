@@ -34,7 +34,7 @@ func (cw *Client) ListModels() []string {
 }
 
 func ListModels() []string {
-	return []string{ModelClaudeWeb}
+	return []string{ModelClaude2, ModelClaude2Dot1}
 }
 
 func (cw *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {

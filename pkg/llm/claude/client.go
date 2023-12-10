@@ -53,10 +53,6 @@ func NewClient(cfg llmconfig.Config) (*Client, error) {
 }
 
 func (c *Client) ListModels() []string {
-	return ListModels()
-}
-
-func ListModels() []string {
 	return []string{ModelClaudeV2, ModelClaudeV1Dot3, ModelClaudeInstantV1Dot2}
 }
 

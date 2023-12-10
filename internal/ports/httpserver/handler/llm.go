@@ -8,12 +8,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Vaayne/aienvoy/internal/core/llmdao"
-
+	"github.com/Vaayne/aienvoy/internal/core/llms"
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
-	llmservice "github.com/Vaayne/aienvoy/pkg/llm/service"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/daos"
 )
@@ -228,7 +226,7 @@ func (l *LLMHandler) CreateChatCompletion(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (l *LLMHandler) chatStream(c echo.Context, svc llmservice.LLMInterface, req llm.ChatCompletionRequest) error {
+func (l *LLMHandler) chatStream(c echo.Context, svc llm.Interface, req llm.ChatCompletionRequest) error {
 	dataChan := make(chan llm.ChatCompletionStreamResponse)
 	defer close(dataChan)
 	errChan := make(chan error)
@@ -266,6 +264,6 @@ func (l *LLMHandler) chatStream(c echo.Context, svc llmservice.LLMInterface, req
 	}
 }
 
-func newLlmService(c echo.Context, model string) (llmservice.LLMInterface, error) {
-	return llmservice.New(model, llmdao.New(c.Get(config.ContextKeyDao).(*daos.Dao)))
+func newLlmService(c echo.Context, model string) (llm.Interface, error) {
+	return llms.New(model, llms.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 }

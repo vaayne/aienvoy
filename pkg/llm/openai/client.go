@@ -15,6 +15,8 @@ import (
 
 type Client struct {
 	*openai.Client
+	Models []string `json:"models" yaml:"models"`
+	config llmconfig.Config
 }
 
 func NewClient(cfg llmconfig.Config) (*Client, error) {
@@ -44,23 +46,23 @@ func NewClient(cfg llmconfig.Config) (*Client, error) {
 
 	return &Client{
 		Client: openai.NewClientWithConfig(oaiConfig),
+		config: cfg,
+		Models: cfg.Models,
 	}, nil
 }
 
-func ListModels() []string {
-	return []string{
-		openai.GPT3Dot5Turbo, openai.GPT3Dot5Turbo0301, openai.GPT3Dot5Turbo0613, openai.GPT3Dot5Turbo1106,
-		openai.GPT3Dot5Turbo16K, openai.GPT3Dot5Turbo16K0613,
-		openai.GPT3Dot5TurboInstruct,
-		openai.GPT4, openai.GPT40314, openai.GPT40613,
-		openai.GPT4TurboPreview,
-		openai.GPT4VisionPreview,
-		openai.GPT432K, openai.GPT432K0314, openai.GPT432K0613,
-	}
-}
-
 func (s *Client) ListModels() []string {
-	return ListModels()
+	if len(s.Models) == 0 {
+		if models, err := s.Client.ListModels(context.Background()); err != nil {
+			slog.Error("list models error", "err", err)
+		} else {
+			for _, model := range models.Models {
+				s.Models = append(s.Models, model.ID)
+			}
+		}
+	}
+
+	return s.Models
 }
 
 func (s *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {

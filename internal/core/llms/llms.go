@@ -1,7 +1,6 @@
-package service
+package llms
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"log/slog"
@@ -17,29 +16,12 @@ import (
 )
 
 var (
-	modelLlmMapping = make(map[string]LLMInterface)
+	modelLlmMapping = make(map[string]llm.Interface)
 	once            sync.Once
 )
 
-type LLMInterface interface {
-	ListModels() []string
-	CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error)
-	CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, respChan chan llm.ChatCompletionStreamResponse, errChan chan error)
-
-	CreateConversation(ctx context.Context, name string) (llm.Conversation, error)
-	ListConversations(ctx context.Context) ([]llm.Conversation, error)
-	GetConversation(ctx context.Context, id string) (llm.Conversation, error)
-	DeleteConversation(ctx context.Context, id string) error
-
-	CreateMessageStream(ctx context.Context, conversationId string, req llm.ChatCompletionRequest, respChan chan llm.ChatCompletionStreamResponse, errChan chan error)
-	CreateMessage(ctx context.Context, conversationId string, req llm.ChatCompletionRequest) (llm.Message, error)
-	ListMessages(ctx context.Context, conversationId string) ([]llm.Message, error)
-	GetMessage(ctx context.Context, id string) (llm.Message, error)
-	DeleteMessage(ctx context.Context, id string) error
-}
-
 func initModelMapping(dao llm.Dao) {
-	addClient := func(cli LLMInterface, err error) error {
+	addClient := func(cli llm.Interface, err error) error {
 		if err != nil {
 			slog.Error("init openai client error", "err", err)
 			return err
@@ -82,7 +64,7 @@ func initModelMapping(dao llm.Dao) {
 	}
 }
 
-func New(model string, dao llm.Dao) (LLMInterface, error) {
+func New(model string, dao llm.Dao) (llm.Interface, error) {
 	once.Do(func() {
 		initModelMapping(dao)
 	})
@@ -97,6 +79,6 @@ func New(model string, dao llm.Dao) (LLMInterface, error) {
 	return cli, nil
 }
 
-func NewWithMemoryDao(model string) (LLMInterface, error) {
+func DefaultLLM(model string) (llm.Interface, error) {
 	return New(model, llm.NewMemoryDao())
 }
