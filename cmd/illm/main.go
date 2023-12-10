@@ -9,13 +9,12 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/parser"
-	"github.com/Vaayne/aienvoy/pkg/aigateway"
 	"github.com/Vaayne/aienvoy/pkg/llm"
-	"github.com/Vaayne/aienvoy/pkg/llm/together"
+	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
+	llmservice "github.com/Vaayne/aienvoy/pkg/llm/service"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -113,10 +112,7 @@ func initLog(level slog.Level) {
 
 type Config struct {
 	DefaultModel string             `yaml:"default_model" mapstructure:"default_model"`
-	AIGateways   []aigateway.Config `yaml:"ai_gateways" mapstructure:"ai_gateways"`
-	Together     struct {
-		ApiKey string `yaml:"api_key" mapstructure:"api_key"`
-	} `yaml:"together" mapstructure:"together"`
+	LLMs         []llmconfig.Config `yaml:"llms" mapstructure:"llms"`
 }
 
 var globalConfig = &Config{}
@@ -218,17 +214,11 @@ func builsMessages(system, prompt string, files, urls, texts []string) ([]llm.Ch
 
 func completions(ctx context.Context, model, system, prompt string, files, urls, texts []string) {
 	var client llm.Client
-	if strings.HasPrefix(model, "gpt") {
-		ag, err := aigateway.New(globalConfig.AIGateways...)
-		if err != nil {
-			slog.Error("create ai gateway error", "err", err)
-			os.Exit(1)
-		}
-		client = ag
-	} else {
-		client = together.New(globalConfig.Together.ApiKey)
+	client, err := llmservice.NewWithMemoryDao(model)
+	if err != nil {
+		slog.Error("create llm service error", "err", err)
+		os.Exit(1)
 	}
-
 	messages, err := builsMessages(system, prompt, files, urls, texts)
 	if err != nil {
 		panic(err)

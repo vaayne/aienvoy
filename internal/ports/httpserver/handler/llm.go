@@ -8,10 +8,12 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Vaayne/aienvoy/internal/core/llmservice"
+	"github.com/Vaayne/aienvoy/internal/core/llmdao"
+
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
+	llmservice "github.com/Vaayne/aienvoy/pkg/llm/service"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/daos"
 )
@@ -34,7 +36,10 @@ func (l *LLMHandler) CreateConversation(c echo.Context) error {
 		slog.ErrorContext(ctx, "bind create conversation request body error", "err", err.Error())
 		return c.String(http.StatusBadRequest, "bad request")
 	}
-	svc := newLlmService(c, req.Model)
+	svc, err := newLlmService(c, req.Model)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 
 	cov, err := svc.CreateConversation(ctx, req.Name)
 	if err != nil {
@@ -45,7 +50,10 @@ func (l *LLMHandler) CreateConversation(c echo.Context) error {
 
 func (l *LLMHandler) ListConversations(c echo.Context) error {
 	ctx := c.Request().Context()
-	svc := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 	covs, err := svc.ListConversations(ctx)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -56,7 +64,10 @@ func (l *LLMHandler) ListConversations(c echo.Context) error {
 func (l *LLMHandler) GetConversation(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.PathParam("id")
-	svc := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 	cov, err := svc.GetConversation(ctx, id)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -67,8 +78,11 @@ func (l *LLMHandler) GetConversation(c echo.Context) error {
 func (l *LLMHandler) DeleteConversation(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.PathParam("id")
-	svc := newLlmService(c, openai.ModelGPT3Dot5Turbo)
-	err := svc.DeleteConversation(ctx, id)
+	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+	err = svc.DeleteConversation(ctx, id)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -89,7 +103,10 @@ func (l *LLMHandler) CreateMessage(c echo.Context) error {
 		return l.createMessageStream(c, conversationId, req)
 	}
 
-	svc := newLlmService(c, req.Model)
+	svc, err := newLlmService(c, req.Model)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 	msg, err := svc.CreateMessage(ctx, conversationId, *req)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -98,7 +115,10 @@ func (l *LLMHandler) CreateMessage(c echo.Context) error {
 }
 
 func (l *LLMHandler) createMessageStream(c echo.Context, conversationId string, req *llm.ChatCompletionRequest) error {
-	svc := newLlmService(c, req.Model)
+	svc, err := newLlmService(c, req.Model)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 	dataChan := make(chan llm.ChatCompletionStreamResponse)
 	defer close(dataChan)
 	errChan := make(chan error)
@@ -139,7 +159,10 @@ func (l *LLMHandler) createMessageStream(c echo.Context, conversationId string, 
 func (l *LLMHandler) ListMessages(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.PathParam("conversationId")
-	svc := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 	msgs, err := svc.ListMessages(ctx, id)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -151,7 +174,10 @@ func (l *LLMHandler) GetMessage(c echo.Context) error {
 	ctx := c.Request().Context()
 	// conversationId := c.PathParam("conversationId")
 	messageId := c.PathParam("messageId")
-	svc := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 	msg, err := svc.GetMessage(ctx, messageId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
@@ -163,8 +189,11 @@ func (l *LLMHandler) DeleteMessage(c echo.Context) error {
 	ctx := c.Request().Context()
 	// conversationId := c.PathParam("conversationId")
 	messageId := c.PathParam("messageId")
-	svc := newLlmService(c, openai.ModelGPT3Dot5Turbo)
-	err := svc.DeleteMessage(ctx, messageId)
+	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+	err = svc.DeleteMessage(ctx, messageId)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -180,7 +209,10 @@ func (l *LLMHandler) CreateChatCompletion(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	svc := newLlmService(c, req.Model)
+	svc, err := newLlmService(c, req.Model)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 	if svc == nil {
 		return c.String(http.StatusBadRequest, "unknown model")
 	}
@@ -196,7 +228,7 @@ func (l *LLMHandler) CreateChatCompletion(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (l *LLMHandler) chatStream(c echo.Context, svc llmservice.Service, req llm.ChatCompletionRequest) error {
+func (l *LLMHandler) chatStream(c echo.Context, svc llmservice.LLMInterface, req llm.ChatCompletionRequest) error {
 	dataChan := make(chan llm.ChatCompletionStreamResponse)
 	defer close(dataChan)
 	errChan := make(chan error)
@@ -234,6 +266,6 @@ func (l *LLMHandler) chatStream(c echo.Context, svc llmservice.Service, req llm.
 	}
 }
 
-func newLlmService(c echo.Context, model string) llmservice.Service {
-	return llmservice.New(model, llmservice.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
+func newLlmService(c echo.Context, model string) (llmservice.LLMInterface, error) {
+	return llmservice.New(model, llmdao.New(c.Get(config.ContextKeyDao).(*daos.Dao)))
 }

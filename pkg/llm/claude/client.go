@@ -10,20 +10,54 @@ import (
 	"strings"
 
 	"github.com/Vaayne/aienvoy/pkg/llm"
-
+	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
+)
+
+const (
+	ModelClaudeV2            = "anthropic.claude-v2"
+	ModelClaudeV1Dot3        = "anthropic.claude-v1"
+	ModelClaudeInstantV1Dot2 = "anthropic.claude-instant-v1"
 )
 
 type Client struct {
 	*bedrockruntime.Client
 }
 
-func NewClient(config aws.Config) *Client {
-	return &Client{
-		bedrockruntime.NewFromConfig(config),
+func NewClient(cfg llmconfig.Config) (*Client, error) {
+	if cfg.LLMType != llmconfig.LLMTypeAWSBedrock {
+		return nil, fmt.Errorf("invalid config for bedrock, llmtype: %s", cfg.LLMType)
 	}
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
+	ab := cfg.AWSBedrock
+	awsConfig, err := awsconfig.LoadDefaultConfig(context.Background(),
+		awsconfig.WithRegion(ab.Region),
+		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+			ab.AccessKey,
+			ab.SecretKey,
+			"",
+		)))
+	if err != nil {
+		return nil, fmt.Errorf("get aws config error: %w", err)
+	}
+	return &Client{
+		bedrockruntime.NewFromConfig(awsConfig),
+	}, nil
+}
+
+func (c *Client) ListModels() []string {
+	return ListModels()
+}
+
+func ListModels() []string {
+	return []string{ModelClaudeV2, ModelClaudeV1Dot3, ModelClaudeInstantV1Dot2}
 }
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {

@@ -1,4 +1,4 @@
-package llmservice
+package llmdao
 
 import (
 	"context"
@@ -15,7 +15,7 @@ type Dao struct {
 	tx *daos.Dao
 }
 
-func NewDao(tx *daos.Dao) *Dao {
+func New(tx *daos.Dao) *Dao {
 	return &Dao{tx: tx}
 }
 

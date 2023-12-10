@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/Vaayne/aienvoy/pkg/llm"
+	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
 )
 
 const baseUrl = "https://api.together.xyz"
@@ -19,12 +20,24 @@ type Client struct {
 	Apikey  string `json:"apikey"`
 }
 
-func New(apikey string) *Client {
-	return &Client{
+func NewClient(cfg llmconfig.Config) (*Client, error) {
+	if cfg.LLMType != llmconfig.LLMTypeTogether {
+		return nil, fmt.Errorf("invalid config for together, llmtype: %s", cfg.LLMType)
+	}
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
+	client := &Client{
 		baseUrl: baseUrl,
 		session: http.DefaultClient,
-		Apikey:  apikey,
+		Apikey:  cfg.ApiKey,
 	}
+	if cfg.BaseUrl != "" {
+		client.baseUrl = cfg.BaseUrl
+	}
+
+	return client, nil
 }
 
 func (c *Client) WithSession(session *http.Client) *Client {
