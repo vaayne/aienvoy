@@ -9,7 +9,7 @@ import (
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/Vaayne/aienvoy/pkg/llm/aigateway"
-	"github.com/Vaayne/aienvoy/pkg/llm/claude"
+	"github.com/Vaayne/aienvoy/pkg/llm/awsbedrock"
 	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 	"github.com/Vaayne/aienvoy/pkg/llm/together"
@@ -23,7 +23,6 @@ var (
 func initModelMapping(dao llm.Dao) {
 	addClient := func(cli llm.Interface, err error) error {
 		if err != nil {
-			slog.Error("init openai client error", "err", err)
 			return err
 		}
 
@@ -36,26 +35,29 @@ func initModelMapping(dao llm.Dao) {
 	for _, cfg := range config.GetConfig().LLMs {
 		switch cfg.LLMType {
 		case llmconfig.LLMTypeOpenAI, llmconfig.LLMTypeAzureOpenAI:
-			if err := addClient(openai.New(cfg, dao)); err != nil {
-				slog.Error("init openai client error", "err", err)
+			cli, err := openai.New(cfg, dao)
+			if err := addClient(cli, err); err != nil {
+				slog.Error("init openai client error", "err", err, "config", cfg)
 				continue
 			}
-		case llmconfig.LLMTypeTogether:
+					case llmconfig.LLMTypeTogether:
 			if err := addClient(together.New(cfg, dao)); err != nil {
-				slog.Error("init together client error", "err", err)
+				slog.Error("init together client error", "err", err, "config", cfg)
 				continue
 			}
 		case llmconfig.LLMTypeAWSBedrock:
-			if err := addClient(claude.New(cfg, dao)); err != nil {
-				slog.Error("init claude client error", "err", err)
+			cli, err := awsbedrock.New(cfg, dao)
+			if err := addClient(cli, err); err != nil {
+				slog.Error("init aws bedrock client error", "err", err, "config", cfg)
 				continue
 			}
-		case llmconfig.LLMTypeAiGateway:
-			if err := addClient(aigateway.New(cfg, dao)); err != nil {
-				slog.Error("init aigateway client error", "err", err)
+					case llmconfig.LLMTypeAiGateway:
+			cli, err := aigateway.New(cfg, dao)
+			if err := addClient(cli, err); err != nil {
+				slog.Error("init aigateway client error", "err", err, "config", cfg)
 				continue
 			}
-		}
+					}
 	}
 
 	slog.Info("llm clients", "clients", modelLlmMapping)
@@ -64,7 +66,7 @@ func initModelMapping(dao llm.Dao) {
 	}
 }
 
-func New(model string, dao llm.Dao) (llm.Interface, error) {
+func NewWithDao(model string, dao llm.Dao) (llm.Interface, error) {
 	once.Do(func() {
 		initModelMapping(dao)
 	})
@@ -79,6 +81,6 @@ func New(model string, dao llm.Dao) (llm.Interface, error) {
 	return cli, nil
 }
 
-func DefaultLLM(model string) (llm.Interface, error) {
-	return New(model, llm.NewMemoryDao())
+func New(model string) (llm.Interface, error) {
+	return NewWithDao(model, llm.NewMemoryDao())
 }

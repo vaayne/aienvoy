@@ -76,20 +76,6 @@ func (c Config) Validate() error {
 	case LLMTypeAiGateway:
 		return c.AiGateway.validate()
 	}
-	switch c.LLMType {
-	case LLMTypeAzureOpenAI:
-		if err := c.AzureOpenAI.validate(); err != nil {
-			return err
-		}
-	case LLMTypeAWSBedrock:
-		if err := c.AWSBedrock.validate(); err != nil {
-			return err
-		}
-	case LLMTypeAiGateway:
-		if err := c.AiGateway.validate(); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -98,10 +84,10 @@ func (c *Config) ListModels() []string {
 }
 
 type AzureOpenAIConfig struct {
-	ApiKey       string            `json:"api_key" mapstructure:"api_key" yaml:"api_key"`
-	ResourceName string            `json:"resource_name" mapstructure:"resource_name"`
-	ModelMapping map[string]string `json:"model_mapping" mapstructure:"model_mapping"`
-	Version      string            `json:"version" mapstructure:"version"`
+	ApiKey                 string            `json:"api_key" mapstructure:"api_key" yaml:"api_key"`
+	ResourceName           string            `json:"resource_name" mapstructure:"resource_name" yaml:"resource_name"`
+	ModelDeploymentMapping map[string]string `json:"model_deployment_mapping" mapstructure:"model_deployment_mapping" yaml:"model_deployment_mapping"`
+	Version                string            `json:"version" mapstructure:"version" yaml:"version"`
 }
 
 func (c *AzureOpenAIConfig) validate() error {
@@ -116,7 +102,7 @@ func (c *AzureOpenAIConfig) validate() error {
 
 func (c *AzureOpenAIConfig) ListModels() []string {
 	models := make([]string, 0)
-	for k := range c.ModelMapping {
+	for k := range c.ModelDeploymentMapping {
 		models = append(models, k)
 	}
 	return models
@@ -126,9 +112,9 @@ type AWSBedrockConfig struct {
 	// AccessKey is the access key for AWS Bedrock
 	AccessKey string `json:"access_key" mapstructure:"access_key" yaml:"access_key"`
 	// SecretKey is the secret key for AWS Bedrock
-	SecretKey string `json:"secret_key" mapstructure:"secret_key"`
+	SecretKey string `json:"secret_key" mapstructure:"secret_key" yaml:"secret_key"`
 	// egion is the region for AWS Bedrock
-	Region string `json:"region" mapstructure:"region"`
+	Region string `json:"region" mapstructure:"region" yaml:"region"`
 }
 
 func (c *AWSBedrockConfig) validate() error {
@@ -142,6 +128,10 @@ func (c *AWSBedrockConfig) validate() error {
 		return fmt.Errorf("aws_bedrock.region is required")
 	}
 	return nil
+}
+
+func (c *AWSBedrockConfig) ListModels() []string {
+	return DefaultAwsBedrockModels
 }
 
 type AiGatewayProvider struct {
@@ -192,7 +182,7 @@ func (c *AiGatewayConfig) GetChatURL(model string) string {
 		return fmt.Sprintf("%s/%s", baseUrl, model)
 	case AiGatewayProviderAzureOpenAI:
 		az := c.Provider.AzureOpenAI
-		return fmt.Sprintf("%s/%s/%s/chat/completions?api-version=%s", baseUrl, az.ResourceName, az.ModelMapping[model], az.Version)
+		return fmt.Sprintf("%s/%s/%s/chat/completions?api-version=%s", baseUrl, az.ResourceName, az.ModelDeploymentMapping[model], az.Version)
 	case AiGatewayProviderAWSBedrock:
 		ab := c.Provider.AWSBedrock
 		return fmt.Sprintf("%s/bedrock-runtime/%s/model/%s/invoke", baseUrl, ab.Region, model)
@@ -230,17 +220,29 @@ func (c AiGatewayConfig) ListModels() []string {
 		// TODO: get models from workers.ai
 		return models
 	case AiGatewayProviderAzureOpenAI:
-		for k := range c.Provider.AzureOpenAI.ModelMapping {
+		for k := range c.Provider.AzureOpenAI.ModelDeploymentMapping {
 			models = append(models, k)
 		}
 		return models
 	case AiGatewayProviderAWSBedrock:
-		// TODO: get models from AWS Bedrock
-		return models
+		return DefaultAwsBedrockModels
 	case AiGatewayProviderOpenAI:
-		// TODO: get models from OpenAI
-		return models
+		return DefaultOpenAIChatModels
 	default:
 		return models
 	}
+}
+
+var DefaultOpenAIChatModels = []string{
+	"gpt-4-1106-preview", "gpt-4-vision-preview", "gpt-4", "gpt-4-32k", "gpt-4-0613", "gpt-4-32k-0613", "gpt-4-0314", "gpt-4-32k-0314",
+	"gpt-3.5-turbo-1106", "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-3.5-turbo-instruct", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-16k-0613", "gpt-3.5-turbo-0301",
+}
+
+var DefaultAwsBedrockModels = []string{
+	"ai21.2-mid-v1", "ai21.2-ultra-v1",
+	"amazon.titan-embed-text-v1", "amazon.titan-text-express-v1", "amazon.titan-embed-image-v1", "amazon.titan-image-generator-v1",
+	"anthropic.claude-v1", "anthropic.claude-v2", "anthropic.claude-v2:1", "anthropic.claude-instant-v1",
+	"cohere.command-text-v14", "cohere.command-light-text-v14", "cohere.embed-english-v3", "cohere.embed-multilingual-v3",
+	"meta.llama2-13b-chat-v1", "metallama2-70b-chat-v1",
+	"stability.stable-diffusion-xl-vo", "stability.stable-diffusion-xL-v1",
 }

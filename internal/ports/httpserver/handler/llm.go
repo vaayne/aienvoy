@@ -265,5 +265,5 @@ func (l *LLMHandler) chatStream(c echo.Context, svc llm.Interface, req llm.ChatC
 }
 
 func newLlmService(c echo.Context, model string) (llm.Interface, error) {
-	return llms.New(model, llms.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
+	return llms.NewWithDao(model, llms.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 }

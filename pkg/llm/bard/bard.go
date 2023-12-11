@@ -14,7 +14,6 @@ import (
 
 const ModelBard = "bard"
 
-
 type Bard struct {
 	client *Client
 	dao    llm.Dao

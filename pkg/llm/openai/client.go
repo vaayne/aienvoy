@@ -53,15 +53,12 @@ func NewClient(cfg llmconfig.Config) (*Client, error) {
 
 func (s *Client) ListModels() []string {
 	if len(s.Models) == 0 {
-		if models, err := s.Client.ListModels(context.Background()); err != nil {
-			slog.Error("list models error", "err", err)
+		if s.config.LLMType == llmconfig.LLMTypeAzureOpenAI {
+			s.Models = llmconfig.DefaultOpenAIChatModels
 		} else {
-			for _, model := range models.Models {
-				s.Models = append(s.Models, model.ID)
-			}
+			s.Models = s.config.AzureOpenAI.ListModels()
 		}
 	}
-
 	return s.Models
 }
 

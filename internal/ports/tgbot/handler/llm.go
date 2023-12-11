@@ -15,7 +15,7 @@ import (
 
 func onLLMChat(c tb.Context, conversationId, model, prompt string) error {
 	ctx := c.Get(config.ContextKeyContext).(context.Context)
-	svc, err := llms.New(model, llms.NewDao(ctx.Value(config.ContextKeyDao).(*daos.Dao)))
+	svc, err := llms.NewWithDao(model, llms.NewDao(ctx.Value(config.ContextKeyDao).(*daos.Dao)))
 	if err != nil {
 		return fmt.Errorf("init llm service err: %v", err)
 	}

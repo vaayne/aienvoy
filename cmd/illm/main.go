@@ -5,16 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"log/slog"
 	"os"
 	"os/user"
 	"path/filepath"
+	"sync"
 	"time"
 
-	"github.com/Vaayne/aienvoy/internal/core/llms"
 	"github.com/Vaayne/aienvoy/internal/pkg/parser"
 	"github.com/Vaayne/aienvoy/pkg/llm"
+	"github.com/Vaayne/aienvoy/pkg/llm/aigateway"
+	"github.com/Vaayne/aienvoy/pkg/llm/awsbedrock"
 	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
+	"github.com/Vaayne/aienvoy/pkg/llm/openai"
+	"github.com/Vaayne/aienvoy/pkg/llm/together"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -104,7 +109,8 @@ func main() {
 
 func initLog(level slog.Level) {
 	th := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: level,
+		Level:     level,
+		AddSource: true,
 	})
 	logger := slog.New(th)
 	slog.SetDefault(logger)
@@ -214,7 +220,7 @@ func builsMessages(system, prompt string, files, urls, texts []string) ([]llm.Ch
 
 func completions(ctx context.Context, model, system, prompt string, files, urls, texts []string) {
 	var client llm.Client
-	client, err := llms.DefaultLLM(model)
+	client, err := getLLM(model)
 	if err != nil {
 		slog.Error("create llm service error", "err", err)
 		os.Exit(1)
@@ -256,4 +262,68 @@ func completions(ctx context.Context, model, system, prompt string, files, urls,
 			os.Exit(1)
 		}
 	}
+}
+
+var (
+	modelLlmMapping = make(map[string]llm.Interface)
+	once            sync.Once
+)
+
+func initModelMapping(dao llm.Dao) {
+	addClient := func(cli llm.Interface, err error) error {
+		if err != nil {
+			return err
+		}
+
+		for _, model := range cli.ListModels() {
+			modelLlmMapping[model] = cli
+		}
+		return nil
+	}
+
+	for _, cfg := range globalConfig.LLMs {
+		switch cfg.LLMType {
+		case llmconfig.LLMTypeOpenAI, llmconfig.LLMTypeAzureOpenAI:
+			cli, err := openai.New(cfg, dao)
+			if err := addClient(cli, err); err != nil {
+				slog.Error("init openai client error", "err", err, "config", cfg)
+				continue
+			}
+			slog.Debug("openai client models", "models", cli.ListModels())
+		case llmconfig.LLMTypeTogether:
+			if err := addClient(together.New(cfg, dao)); err != nil {
+				slog.Error("init together client error", "err", err, "config", cfg)
+				continue
+			}
+		case llmconfig.LLMTypeAWSBedrock:
+			cli, err := awsbedrock.New(cfg, dao)
+			if err := addClient(cli, err); err != nil {
+				slog.Error("init aws bedrock client error", "err", err, "config", cfg)
+				continue
+			}
+			slog.Debug("aws bedrock client models", "models", cli.ListModels())
+		case llmconfig.LLMTypeAiGateway:
+			cli, err := aigateway.New(cfg, dao)
+			if err := addClient(cli, err); err != nil {
+				slog.Error("init aigateway client error", "err", err, "config", cfg)
+				continue
+			}
+			slog.Debug("aigateway client models", "models", cli.ListModels())
+		}
+	}
+
+	if len(modelLlmMapping) == 0 {
+		log.Fatal("no llm clients found")
+	}
+}
+
+func getLLM(model string) (llm.Interface, error) {
+	once.Do(func() {
+		initModelMapping(nil)
+	})
+
+	if cli, ok := modelLlmMapping[model]; ok {
+		return cli, nil
+	}
+	return nil, fmt.Errorf("no llm client found for model %s", model)
 }
