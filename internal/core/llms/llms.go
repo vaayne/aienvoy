@@ -40,7 +40,7 @@ func initModelMapping(dao llm.Dao) {
 				slog.Error("init openai client error", "err", err, "config", cfg)
 				continue
 			}
-					case llmconfig.LLMTypeTogether:
+		case llmconfig.LLMTypeTogether:
 			if err := addClient(together.New(cfg, dao)); err != nil {
 				slog.Error("init together client error", "err", err, "config", cfg)
 				continue
@@ -51,13 +51,13 @@ func initModelMapping(dao llm.Dao) {
 				slog.Error("init aws bedrock client error", "err", err, "config", cfg)
 				continue
 			}
-					case llmconfig.LLMTypeAiGateway:
+		case llmconfig.LLMTypeAiGateway:
 			cli, err := aigateway.New(cfg, dao)
 			if err := addClient(cli, err); err != nil {
 				slog.Error("init aigateway client error", "err", err, "config", cfg)
 				continue
 			}
-					}
+		}
 	}
 
 	slog.Info("llm clients", "clients", modelLlmMapping)
