@@ -236,7 +236,7 @@ func completions(ctx context.Context, model, system, prompt string, files, urls,
 		Stream:      true,
 		Temperature: 0.9,
 		MaxTokens:   4096,
-		Stop:        []string{"</s>",  "user:", "<|im_start|>", "<|im_end|>"},
+		Stop:        []string{"</s>", "user:", "<|im_start|>", "<|im_end|>"},
 	}
 
 	slog.Debug("start to create chat completion stream", "request", req)
