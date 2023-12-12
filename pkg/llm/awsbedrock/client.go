@@ -62,7 +62,7 @@ func (c *Client) ListModels() []string {
 }
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	slog.InfoContext(ctx, "chat start", "model", req.Model, "is_stream", false)
+	slog.DebugContext(ctx, "chat start", "model", req.Model, "is_stream", false)
 	bedrockRequest := &BedrockRequest{}
 	bedrockRequest.FromChatCompletionRequest(req)
 
@@ -78,12 +78,12 @@ func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 	}
 	resp := &BedrockResponse{}
 	resp.Unmarshal(output.Body)
-	slog.InfoContext(ctx, "chat success", "model", req.Model, "is_stream", false)
+	slog.DebugContext(ctx, "chat success", "model", req.Model, "is_stream", false)
 	return resp.ToChatCompletionResponse(), nil
 }
 
 func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
-	slog.InfoContext(ctx, "chat start", "model", req.Model, "is_stream", true)
+	slog.DebugContext(ctx, "chat start", "model", req.Model, "is_stream", true)
 	bedrockRequest := &BedrockRequest{}
 	bedrockRequest.FromChatCompletionRequest(req)
 
@@ -123,6 +123,6 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 			return
 		}
 	}
-	slog.InfoContext(ctx, "chat success", "model", req.Model, "is_stream", true)
+	slog.DebugContext(ctx, "chat success", "model", req.Model, "is_stream", true)
 	errChan <- io.EOF
 }

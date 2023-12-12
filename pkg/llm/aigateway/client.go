@@ -205,6 +205,7 @@ func setRequestHeaders(ctx context.Context, request *http.Request, config llmcon
 			return fmt.Errorf("sign request error: %w", err)
 		}
 	}
+	slog.DebugContext(ctx, "chat request headers", "headers", request.Header)
 	return nil
 }
 

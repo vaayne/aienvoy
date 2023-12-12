@@ -7,12 +7,16 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
 )
 
 const baseUrl = "https://api.together.xyz"
+
+var cacheModelsFile = filepath.Join(os.TempDir(), "together_models.json")
 
 type Client struct {
 	session *http.Client
@@ -62,6 +66,11 @@ type Model struct {
 	DisplayType   string `json:"display_type"`
 	Description   string `json:"description"`
 	ContextLength int    `json:"context_length"`
+	Config        struct {
+		ChatPrompt   string   `json:"chat_prompt"`
+		PromptFormat string   `json:"prompt_format"`
+		Stop         []string `json:"stop"`
+	} `json:"config"`
 }
 
 func (c *Client) setHeaders(req *http.Request) {
@@ -71,17 +80,15 @@ func (c *Client) setHeaders(req *http.Request) {
 	req.Header.Set("User-Agent", "TogetherPythonOfficial/0.2.10")
 }
 
-func (c *Client) ListModels() []string {
-	req, _ := http.NewRequest("GET", c.baseUrl+"/models/info", nil)
-	c.setHeaders(req)
-	resp, err := c.session.Do(req)
+func readModelsCache() []string {
+	modelsFile, err := os.Open(cacheModelsFile)
 	if err != nil {
 		slog.Error("list models", "err", err)
 		return []string{}
 	}
-	defer resp.Body.Close()
+	defer modelsFile.Close()
 	var models []Model
-	if err := json.NewDecoder(resp.Body).Decode(&models); err != nil {
+	if err := json.NewDecoder(modelsFile).Decode(&models); err != nil {
 		slog.Error("list models", "err", err)
 		return []string{}
 	}
@@ -90,6 +97,44 @@ func (c *Client) ListModels() []string {
 		modelNames = append(modelNames, model.Name)
 	}
 	return modelNames
+}
+
+func saveModelsCache(models []any) {
+	modelsFile, err := os.Create(cacheModelsFile)
+	if err != nil {
+		slog.Error("list models", "err", err)
+		return
+	}
+	defer modelsFile.Close()
+	if err := json.NewEncoder(modelsFile).Encode(models); err != nil {
+		slog.Error("list models", "err", err)
+		return
+	}
+}
+
+func (c *Client) getModelsFromServer() []any {
+	models := make([]any, 0)
+	req, _ := http.NewRequest("GET", c.baseUrl+"/models/info", nil)
+	c.setHeaders(req)
+	resp, err := c.session.Do(req)
+	if err != nil {
+		slog.Error("list models", "err", err)
+		return models
+	}
+	defer resp.Body.Close()
+	if err := json.NewDecoder(resp.Body).Decode(&models); err != nil {
+		slog.Error("list models", "err", err)
+		return models
+	}
+	return models
+}
+
+func (c *Client) ListModels() []string {
+	if _, err := os.Stat(cacheModelsFile); err != nil {
+		models := c.getModelsFromServer()
+		saveModelsCache(models)
+	}
+	return readModelsCache()
 }
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {

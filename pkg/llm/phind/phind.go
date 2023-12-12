@@ -29,7 +29,7 @@ func (p *Client) ListModels() []string {
 }
 
 func (p *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	slog.InfoContext(ctx, "chat start", "llm", req.Model, "is_stream", false)
+	slog.DebugContext(ctx, "chat start", "llm", req.Model, "is_stream", false)
 	payload := &Request{}
 	payload.FromChatCompletionRequest(req)
 
@@ -47,7 +47,7 @@ func (p *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 			}
 		case err := <-innerErrChan:
 			if errors.Is(err, io.EOF) {
-				slog.InfoContext(ctx, "chat success", "llm", req.Model, "is_stream", false)
+				slog.DebugContext(ctx, "chat success", "llm", req.Model, "is_stream", false)
 				return llm.ChatCompletionResponse{
 					ID:      data.ID,
 					Object:  data.Object,
@@ -73,7 +73,7 @@ func (p *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 }
 
 func (p *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
-	slog.InfoContext(ctx, "chat start", "llm", req.Model, "is_stream", true)
+	slog.DebugContext(ctx, "chat start", "llm", req.Model, "is_stream", true)
 	payload := &Request{}
 	payload.FromChatCompletionRequest(req)
 
@@ -92,7 +92,7 @@ func (p *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 			dataChan <- resp
 		case err := <-innerErrChan:
 			if errors.Is(err, io.EOF) {
-				slog.InfoContext(ctx, "chat success", "llm", req.Model, "is_stream", true)
+				slog.DebugContext(ctx, "chat success", "llm", req.Model, "is_stream", true)
 				errChan <- err
 				return
 			}

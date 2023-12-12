@@ -202,7 +202,7 @@ func (c AiGatewayConfig) GetAuthHeader() map[string]string {
 		}
 	case AiGatewayProviderAzureOpenAI:
 		return map[string]string{
-			"api-key": c.Provider.ApiKey,
+			"api-key": c.Provider.AzureOpenAI.ApiKey,
 		}
 	case AiGatewayProviderAWSBedrock:
 		ab := c.Provider.AWSBedrock
