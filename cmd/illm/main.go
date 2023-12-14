@@ -18,6 +18,7 @@ import (
 	"github.com/Vaayne/aienvoy/pkg/llm/aigateway"
 	"github.com/Vaayne/aienvoy/pkg/llm/awsbedrock"
 	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
+	"github.com/Vaayne/aienvoy/pkg/llm/googleai"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 	"github.com/Vaayne/aienvoy/pkg/llm/together"
 	"github.com/spf13/cobra"
@@ -236,7 +237,7 @@ func completions(ctx context.Context, model, system, prompt string, files, urls,
 		Stream:      true,
 		Temperature: 0.9,
 		MaxTokens:   4096,
-		Stop:        []string{"</s>", "user:", "<|im_start|>", "<|im_end|>"},
+		Stop:        []string{"</s>", "<|im_end|>"},
 	}
 
 	slog.Debug("start to create chat completion stream", "request", req)
@@ -294,6 +295,11 @@ func initModelMapping(dao llm.Dao) {
 		case llmconfig.LLMTypeTogether:
 			if err := addClient(together.New(cfg, dao)); err != nil {
 				slog.Error("init together client error", "err", err, "config", cfg)
+				continue
+			}
+		case llmconfig.LLMTypeGoogleAI:
+			if err := addClient(googleai.New(cfg, dao)); err != nil {
+				slog.Error("init googleai client error", "err", err, "config", cfg)
 				continue
 			}
 		case llmconfig.LLMTypeAWSBedrock:

@@ -19,6 +19,7 @@ const (
 	LLMTypeReplicate   LLMType = "replicate"
 	LLMTypeClaudeWeb   LLMType = "claude-web"
 	LLMTypeGoogleBard  LLMType = "google-bard"
+	LLMTypeGoogleAI    LLMType = "google-ai"
 )
 
 type AiGatewayProviderType string
@@ -65,7 +66,7 @@ func (c Config) Validate() error {
 	}
 
 	switch c.LLMType {
-	case LLMTypeOpenAI, LLMTypeClaudeWeb, LLMTypeGoogleBard, LLMTypeTogether, LLMTypeReplicate:
+	case LLMTypeOpenAI, LLMTypeClaudeWeb, LLMTypeGoogleBard, LLMTypeTogether, LLMTypeReplicate, LLMTypeGoogleAI:
 		if c.ApiKey == "" {
 			return fmt.Errorf("api_key is required")
 		}
