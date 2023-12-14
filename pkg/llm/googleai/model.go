@@ -38,15 +38,27 @@ type ChatRequest struct {
 
 func (r ChatRequest) FromChatCompletionRequest(req llm.ChatCompletionRequest) ChatRequest {
 	contents := make([]ChatMessage, 0, len(req.Messages))
+	lastRole := ""
 	for _, message := range req.Messages {
 		role := message.Role
 		if role == llm.ChatMessageRoleAssistant {
 			role = "model"
+		} else if role == llm.ChatMessageRoleSystem {
+			role = "user"
 		}
+
+		if lastRole == "user" && role == "user" {
+			contents = append(contents, ChatMessage{
+				Role:  "model",
+				Parts: []ChatMessagePart{{Text: ""}},
+			})
+		}
+
 		contents = append(contents, ChatMessage{
 			Role:  role,
 			Parts: []ChatMessagePart{{Text: message.Content}},
 		})
+		lastRole = role
 	}
 
 	safetySettings := []SafetySetting{
