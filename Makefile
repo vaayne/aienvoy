@@ -13,6 +13,9 @@ run: build
 build:
 	go build -ldflags="-s -w" -o ./app main.go
 
+buildd:
+	docker buildx build --platform linux/amd64,linux/arm64 -t vaayne/aienvoy:latest --push .
+
 # create migration file
 migrate_create:
 	# usage make migrate_create name=table_name
