@@ -14,31 +14,49 @@ import (
 
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/Vaayne/aienvoy/pkg/llm/claude"
+	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/mitchellh/mapstructure"
 )
 
-func (c *Client) ListModels() []string {
-	var models []string
-	for _, config := range c.Mapping {
-		models = append(models, config.Models...)
+type Client struct {
+	session *http.Client
+	config  llmconfig.AiGatewayConfig
+	Models  []string `json:"models"`
+}
+
+func NewClient(cfg llmconfig.Config) (*Client, error) {
+	if cfg.LLMType != llmconfig.LLMTypeAiGateway {
+		return nil, fmt.Errorf("invalid config for ai gateway, llmtype: %s", cfg.LLMType)
 	}
-	return models
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
+	client := &Client{
+		session: http.DefaultClient,
+		config:  cfg.AiGateway,
+	}
+
+	return client, nil
+}
+
+func (c *Client) ListModels() []string {
+	if len(c.Models) == 0 {
+		c.Models = c.config.ListModels()
+	}
+	return c.Models
 }
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	config, ok := c.Mapping[req.Model]
-	if !ok {
-		return llm.ChatCompletionResponse{}, fmt.Errorf("model id %s not found", req.Model)
-	}
-
+	config := c.config
 	payload, err := buildRequestPayload(req, config)
 	if err != nil {
 		return llm.ChatCompletionResponse{}, fmt.Errorf("build request payload error: %w", err)
 	}
 
-	url := config.GetBaseURL(req.Model)
+	url := config.GetChatURL(req.Model)
 	slog.DebugContext(ctx, "chat request", "url", url, "req", string(payload))
 	requestBody := bytes.NewReader(payload)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, requestBody)
@@ -69,18 +87,14 @@ func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 
 func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	req.Stream = true
-	config, ok := c.Mapping[req.Model]
-	if !ok {
-		errChan <- fmt.Errorf("model id %s not found", req.Model)
-		return
-	}
+	config := c.config
 	payload, err := buildRequestPayload(req, config)
 	if err != nil {
 		errChan <- fmt.Errorf("build request payload error: %w", err)
 		return
 	}
 
-	url := config.GetBaseURL(req.Model)
+	url := config.GetChatURL(req.Model)
 	slog.DebugContext(ctx, "chat request", "url", url, "req", string(payload))
 	requestBody := bytes.NewReader(payload)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, requestBody)
@@ -118,15 +132,15 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 		case <-ctx.Done():
 			return
 		case data := <-innerDataChan:
-			switch config.Provider {
-			case AWSBedrock:
+			switch config.Provider.Type {
+			case llmconfig.AiGatewayProviderAWSBedrock:
 				var val claude.BedrockResponse
 				if err := mapstructure.Decode(data, &val); err != nil {
 					errChan <- fmt.Errorf("parse response error: %w", err)
 					return
 				}
 				dataChan <- val.ToChatCompletionStreamResponse()
-			case OpenAI, AzureOpenAI:
+			case llmconfig.AiGatewayProviderOpenAI, llmconfig.AiGatewayProviderAzureOpenAI:
 				// convert any to ChatCompletionStreamResponse
 				// the any may response as map[string]interface{}, so we have to convert it manually
 				var val llm.ChatCompletionStreamResponse
@@ -145,12 +159,12 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 	}
 }
 
-func buildRequestPayload(req llm.ChatCompletionRequest, config Config) ([]byte, error) {
+func buildRequestPayload(req llm.ChatCompletionRequest, config llmconfig.AiGatewayConfig) ([]byte, error) {
 	var payload []byte
 	var err error
 
-	switch config.Provider {
-	case AWSBedrock:
+	switch config.Provider.Type {
+	case llmconfig.AiGatewayProviderAWSBedrock:
 		bedrockRequest := &claude.BedrockRequest{}
 		bedrockRequest.FromChatCompletionRequest(req)
 		payload = bedrockRequest.Marshal()
@@ -161,7 +175,7 @@ func buildRequestPayload(req llm.ChatCompletionRequest, config Config) ([]byte, 
 	return payload, err
 }
 
-func setRequestHeaders(ctx context.Context, request *http.Request, config Config, stream bool, requestBody io.Reader) error {
+func setRequestHeaders(ctx context.Context, request *http.Request, config llmconfig.AiGatewayConfig, stream bool, requestBody io.Reader) error {
 	// set auth header
 	for k, v := range config.GetAuthHeader() {
 		request.Header.Set(k, v)
@@ -169,7 +183,7 @@ func setRequestHeaders(ctx context.Context, request *http.Request, config Config
 	// set content type and accept
 	request.Header.Set("Content-Type", "application/json")
 	if stream {
-		if config.Provider == AWSBedrock {
+		if config.Provider.Type == llmconfig.AiGatewayProviderAWSBedrock {
 			request.Header.Set("accept", "application/vnd.amazon.eventstream")
 		} else {
 			request.Header.Set("accept", "text/event-stream")
@@ -179,24 +193,26 @@ func setRequestHeaders(ctx context.Context, request *http.Request, config Config
 	}
 
 	// set bedrock headers
-	if config.Provider == AWSBedrock {
+	if config.Provider.Type == llmconfig.AiGatewayProviderAWSBedrock {
 		// Create a signer with the credentials
 		signer := v4.NewSigner()
 		h := sha256.New()
 		_, _ = io.Copy(h, requestBody)
 		payloadHash := hex.EncodeToString(h.Sum(nil))
-		privider := aws.Credentials{AccessKeyID: config.AwsBedrockAccessKey, SecretAccessKey: config.AwsBedrockSecretKey, SessionToken: ""}
-		if err := signer.SignHTTP(ctx, privider, request, payloadHash, "bedrock", config.AwsBedrockRegion, time.Now()); err != nil {
+		ab := config.Provider.AWSBedrock
+		privider := aws.Credentials{AccessKeyID: ab.AccessKey, SecretAccessKey: ab.SecretKey, SessionToken: ""}
+		if err := signer.SignHTTP(ctx, privider, request, payloadHash, "bedrock", ab.Region, time.Now()); err != nil {
 			return fmt.Errorf("sign request error: %w", err)
 		}
 	}
+	slog.DebugContext(ctx, "chat request headers", "headers", request.Header)
 	return nil
 }
 
-func processResponse(ctx context.Context, body io.ReadCloser, config Config) (llm.ChatCompletionResponse, error) {
+func processResponse(ctx context.Context, body io.ReadCloser, config llmconfig.AiGatewayConfig) (llm.ChatCompletionResponse, error) {
 	var respBody llm.ChatCompletionResponse
-	switch config.Provider {
-	case AWSBedrock:
+	switch config.Provider.Type {
+	case llmconfig.AiGatewayProviderAWSBedrock:
 		var bedrockResp claude.BedrockResponse
 		err := json.NewDecoder(body).Decode(&bedrockResp)
 		if err != nil {

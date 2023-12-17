@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Vaayne/aienvoy/internal/core/llmservice"
+	"github.com/Vaayne/aienvoy/internal/core/llms"
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/pocketbase/pocketbase/daos"
@@ -15,7 +15,10 @@ import (
 
 func onLLMChat(c tb.Context, conversationId, model, prompt string) error {
 	ctx := c.Get(config.ContextKeyContext).(context.Context)
-	svc := llmservice.New(model, llmservice.NewDao(ctx.Value(config.ContextKeyDao).(*daos.Dao)))
+	svc, err := llms.NewWithDao(model, llms.NewDao(ctx.Value(config.ContextKeyDao).(*daos.Dao)))
+	if err != nil {
+		return fmt.Errorf("init llm service err: %v", err)
+	}
 	if conversationId == "" {
 		cov, err := svc.CreateConversation(ctx, "")
 		if err != nil {

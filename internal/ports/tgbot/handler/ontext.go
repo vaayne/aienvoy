@@ -50,7 +50,7 @@ func OnText(c tb.Context) error {
 		case CommandChatGPT4:
 			model = openai.ModelGPT4
 		case CommandClaudeWeb:
-			model = claudeweb.ModelClaudeWeb
+			model = claudeweb.ModelClaude2
 		case CommandClaudeV2:
 			model = claude.ModelClaudeV2
 		case CommandClaudeV1:

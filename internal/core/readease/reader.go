@@ -9,7 +9,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/Vaayne/aienvoy/internal/core/llmservice"
+	"github.com/Vaayne/aienvoy/internal/core/llms"
 	"github.com/Vaayne/aienvoy/internal/pkg/parser"
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/pocketbase/pocketbase"
@@ -114,8 +114,8 @@ func (s *Reader) Read(ctx context.Context, url, model string) (*Article, error) 
 	}
 
 	// summary article
-	llmSvc := llmservice.New(model, llmservice.NewDao(s.app.Dao()))
-	if llmSvc == nil {
+	llmSvc, err := llms.NewWithDao(model, llms.NewDao(s.app.Dao()))
+	if err != nil || llmSvc == nil {
 		slog.Error("failed to create llm service", "model", model)
 		return nil, fmt.Errorf("failed to create llm service: %w", err)
 	}
@@ -159,8 +159,8 @@ func (s *Reader) ReadStream(ctx context.Context, url, model string, respChan cha
 		return
 	}
 
-	llmSvc := llmservice.New(model, llmservice.NewDao(s.app.Dao()))
-	if llmSvc == nil {
+	llmSvc, err := llms.NewWithDao(model, llms.NewDao(s.app.Dao()))
+	if err != nil || llmSvc == nil {
 		slog.ErrorContext(ctx, "failed to create llm service", "model", model)
 		errChan <- fmt.Errorf("failed to create llm service: %w", err)
 		return

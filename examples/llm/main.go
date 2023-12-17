@@ -4,19 +4,18 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/Vaayne/aienvoy/internal/core/llmservice"
+	"github.com/Vaayne/aienvoy/internal/core/llms"
 	"github.com/Vaayne/aienvoy/pkg/llm"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 )
 
 func main() {
-	// bard.ModelBard
-	// claude.ModelClaudeV1Dot3
-	// claudeweb.ModelClaudeWeb
-	// openai.ModelGPT3Dot5Turbo
-	// phind.ModelPhindV1
 	model := openai.ModelGPT3Dot5Turbo
-	svc := llmservice.New(model, llm.NewMemoryDao())
+	svc, err := llms.New(model)
+	if err != nil {
+		slog.Error("create llm service error", "err", err)
+		return
+	}
 	ctx := context.Background()
 
 	cov, err := svc.CreateConversation(ctx, "test")

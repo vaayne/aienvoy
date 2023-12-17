@@ -1,4 +1,4 @@
-package claude
+package awsbedrock
 
 import (
 	"bytes"
@@ -18,14 +18,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 )
 
-const (
-	ModelClaudeV2            = "anthropic.claude-v2"
-	ModelClaudeV1Dot3        = "anthropic.claude-v1"
-	ModelClaudeInstantV1Dot2 = "anthropic.claude-instant-v1"
-)
-
 type Client struct {
 	*bedrockruntime.Client
+	config llmconfig.Config
 }
 
 func NewClient(cfg llmconfig.Config) (*Client, error) {
@@ -48,12 +43,16 @@ func NewClient(cfg llmconfig.Config) (*Client, error) {
 		return nil, fmt.Errorf("get aws config error: %w", err)
 	}
 	return &Client{
-		bedrockruntime.NewFromConfig(awsConfig),
+		Client: bedrockruntime.NewFromConfig(awsConfig),
+		config: cfg,
 	}, nil
 }
 
 func (c *Client) ListModels() []string {
-	return []string{ModelClaudeV2, ModelClaudeV1Dot3, ModelClaudeInstantV1Dot2}
+	if c.config.Models == nil || len(c.config.Models) == 0 {
+		c.config.Models = c.config.AWSBedrock.ListModels()
+	}
+	return c.config.Models
 }
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {

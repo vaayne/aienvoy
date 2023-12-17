@@ -1,7 +1,10 @@
 
 static:
-	golangci-lint run --fix ./... ./examples/...
+	golangci-lint run --fix ./... ./examples/... ./cmd/...
 	pre-commit run --all-files
+
+illm:
+	go build -ldflags="-s -w" -o illm cmd/illm/main.go && mv illm `go env GOPATH`/bin/illm
 
 run: build
 	./app serve
@@ -9,6 +12,9 @@ run: build
 
 build:
 	go build -ldflags="-s -w" -o ./app main.go
+
+buildd:
+	docker buildx build --platform linux/amd64,linux/arm64 -t vaayne/aienvoy:latest --push .
 
 # create migration file
 migrate_create:

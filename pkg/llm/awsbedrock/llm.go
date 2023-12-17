@@ -1,4 +1,4 @@
-package claude
+package awsbedrock
 
 import (
 	"github.com/Vaayne/aienvoy/pkg/llm"

@@ -1,34 +1,54 @@
 package together
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/Vaayne/aienvoy/pkg/llm"
 )
 
+// var defaultStops = []string{"</s>", "user:", "<|im_start|>", "<|im_end|>"}
+
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+	Name    string `json:"name,omitempty"`
+}
+
 type TogetherChatRequest struct {
-	Model             string  `json:"model"`      // required
-	Prompt            string  `json:"prompt"`     // required
-	MaxTokens         int     `json:"max_tokens"` // required
-	Stop              string  `json:"stop,omitempty"`
-	Temperature       float64 `json:"temperature,omitempty"`
-	TopP              float64 `json:"top_p,omitempty"`
-	TopK              int     `json:"top_k,omitempty"`
-	RepetitionPenalty int     `json:"repetition_penalty,omitempty"`
-	Logprobs          int     `json:"logprobs,omitempty"`
-	Stream            bool    `json:"stream"`
+	// Prompt            string    `json:"prompt"` // required
+	Model             string    `json:"model"`      // required
+	Messages          []Message `json:"messages"`   // required
+	MaxTokens         int       `json:"max_tokens"` // required
+	Stop              []string  `json:"stop,omitempty"`
+	Temperature       float64   `json:"temperature,omitempty"`
+	TopP              float64   `json:"top_p,omitempty"`
+	TopK              int       `json:"top_k,omitempty"`
+	RepetitionPenalty int       `json:"repetition_penalty,omitempty"`
+	Logprobs          int       `json:"logprobs,omitempty"`
+	Stream            bool      `json:"stream"`
 }
 
 func (r *TogetherChatRequest) FromChatCompletionRequest(req llm.ChatCompletionRequest) {
 	r.Model = req.Model
-	r.Prompt = req.ToPrompt()
+	// r.Prompt = req.ToPrompt()
+	for _, message := range req.Messages {
+		r.Messages = append(r.Messages, Message{
+			Role:    message.Role,
+			Content: message.Content,
+			Name:    message.Name,
+		})
+	}
 	r.MaxTokens = req.MaxTokens
 	r.Temperature = float64(req.Temperature)
 	r.TopP = float64(req.TopP)
 	r.Stream = req.Stream
-	if len(req.Stop) > 0 {
-		r.Stop = req.Stop[0]
-	}
+	// req.Stop = defaultStops
+	// if len(req.Stop) > 0 {
+	// 	r.Stop = append(r.Stop, req.Stop...)
+	// }
+
+	slog.Info("from chat completion request", "tog req", r)
 }
 
 type TogetherChatResponseChoice struct {

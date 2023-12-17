@@ -14,10 +14,6 @@ import (
 
 const ModelBard = "bard"
 
-func ListModels() []string {
-	return []string{ModelBard}
-}
-
 type Bard struct {
 	client *Client
 	dao    llm.Dao
@@ -37,7 +33,7 @@ func New(token string, dao llm.Dao, opts ...ClientOption) (*Bard, error) {
 }
 
 func (c *Client) ListModels() []string {
-	return ListModels()
+	return []string{ModelBard}
 }
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {

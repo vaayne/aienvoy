@@ -1,9 +1,11 @@
 package config
 
+import llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
+
 type Config struct {
 	Service  ServiceConfig
 	Admins   []Admin
-	LLMs     []LLMConfig
+	LLMs     []llmconfig.Config
 	Axiom    Axiom
 	Telegram struct {
 		Token string `yaml:"token"`
@@ -27,14 +29,6 @@ type ServiceConfig struct {
 	URL      string
 	LogLevel string
 	Env      string
-}
-
-type LLMConfig struct {
-	Type        string // openai or azureOpenAI
-	ApiEndpoint string
-	ApiKey      string
-	ApiVersion  string
-	Models      []string // valid model ids
 }
 
 type Axiom struct {
