@@ -3,8 +3,6 @@ package main
 import (
 	"embed"
 	"log/slog"
-	"os/exec"
-	"runtime"
 
 	"github.com/Vaayne/aienvoy/internal/core/midjourney"
 	_ "github.com/Vaayne/aienvoy/internal/pkg/logger"
@@ -29,24 +27,24 @@ func registerRoutes(app *pocketbase.PocketBase) {
 	})
 }
 
-func openBrowser(url string) error {
-	var cmd string
-	var args []string
+// func openBrowser(url string) error {
+// 	var cmd string
+// 	var args []string
 
-	switch runtime.GOOS {
-	case "windows":
-		cmd = "cmd"
-		args = []string{"/c", "start", url}
-	case "darwin":
-		cmd = "open"
-		args = []string{url}
-	default: // "linux", "freebsd", "openbsd", "netbsd"
-		cmd = "xdg-open"
-		args = []string{url}
-	}
+// 	switch runtime.GOOS {
+// 	case "windows":
+// 		cmd = "cmd"
+// 		args = []string{"/c", "start", url}
+// 	case "darwin":
+// 		cmd = "open"
+// 		args = []string{url}
+// 	default: // "linux", "freebsd", "openbsd", "netbsd"
+// 		cmd = "xdg-open"
+// 		args = []string{url}
+// 	}
 
-	return exec.Command(cmd, args...).Start()
-}
+// 	return exec.Command(cmd, args...).Start()
+// }
 
 func main() {
 	app := pocketbase.New()
