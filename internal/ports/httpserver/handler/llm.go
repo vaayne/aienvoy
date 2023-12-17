@@ -257,7 +257,8 @@ func (l *LLMHandler) chatStream(c echo.Context, svc llm.Interface, req llm.ChatC
 			c.Response().Flush()
 		case err := <-errChan:
 			if errors.Is(err, io.EOF) {
-				return c.String(http.StatusOK, "data: [DONE]\n\n")
+				_, err = c.Response().Write([]byte("data: [DONE]\n\n"))
+				return err
 			}
 			return c.String(http.StatusInternalServerError, err.Error())
 		}

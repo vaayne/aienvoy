@@ -134,6 +134,9 @@ func (r ChatResponse) ToChatCompletionResponse() llm.ChatCompletionResponse {
 func (r ChatResponse) ToChatCompletionStreamResponse() llm.ChatCompletionStreamResponse {
 	choices := make([]llm.ChatCompletionStreamChoice, 0, len(r.Candidates))
 	for _, candidate := range r.Candidates {
+		if len(candidate.Content.Parts) == 0 {
+			continue
+		}
 		choices = append(choices, llm.ChatCompletionStreamChoice{
 			Index: candidate.Index,
 			Delta: llm.ChatCompletionStreamChoiceDelta{
