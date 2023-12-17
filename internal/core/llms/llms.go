@@ -11,6 +11,7 @@ import (
 	"github.com/Vaayne/aienvoy/pkg/llm/aigateway"
 	"github.com/Vaayne/aienvoy/pkg/llm/awsbedrock"
 	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
+	"github.com/Vaayne/aienvoy/pkg/llm/googleai"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 	"github.com/Vaayne/aienvoy/pkg/llm/together"
 )
@@ -45,6 +46,12 @@ func initModelMapping(dao llm.Dao) {
 				slog.Error("init together client error", "err", err, "config", cfg)
 				continue
 			}
+		case llmconfig.LLMTypeGoogleAI:
+			cli, err := googleai.New(cfg, dao)
+			if err := addClient(cli, err); err != nil {
+				slog.Error("init googleai client error", "err", err, "config", cfg)
+				continue
+			}
 		case llmconfig.LLMTypeAWSBedrock:
 			cli, err := awsbedrock.New(cfg, dao)
 			if err := addClient(cli, err); err != nil {
@@ -60,7 +67,13 @@ func initModelMapping(dao llm.Dao) {
 		}
 	}
 
-	slog.Info("llm clients", "clients", modelLlmMapping)
+	// get all keys from modelLlmMapping
+	models := make([]string, 0, len(modelLlmMapping))
+	for model := range modelLlmMapping {
+		models = append(models, model)
+	}
+	slog.Debug("llm clients support models", "models", models)
+
 	if len(modelLlmMapping) == 0 {
 		log.Fatal("no llm clients found")
 	}

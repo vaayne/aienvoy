@@ -10,13 +10,8 @@ import (
 )
 
 func main() {
-	// bard.ModelBard
-	// claude.ModelClaudeV1Dot3
-	// claudeweb.ModelClaudeWeb
-	// openai.ModelGPT3Dot5Turbo
-	// phind.ModelPhindV1
 	model := openai.ModelGPT3Dot5Turbo
-	svc, err := llms.DefaultLLM(model)
+	svc, err := llms.New(model)
 	if err != nil {
 		slog.Error("create llm service error", "err", err)
 		return

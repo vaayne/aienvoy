@@ -7,7 +7,6 @@ import (
 	"runtime"
 
 	"github.com/Vaayne/aienvoy/internal/core/midjourney"
-	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	_ "github.com/Vaayne/aienvoy/internal/pkg/logger"
 	"github.com/Vaayne/aienvoy/internal/ports/httpserver"
 	"github.com/Vaayne/aienvoy/internal/ports/tgbot"
@@ -93,11 +92,11 @@ func main() {
 		}()
 		return nil
 	})
-	go func() {
-		if err := openBrowser(config.GetConfig().Service.URL); err != nil {
-			slog.Error("Open browser error", "err", err)
-		}
-	}()
+	// go func() {
+	// 	if err := openBrowser(config.GetConfig().Service.URL); err != nil {
+	// 		slog.Error("Open browser error", "err", err)
+	// 	}
+	// }()
 	if err := app.Start(); err != nil {
 		slog.Error("failed to start app", "err", err)
 	}

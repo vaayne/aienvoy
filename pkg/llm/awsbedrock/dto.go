@@ -41,7 +41,7 @@ func (b *BedrockRequest) FromChatCompletionRequest(req llm.ChatCompletionRequest
 			sb.WriteString(fmt.Sprintf("\n\nSystem: %s", m.Content))
 		}
 	}
-	sb.WriteString("\n\nAssistant:")
+	sb.WriteString("\n\nAssistant: ")
 	b.Prompt = sb.String()
 }
 

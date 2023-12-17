@@ -81,6 +81,7 @@ func (c *Client) setHeaders(req *http.Request) {
 }
 
 func readModelsCache() []string {
+	slog.Debug("read models cache", "file", cacheModelsFile)
 	modelsFile, err := os.Open(cacheModelsFile)
 	if err != nil {
 		slog.Error("list models", "err", err)
@@ -94,7 +95,9 @@ func readModelsCache() []string {
 	}
 	var modelNames []string
 	for _, model := range models {
-		modelNames = append(modelNames, model.Name)
+		if model.DisplayType == "chat" {
+			modelNames = append(modelNames, model.Name)
+		}
 	}
 	return modelNames
 }

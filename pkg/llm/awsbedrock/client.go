@@ -18,12 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 )
 
-const (
-	ModelClaudeV2            = "anthropic.claude-v2"
-	ModelClaudeV1Dot3        = "anthropic.claude-v1"
-	ModelClaudeInstantV1Dot2 = "anthropic.claude-instant-v1"
-)
-
 type Client struct {
 	*bedrockruntime.Client
 	config llmconfig.Config

@@ -73,6 +73,12 @@ func (r ChatRequest) FromChatCompletionRequest(req llm.ChatCompletionRequest) Ch
 		topK = 10
 	}
 
+	if req.MaxTokens == 0 {
+		req.MaxTokens = 1024
+	} else if req.MaxTokens > 2048 {
+		req.MaxTokens = 2048
+	}
+
 	generationConfig := GenerationConfig{
 		Stop:        req.Stop,
 		Temperature: req.Temperature,

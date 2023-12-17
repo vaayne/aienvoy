@@ -240,10 +240,10 @@ var DefaultOpenAIChatModels = []string{
 }
 
 var DefaultAwsBedrockModels = []string{
-	"ai21.2-mid-v1", "ai21.2-ultra-v1",
-	"amazon.titan-embed-text-v1", "amazon.titan-text-express-v1", "amazon.titan-embed-image-v1", "amazon.titan-image-generator-v1",
+	// "ai21.2-mid-v1", "ai21.2-ultra-v1",
+	// "amazon.titan-embed-text-v1", "amazon.titan-text-express-v1", "amazon.titan-embed-image-v1", "amazon.titan-image-generator-v1",
 	"anthropic.claude-v1", "anthropic.claude-v2", "anthropic.claude-v2:1", "anthropic.claude-instant-v1",
-	"cohere.command-text-v14", "cohere.command-light-text-v14", "cohere.embed-english-v3", "cohere.embed-multilingual-v3",
-	"meta.llama2-13b-chat-v1", "metallama2-70b-chat-v1",
-	"stability.stable-diffusion-xl-vo", "stability.stable-diffusion-xL-v1",
+	// "cohere.command-text-v14", "cohere.command-light-text-v14", "cohere.embed-english-v3", "cohere.embed-multilingual-v3",
+	// "meta.llama2-13b-chat-v1", "metallama2-70b-chat-v1",
+	// "stability.stable-diffusion-xl-vo", "stability.stable-diffusion-xL-v1",
 }
