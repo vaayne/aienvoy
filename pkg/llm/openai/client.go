@@ -19,10 +19,16 @@ type Client struct {
 	config llmconfig.Config
 }
 
+var validLLMTypes = map[llmconfig.LLMType]struct{}{
+	llmconfig.LLMTypeOpenAI:      {},
+	llmconfig.LLMTypeAzureOpenAI: {},
+	llmconfig.LLMTypeOpenRouter:  {},
+}
+
 func NewClient(cfg llmconfig.Config) (*Client, error) {
 	// make sure cfg.LLMType == llmconfig.LLMTypeOpenAI
 	// make sure cfg.ApiKey is not empty
-	if cfg.LLMType != llmconfig.LLMTypeOpenAI && cfg.LLMType != llmconfig.LLMTypeAzureOpenAI {
+	if _, ok := validLLMTypes[cfg.LLMType]; !ok {
 		return nil, fmt.Errorf("invalid config for openai, llmtype: %s", cfg.LLMType)
 	}
 

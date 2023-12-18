@@ -243,3 +243,18 @@ type Message struct {
 	Response        ChatCompletionResponse `json:"response"`
 	RawResponse     []byte                 `json:"raw_response"`
 }
+
+type Model struct {
+	ID          string `json:"id"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Pricing     struct {
+		Prompt     float64 `json:"prompt,omitempty"`
+		Completion float64 `json:"completion,omitempty"`
+	} `json:"pricing,omitempty"`
+	ContextLength   int `json:"context_length,omitempty"`
+	PreRequestLimit struct {
+		Prompt     int `json:"prompt_tokens,omitempty"`
+		Completion int `json:"completion_tokens,omitempty"`
+	}
+}

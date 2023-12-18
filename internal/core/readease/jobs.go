@@ -8,13 +8,12 @@ import (
 
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/hackernews"
-	"github.com/Vaayne/aienvoy/pkg/llm/claude"
 
 	"github.com/pocketbase/pocketbase"
 	"golang.org/x/sync/semaphore"
 )
 
-func PeriodJob(app *pocketbase.PocketBase) ([]string, error) {
+func PeriodJob(app *pocketbase.PocketBase, model string) ([]string, error) {
 	ctx := context.Background()
 	slog.InfoContext(ctx, "Start readease period job...")
 	topStoiresCnt := config.GetConfig().ReadEase.TopStoriesCnt
@@ -43,7 +42,7 @@ func PeriodJob(app *pocketbase.PocketBase) ([]string, error) {
 			slog.InfoContext(ctx, "start read hackernews item", "url", itemUrl)
 			// get from cache
 
-			article, err := reader.Read(ctx, itemUrl, claude.ModelClaudeV1Dot3)
+			article, err := reader.Read(ctx, itemUrl, model)
 			if err != nil {
 				slog.ErrorContext(ctx, "read artilce error", "err", err)
 				return
