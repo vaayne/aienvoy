@@ -87,8 +87,10 @@ func main() {
 		go tgbot.Serve(app)
 		// start midjourney bot
 		go func() {
-			m := midjourney.New(app.Dao())
-			m.Client.Serve()
+			if config.GetConfig().MidJourney.DiscordBotToken != "" {
+				m := midjourney.New(app.Dao())
+				m.Client.Serve()
+			}
 		}()
 		return nil
 	})
