@@ -10,7 +10,6 @@ import (
 
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/llm"
-	"github.com/Vaayne/aienvoy/pkg/llm/claude"
 
 	"github.com/Vaayne/aienvoy/internal/core/readease"
 	"github.com/pocketbase/pocketbase"
@@ -41,7 +40,7 @@ func OnReadEase(c tb.Context) error {
 	defer close(respChan)
 	defer close(errChan)
 
-	go reader.ReadStream(ctx, urlStr, claude.ModelClaudeV1Dot3, respChan, errChan)
+	go reader.ReadStream(ctx, urlStr, "gemini-pro", respChan, errChan)
 
 	text := ""
 	chunk := ""

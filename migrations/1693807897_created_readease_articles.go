@@ -132,7 +132,7 @@ func init() {
 			],
 			"indexes": [
 				"CREATE UNIQUE INDEX ` + "`" + `idx_GsXzUhy` + "`" + ` ON ` + "`" + `readease_articles` + "`" + ` (` + "`" + `url` + "`" + `)",
-				"CREATE UNIQUE INDEX ` + "`" + `idx_IOVVbjs` + "`" + ` ON ` + "`" + `readease_articles` + "`" + ` (` + "`" + `original_url` + "`" + `)"
+				"CREATE INDEX ` + "`" + `idx_IOVVbjs` + "`" + ` ON ` + "`" + `readease_articles` + "`" + ` (` + "`" + `original_url` + "`" + `)"
 			],
 			"listRule": null,
 			"viewRule": null,
