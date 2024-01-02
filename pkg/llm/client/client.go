@@ -10,6 +10,7 @@ import (
 	"github.com/Vaayne/aienvoy/pkg/llm/aigateway"
 	"github.com/Vaayne/aienvoy/pkg/llm/awsbedrock"
 	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
+	"github.com/Vaayne/aienvoy/pkg/llm/githubcopilot"
 	"github.com/Vaayne/aienvoy/pkg/llm/googleai"
 	"github.com/Vaayne/aienvoy/pkg/llm/openai"
 	"github.com/Vaayne/aienvoy/pkg/llm/together"
@@ -61,6 +62,12 @@ func initModelMapping(dao llm.Dao, cfgs []llmconfig.Config) {
 			cli, err := aigateway.New(cfg, dao)
 			if err := addClient(cli, err); err != nil {
 				slog.Error("init aigateway client error", "err", err, "config", cfg)
+				continue
+			}
+		case llmconfig.LLMTypeGithubCopilot:
+			cli, err := githubcopilot.New(cfg, dao)
+			if err := addClient(cli, err); err != nil {
+				slog.Error("init github copilot client error", "err", err, "config", cfg)
 				continue
 			}
 		}

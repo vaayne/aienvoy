@@ -11,16 +11,17 @@ func (t LLMType) String() string {
 }
 
 const (
-	LLMTypeOpenAI      LLMType = "openai"
-	LLMTypeAiGateway   LLMType = "aigateway"
-	LLMTypeAzureOpenAI LLMType = "azure-openai"
-	LLMTypeAWSBedrock  LLMType = "aws-bedrock"
-	LLMTypeTogether    LLMType = "together"
-	LLMTypeOpenRouter  LLMType = "open-router"
-	LLMTypeReplicate   LLMType = "replicate"
-	LLMTypeClaudeWeb   LLMType = "claude-web"
-	LLMTypeGoogleBard  LLMType = "google-bard"
-	LLMTypeGoogleAI    LLMType = "google-ai"
+	LLMTypeOpenAI        LLMType = "openai"
+	LLMTypeAiGateway     LLMType = "aigateway"
+	LLMTypeAzureOpenAI   LLMType = "azure-openai"
+	LLMTypeAWSBedrock    LLMType = "aws-bedrock"
+	LLMTypeTogether      LLMType = "together"
+	LLMTypeOpenRouter    LLMType = "open-router"
+	LLMTypeReplicate     LLMType = "replicate"
+	LLMTypeClaudeWeb     LLMType = "claude-web"
+	LLMTypeGoogleBard    LLMType = "google-bard"
+	LLMTypeGoogleAI      LLMType = "google-ai"
+	LLMTypeGithubCopilot LLMType = "github-copilot"
 )
 
 type AiGatewayProviderType string

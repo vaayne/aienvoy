@@ -15,7 +15,6 @@ import (
 // If an error occurs during reading or parsing, it sends the error to the provided errChan.
 // The function stops reading when it encounters an EOF (End of File) or an error.
 func ParseSSE[T any](body io.Reader, dataChan chan T, errChan chan error) {
-	var data T
 	reader := bufio.NewReader(body) // Create a new reader
 
 	for {
@@ -40,7 +39,7 @@ func ParseSSE[T any](body io.Reader, dataChan chan T, errChan chan error) {
 				errChan <- io.EOF
 				return
 			}
-
+			var data T
 			// The actual data starts from the 7th byte, so we slice the line from the 6th index
 			err = json.Unmarshal(line[6:], &data)
 
