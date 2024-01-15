@@ -14,6 +14,16 @@ import (
 )
 
 func RegisterRoutes(e *echo.Echo, app *pocketbase.PocketBase, staticFiles embed.FS) {
+	mds := []echo.MiddlewareFunc{
+		middlerware.ContextMiddleware(),
+		middlerware.RequestIDMiddleware(),
+		middlerware.DaoMiddleware(app.Dao()),
+		middlerware.LoggerMiddleware(),
+		emw.CORS(),
+	}
+
+	e.Use(mds...)
+
 	// web static files
 	e.GET("/", func(c echo.Context) error {
 		return c.Redirect(http.StatusTemporaryRedirect, "/web/")
@@ -21,17 +31,7 @@ func RegisterRoutes(e *echo.Echo, app *pocketbase.PocketBase, staticFiles embed.
 	e.Add(http.MethodGet, "/web/*", echo.WrapHandler(http.FileServer(http.FS(staticFiles))))
 
 	// v1 apis
-	mds := []echo.MiddlewareFunc{
-		middlerware.ContextMiddleware(),
-		middlerware.RequestIDMiddleware(),
-		middlerware.AuthByApiKeyMiddleware(app.Dao()),
-		apis.RequireAdminOrRecordAuth(),
-		middlerware.DaoMiddleware(app.Dao()),
-		middlerware.LoggerMiddleware(),
-		emw.CORS(),
-	}
-
-	v1 := e.Group("/v1", mds...)
+	v1 := e.Group("/v1", middlerware.AuthByApiKeyMiddleware(app.Dao()), apis.RequireAdminOrRecordAuth())
 	llmHandler := handler.NewLLMHandler()
 	v1.POST("/chat/completions", llmHandler.CreateChatCompletion)
 	// v1.POST("/embeddings", llmHandler.CreateEmbeddings)
@@ -51,4 +51,7 @@ func RegisterRoutes(e *echo.Echo, app *pocketbase.PocketBase, staticFiles embed.
 	v1.GET("/conversations/:conversationId/messages", llmHandler.ListMessages)
 	v1.GET("/conversations/:conversationId/messages/:messageId", llmHandler.GetMessage)
 	v1.DELETE("/conversations/:conversationId/messages/:messageId", llmHandler.DeleteMessage)
+
+	// read article using readability
+	e.GET("/readability", handler.Readability)
 }
