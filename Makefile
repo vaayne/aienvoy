@@ -1,3 +1,6 @@
+IMAGE_NAME=vaayne/aienvoy
+IMAGE_TAG=latest
+IMAGE_CACHE_TAG=buildcache
 
 static:
 	golangci-lint run --fix ./... ./examples/... ./cmd/...
@@ -14,7 +17,10 @@ build:
 	go build -ldflags="-s -w" -o ./app main.go
 
 buildd:
-	docker buildx build --platform linux/amd64,linux/arm64 -t vaayne/aienvoy:latest --push .
+	docker buildx build --cache-from=type=registry,ref=${IMAGE_NAME}:${IMAGE_CACHE_TAG} --cache-to=type=registry,ref=${IMAGE_NAME}:${IMAGE_CACHE_TAG},mode=max -t ${IMAGE_NAME}:${IMAGE_TAG} --load .
+
+buildd-push:
+	docker buildx build --platform linux/arm64,linux/amd64 --cache-from=type=registry,ref=${IMAGE_NAME}:${IMAGE_CACHE_TAG} --cache-to=type=registry,ref=${IMAGE_NAME}:${IMAGE_CACHE_TAG},mode=max -t ${IMAGE_NAME}:${IMAGE_TAG} --push .
 
 # create migration file
 migrate_create:
