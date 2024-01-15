@@ -11,7 +11,7 @@ import (
 
 	"github.com/Vaayne/aienvoy/internal/core/llms"
 	"github.com/Vaayne/aienvoy/internal/pkg/parser"
-	"github.com/Vaayne/aienvoy/pkg/llm"
+	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 	"github.com/pocketbase/pocketbase"
 )
 

@@ -1,11 +1,11 @@
 package config
 
-import llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
+import "github.com/Vaayne/aienvoy/pkg/llms/llm"
 
 type Config struct {
 	Service  ServiceConfig
 	Admins   []Admin
-	LLMs     []llmconfig.Config
+	LLMs     []llm.Config
 	Axiom    Axiom
 	Telegram struct {
 		Token string `yaml:"token"`

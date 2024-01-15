@@ -10,8 +10,8 @@ import (
 
 	"github.com/Vaayne/aienvoy/internal/core/llms"
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
-	"github.com/Vaayne/aienvoy/pkg/llm"
-	"github.com/Vaayne/aienvoy/pkg/llm/openai"
+	"github.com/Vaayne/aienvoy/pkg/llms/llm"
+	"github.com/Vaayne/aienvoy/pkg/llms/openai"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/daos"
 )

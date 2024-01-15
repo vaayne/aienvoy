@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/dtoutils"
-	"github.com/Vaayne/aienvoy/pkg/llm"
+	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 	"github.com/pocketbase/pocketbase/tools/types"
 )
 

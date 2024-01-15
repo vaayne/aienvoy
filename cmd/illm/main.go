@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/parser"
-	"github.com/Vaayne/aienvoy/pkg/llm"
-	"github.com/Vaayne/aienvoy/pkg/llm/client"
-	llmconfig "github.com/Vaayne/aienvoy/pkg/llm/config"
+	"github.com/Vaayne/aienvoy/pkg/llms"
+	"github.com/Vaayne/aienvoy/pkg/llms/llm"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -112,8 +112,8 @@ func initLog(level slog.Level) {
 }
 
 type Config struct {
-	DefaultModel string             `yaml:"default_model" mapstructure:"default_model"`
-	LLMs         []llmconfig.Config `yaml:"llms" mapstructure:"llms"`
+	DefaultModel string       `yaml:"default_model" mapstructure:"default_model"`
+	LLMs         []llm.Config `yaml:"llms" mapstructure:"llms"`
 }
 
 var globalConfig = &Config{}
@@ -214,7 +214,7 @@ func builsMessages(system, prompt string, files, urls, texts []string) ([]llm.Ch
 }
 
 func chatStreaming(ctx context.Context, model, system, prompt string, files, urls, texts []string) {
-	client, err := client.New(model, globalConfig.LLMs)
+	client, err := llms.New(model, globalConfig.LLMs)
 	if err != nil {
 		slog.Error("create llm service error", "err", err)
 		os.Exit(1)
