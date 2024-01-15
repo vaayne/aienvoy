@@ -3,10 +3,10 @@ package handler
 import (
 	"strings"
 
-	"github.com/Vaayne/aienvoy/pkg/llm/bard"
-	"github.com/Vaayne/aienvoy/pkg/llm/claude"
-	"github.com/Vaayne/aienvoy/pkg/llm/claudeweb"
-	"github.com/Vaayne/aienvoy/pkg/llm/openai"
+	"github.com/Vaayne/aienvoy/pkg/llms/bard"
+	"github.com/Vaayne/aienvoy/pkg/llms/claude"
+	"github.com/Vaayne/aienvoy/pkg/llms/claudeweb"
+	"github.com/Vaayne/aienvoy/pkg/llms/openai"
 
 	tb "gopkg.in/telebot.v3"
 )

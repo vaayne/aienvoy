@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
-	"github.com/Vaayne/aienvoy/pkg/llm"
+	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 
 	"github.com/Vaayne/aienvoy/internal/core/readease"
 	"github.com/pocketbase/pocketbase"

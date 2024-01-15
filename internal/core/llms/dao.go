@@ -5,7 +5,7 @@ import (
 
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/internal/pkg/dtoutils"
-	"github.com/Vaayne/aienvoy/pkg/llm"
+	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 	"github.com/google/uuid"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/daos"

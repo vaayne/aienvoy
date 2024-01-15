@@ -5,8 +5,8 @@ import (
 	"log/slog"
 
 	"github.com/Vaayne/aienvoy/internal/core/llms"
-	"github.com/Vaayne/aienvoy/pkg/llm"
-	"github.com/Vaayne/aienvoy/pkg/llm/openai"
+	"github.com/Vaayne/aienvoy/pkg/llms/llm"
+	"github.com/Vaayne/aienvoy/pkg/llms/openai"
 )
 
 func main() {
