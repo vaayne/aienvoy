@@ -32,18 +32,18 @@ func (c *Client) ListModels() []string {
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
 	reqBody := ChatRequest{}.FromChatCompletionRequest(req)
-	chatResp, err := c.post(req.Model, reqBody, false)
+	chatResp, err := c.post(req.ModelId(), reqBody, false)
 	if err != nil {
-		return llm.ChatCompletionResponse{}, fmt.Errorf("chat with %s error: %w", req.Model, err)
+		return llm.ChatCompletionResponse{}, fmt.Errorf("chat with %s error: %w", req.ModelId(), err)
 	}
 	return chatResp.ToChatCompletionResponse(), nil
 }
 
 func (p *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	reqBody := ChatRequest{}.FromChatCompletionRequest(req)
-	chatResp, err := p.post(req.Model, reqBody, true)
+	chatResp, err := p.post(req.ModelId(), reqBody, true)
 	if err != nil {
-		errChan <- fmt.Errorf("chat with %s error: %w", req.Model, err)
+		errChan <- fmt.Errorf("chat with %s error: %w", req.ModelId(), err)
 		return
 	}
 	dataChan <- chatResp.ToChatCompletionStreamResponse()

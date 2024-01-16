@@ -21,6 +21,7 @@ import (
 type Client struct {
 	*bedrockruntime.Client
 	config llm.Config
+	Models []string `json:"models"`
 }
 
 func NewClient(cfg llm.Config) (*Client, error) {
@@ -45,44 +46,42 @@ func NewClient(cfg llm.Config) (*Client, error) {
 	return &Client{
 		Client: bedrockruntime.NewFromConfig(awsConfig),
 		config: cfg,
+		Models: cfg.ListModels(),
 	}, nil
 }
 
 func (c *Client) ListModels() []string {
-	if c.config.Models == nil || len(c.config.Models) == 0 {
-		c.config.Models = c.config.AWSBedrock.ListModels()
-	}
-	return c.config.Models
+	return c.Models
 }
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	slog.DebugContext(ctx, "chat start", "model", req.Model, "is_stream", false)
+	slog.DebugContext(ctx, "chat start", "model", req.ModelId(), "is_stream", false)
 	bedrockRequest := &BedrockRequest{}
 	bedrockRequest.FromChatCompletionRequest(req)
 
 	output, err := c.InvokeModel(ctx, &bedrockruntime.InvokeModelInput{
-		ModelId:     aws.String(req.Model),
+		ModelId:     aws.String(req.ModelId()),
 		Body:        bedrockRequest.Marshal(),
 		Accept:      aws.String("application/json"),
 		ContentType: aws.String("application/json"),
 	})
 	if err != nil {
-		slog.ErrorContext(ctx, "chat start", "model", req.Model, "is_stream", false, "err", err)
+		slog.ErrorContext(ctx, "chat start", "model", req.ModelId(), "is_stream", false, "err", err)
 		return llm.ChatCompletionResponse{}, err
 	}
 	resp := &BedrockResponse{}
 	resp.Unmarshal(output.Body)
-	slog.DebugContext(ctx, "chat success", "model", req.Model, "is_stream", false)
+	slog.DebugContext(ctx, "chat success", "model", req.ModelId(), "is_stream", false)
 	return resp.ToChatCompletionResponse(), nil
 }
 
 func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
-	slog.DebugContext(ctx, "chat start", "model", req.Model, "is_stream", true)
+	slog.DebugContext(ctx, "chat start", "model", req.ModelId(), "is_stream", true)
 	bedrockRequest := &BedrockRequest{}
 	bedrockRequest.FromChatCompletionRequest(req)
 
 	output, err := c.InvokeModelWithResponseStream(ctx, &bedrockruntime.InvokeModelWithResponseStreamInput{
-		ModelId:     aws.String(req.Model),
+		ModelId:     aws.String(req.ModelId()),
 		Body:        bedrockRequest.Marshal(),
 		ContentType: aws.String("application/json"),
 	})
@@ -99,7 +98,7 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 			var resp BedrockResponse
 			err := json.NewDecoder(bytes.NewReader(v.Value.Bytes)).Decode(&resp)
 			if err != nil {
-				slog.ErrorContext(ctx, "chat start", "model", req.Model, "is_stream", true, "err", err)
+				slog.ErrorContext(ctx, "chat start", "model", req.ModelId(), "is_stream", true, "err", err)
 				errChan <- err
 				return
 			}
@@ -107,16 +106,16 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 			dataChan <- resp.ToChatCompletionStreamResponse()
 		case *types.UnknownUnionMember:
 			err = fmt.Errorf("unknown event type: %T", v)
-			slog.ErrorContext(ctx, "chat start", "model", req.Model, "is_stream", true, "err", err)
+			slog.ErrorContext(ctx, "chat start", "model", req.ModelId(), "is_stream", true, "err", err)
 			errChan <- err
 			return
 		default:
 			err = fmt.Errorf("unknown event type: %T", v)
-			slog.ErrorContext(ctx, "chat start", "model", req.Model, "is_stream", true, "err", err)
+			slog.ErrorContext(ctx, "chat start", "model", req.ModelId(), "is_stream", true, "err", err)
 			errChan <- err
 			return
 		}
 	}
-	slog.DebugContext(ctx, "chat success", "model", req.Model, "is_stream", true)
+	slog.DebugContext(ctx, "chat success", "model", req.ModelId(), "is_stream", true)
 	errChan <- io.EOF
 }

@@ -9,6 +9,7 @@ import (
 
 func toOpenAIChatCompletionRequest(req llm.ChatCompletionRequest) openai.ChatCompletionRequest {
 	data, _ := json.Marshal(req)
+	req.Model = req.ModelId()
 	var resp openai.ChatCompletionRequest
 	_ = json.Unmarshal(data, &resp)
 	newModel, ok := modelMappings[resp.Model]

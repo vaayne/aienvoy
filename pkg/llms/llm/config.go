@@ -83,7 +83,13 @@ func (c Config) Validate() error {
 }
 
 func (c *Config) ListModels() []string {
-	return c.Models
+	if c.LLMType == LLMTypeAzureOpenAI {
+		return c.AzureOpenAI.ListModels()
+	} else if c.LLMType == LLMTypeAiGateway && c.AiGateway.Provider.Type == AiGatewayProviderAzureOpenAI {
+		return c.AiGateway.Provider.AzureOpenAI.ListModels()
+	} else {
+		return c.Models
+	}
 }
 
 type AzureOpenAIConfig struct {
@@ -131,10 +137,6 @@ func (c *AWSBedrockConfig) validate() error {
 		return fmt.Errorf("aws_bedrock.region is required")
 	}
 	return nil
-}
-
-func (c *AWSBedrockConfig) ListModels() []string {
-	return DefaultAwsBedrockModels
 }
 
 type AiGatewayProvider struct {
@@ -214,26 +216,6 @@ func (c AiGatewayConfig) GetAuthHeader() map[string]string {
 		}
 	}
 	return nil
-}
-
-func (c AiGatewayConfig) ListModels() []string {
-	models := make([]string, 0)
-	switch c.Provider.Type {
-	case AiGatewayProviderWorkersAI:
-		// TODO: get models from workers.ai
-		return models
-	case AiGatewayProviderAzureOpenAI:
-		for k := range c.Provider.AzureOpenAI.ModelDeploymentMapping {
-			models = append(models, k)
-		}
-		return models
-	case AiGatewayProviderAWSBedrock:
-		return DefaultAwsBedrockModels
-	case AiGatewayProviderOpenAI:
-		return DefaultOpenAIChatModels
-	default:
-		return models
-	}
 }
 
 var DefaultOpenAIChatModels = []string{

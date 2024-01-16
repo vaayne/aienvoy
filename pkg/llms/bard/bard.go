@@ -113,11 +113,11 @@ func (b *Bard) CreateMessage(ctx context.Context, conversationId string, req llm
 
 	answer, err := b.client.Ask(prompt, lastAnswer.ConversationID, lastAnswer.ResponseID, lastAnswer.Choices[0].ID, 0)
 	if err != nil {
-		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId, "model", req.Model)
+		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId, "model", req.ModelId())
 		return llm.Message{}, err
 	}
 	message, err := b.saveAnswer(ctx, conversationId, req, answer)
-	slog.InfoContext(ctx, "create message", "message", message, "err", err, "model", req.Model)
+	slog.InfoContext(ctx, "create message", "message", message, "err", err, "model", req.ModelId())
 	return message, err
 }
 
@@ -150,7 +150,7 @@ func (b *Bard) CreateMessageStream(ctx context.Context, conversationId string, r
 
 	answer, err := b.client.Ask(prompt, lastAnswer.ConversationID, lastAnswer.ResponseID, lastAnswer.Choices[0].ID, 0)
 	if err != nil {
-		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId, "model", req.Model)
+		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId, "model", req.ModelId())
 		errChan <- fmt.Errorf("bard create message stream error, %w", err)
 		return
 	}
@@ -158,10 +158,10 @@ func (b *Bard) CreateMessageStream(ctx context.Context, conversationId string, r
 	respChan <- answer.ToChatCompletionStreamResponse()
 
 	if _, err := b.saveAnswer(ctx, conversationId, req, answer); err != nil {
-		slog.ErrorContext(ctx, "save answer error", "err", err, "conversation_id", conversationId, "model", req.Model)
+		slog.ErrorContext(ctx, "save answer error", "err", err, "conversation_id", conversationId, "model", req.ModelId())
 	}
 
-	slog.InfoContext(ctx, "create message success", "model", req.Model)
+	slog.InfoContext(ctx, "create message success", "model", req.ModelId())
 	errChan <- io.EOF
 }
 
@@ -173,7 +173,7 @@ func (b *Bard) saveAnswer(ctx context.Context, conversationId string, req llm.Ch
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		ConversationId: conversationId,
-		Model:          req.Model,
+		Model:          req.ModelId(),
 		Request:        req,
 		Response:       res,
 		RawResponse:    rawResp,

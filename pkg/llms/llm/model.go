@@ -113,6 +113,14 @@ func (r *ChatCompletionRequest) FromPrompt(model, prompt string) {
 	}
 }
 
+func (r *ChatCompletionRequest) ModelId() string {
+	texts := strings.Split(r.Model, "/")
+	if len(texts) == 1 {
+		return r.Model
+	}
+	return strings.Join(texts[1:], "/")
+}
+
 type FunctionDefinition struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`

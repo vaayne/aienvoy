@@ -36,15 +36,13 @@ func NewClient(cfg llm.Config) (*Client, error) {
 	client := &Client{
 		session: http.DefaultClient,
 		config:  cfg.AiGateway,
+		Models:  cfg.ListModels(),
 	}
 
 	return client, nil
 }
 
 func (c *Client) ListModels() []string {
-	if len(c.Models) == 0 {
-		c.Models = c.config.ListModels()
-	}
 	return c.Models
 }
 
@@ -55,7 +53,7 @@ func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 		return llm.ChatCompletionResponse{}, fmt.Errorf("build request payload error: %w", err)
 	}
 
-	url := config.GetChatURL(req.Model)
+	url := config.GetChatURL(req.ModelId())
 	slog.DebugContext(ctx, "chat request", "url", url, "req", string(payload))
 	requestBody := bytes.NewReader(payload)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, requestBody)
@@ -93,7 +91,7 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 		return
 	}
 
-	url := config.GetChatURL(req.Model)
+	url := config.GetChatURL(req.ModelId())
 	slog.DebugContext(ctx, "chat request", "url", url, "req", string(payload))
 	requestBody := bytes.NewReader(payload)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, requestBody)

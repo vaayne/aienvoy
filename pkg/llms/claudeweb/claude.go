@@ -164,7 +164,7 @@ func (c *ClaudeWeb) saveResponseMessage(ctx context.Context, conversationId stri
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		ConversationId: conversationId,
-		Model:          req.Model,
+		Model:          req.ModelId(),
 		Request:        req,
 		Response:       res,
 		RawResponse:    rawResp,

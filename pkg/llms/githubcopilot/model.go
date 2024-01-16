@@ -15,7 +15,7 @@ type Request struct {
 }
 
 func (r *Request) FromChatCompletionRequest(req llm.ChatCompletionRequest) {
-	r.Model = req.Model
+	r.Model = req.ModelId()
 	r.Messages = req.Messages
 	r.Temperature = 0.5
 	r.TopP = 1

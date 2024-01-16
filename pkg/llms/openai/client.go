@@ -53,18 +53,11 @@ func NewClient(cfg llm.Config) (*Client, error) {
 	return &Client{
 		Client: openai.NewClientWithConfig(oaiConfig),
 		config: cfg,
-		Models: cfg.Models,
+		Models: cfg.ListModels(),
 	}, nil
 }
 
 func (s *Client) ListModels() []string {
-	if len(s.Models) == 0 {
-		if s.config.LLMType == llm.LLMTypeAzureOpenAI {
-			s.Models = llm.DefaultOpenAIChatModels
-		} else {
-			s.Models = s.config.AzureOpenAI.ListModels()
-		}
-	}
 	return s.Models
 }
 

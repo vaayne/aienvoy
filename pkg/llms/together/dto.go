@@ -30,7 +30,7 @@ type TogetherChatRequest struct {
 }
 
 func (r *TogetherChatRequest) FromChatCompletionRequest(req llm.ChatCompletionRequest) {
-	r.Model = req.Model
+	r.Model = req.ModelId()
 	// r.Prompt = req.ToPrompt()
 	for _, message := range req.Messages {
 		r.Messages = append(r.Messages, Message{

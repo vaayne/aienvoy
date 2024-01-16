@@ -89,7 +89,7 @@ func (l *LLM) CreateMessage(ctx context.Context, conversationId string, req Chat
 	req.Messages = reqMessages
 	resp, err := l.Client.CreateChatCompletion(ctx, req)
 	if err != nil {
-		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId, "model", req.Model)
+		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId, "model", req.ModelId())
 		return Message{}, err
 	}
 	req.Messages = originReqMessages
@@ -97,7 +97,7 @@ func (l *LLM) CreateMessage(ctx context.Context, conversationId string, req Chat
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		ConversationId: conversationId,
-		Model:          req.Model,
+		Model:          req.ModelId(),
 		Request:        req,
 		Response:       resp,
 	})
@@ -162,7 +162,7 @@ func (l *LLM) CreateMessageStream(ctx context.Context, conversationId string, re
 					CreatedAt:      time.Now(),
 					UpdatedAt:      time.Now(),
 					ConversationId: conversationId,
-					Model:          req.Model,
+					Model:          req.ModelId(),
 					Request:        req,
 					Response:       chatCompletionResponse,
 				}); err != nil {

@@ -29,7 +29,7 @@ func (p *Client) ListModels() []string {
 }
 
 func (p *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	slog.DebugContext(ctx, "chat start", "llm", req.Model, "is_stream", false)
+	slog.DebugContext(ctx, "chat start", "llm", req.ModelId(), "is_stream", false)
 	payload := &Request{}
 	payload.FromChatCompletionRequest(req)
 
@@ -47,7 +47,7 @@ func (p *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 			}
 		case err := <-innerErrChan:
 			if errors.Is(err, io.EOF) {
-				slog.DebugContext(ctx, "chat success", "llm", req.Model, "is_stream", false)
+				slog.DebugContext(ctx, "chat success", "llm", req.ModelId(), "is_stream", false)
 				return llm.ChatCompletionResponse{
 					ID:      data.ID,
 					Object:  data.Object,
@@ -64,7 +64,7 @@ func (p *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 					},
 				}, nil
 			}
-			slog.ErrorContext(ctx, "chat error", "llm", req.Model, "is_stream", false, "err", err)
+			slog.ErrorContext(ctx, "chat error", "llm", req.ModelId(), "is_stream", false, "err", err)
 			return llm.ChatCompletionResponse{}, err
 		case <-ctx.Done():
 			return llm.ChatCompletionResponse{}, fmt.Errorf("context done")
@@ -73,7 +73,7 @@ func (p *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 }
 
 func (p *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
-	slog.DebugContext(ctx, "chat start", "llm", req.Model, "is_stream", true)
+	slog.DebugContext(ctx, "chat start", "llm", req.ModelId(), "is_stream", true)
 	payload := &Request{}
 	payload.FromChatCompletionRequest(req)
 
@@ -92,11 +92,11 @@ func (p *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 			dataChan <- resp
 		case err := <-innerErrChan:
 			if errors.Is(err, io.EOF) {
-				slog.DebugContext(ctx, "chat success", "llm", req.Model, "is_stream", true)
+				slog.DebugContext(ctx, "chat success", "llm", req.ModelId(), "is_stream", true)
 				errChan <- err
 				return
 			}
-			slog.ErrorContext(ctx, "chat error", "llm", req.Model, "is_stream", true, "err", err)
+			slog.ErrorContext(ctx, "chat error", "llm", req.ModelId(), "is_stream", true, "err", err)
 			errChan <- err
 			return
 		}
