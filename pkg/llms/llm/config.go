@@ -92,6 +92,13 @@ func (c *Config) ListModels() []string {
 	}
 }
 
+func (c *Config) LLMTypeID() string {
+	if c.LLMType == LLMTypeAiGateway {
+		return fmt.Sprintf("%s-%s", c.LLMType, c.AiGateway.Provider.Type)
+	}
+	return c.LLMType.String()
+}
+
 type AzureOpenAIConfig struct {
 	ApiKey                 string            `json:"api_key" mapstructure:"api_key" yaml:"api_key"`
 	ResourceName           string            `json:"resource_name" mapstructure:"resource_name" yaml:"resource_name"`
