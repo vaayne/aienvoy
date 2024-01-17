@@ -1,25 +1,21 @@
 package handler
 
 import (
+	"fmt"
 	"strings"
 
-	"github.com/Vaayne/aienvoy/pkg/llms/bard"
-	"github.com/Vaayne/aienvoy/pkg/llms/claudeweb"
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 
 	tb "gopkg.in/telebot.v3"
 )
 
 const (
-	CommandBard          = "bard"
-	CommandRead          = "read"
-	CommandChatGPT35     = "gpt35"
-	CommandChatGPT4      = "gpt4"
-	CommandClaudeWeb     = "claude_web"
-	CommandClaudeV2      = "claude_v2"
-	CommandClaudeV1      = "claude_v1"
-	CommandClaudeInstant = "claude_instant"
-	CommandImagine       = "imagine"
+	CommandRead      = "read"
+	CommandChatGPT35 = "gpt35"
+	CommandChatGPT4  = "gpt4"
+	CommandClaudeV2  = "claude_v2"
+	CommandGemini    = "gemini"
+	CommandImagine   = "imagine"
 )
 
 func OnText(c tb.Context) error {
@@ -40,22 +36,16 @@ func OnText(c tb.Context) error {
 		}
 
 		switch model {
-		case CommandBard:
-			model = bard.ModelBard
 		case CommandRead:
 			return OnReadEase(c)
+		case CommandGemini:
+			model = llm.DefaultGeminiModel
 		case CommandChatGPT35:
-			model = llm.OAIModelGPT3Dot5Turbo
+			model = fmt.Sprintf("%s-%s/%s", llm.LLMTypeAiGateway, llm.AiGatewayProviderAzureOpenAI, llm.OAIModelGPT3Dot5Turbo)
 		case CommandChatGPT4:
-			model = llm.OAIModelGPT4TurboPreview
-		case CommandClaudeWeb:
-			model = claudeweb.ModelClaude2
+			model = fmt.Sprintf("%s-%s/%s", llm.LLMTypeAiGateway, llm.AiGatewayProviderAzureOpenAI, llm.OAIModelGPT4TurboPreview)
 		case CommandClaudeV2:
-			model = llm.BedrockModelClaudeV2
-		case CommandClaudeV1:
-			model = llm.BedrockModelClaudeV1
-		case CommandClaudeInstant:
-			model = llm.BedrockModelClaudeInstantV1
+			model = fmt.Sprintf("%s/%s", llm.LLMTypeAWSBedrock, llm.BedrockModelClaudeV2)
 		case CommandImagine:
 			return OnMidJourneyImagine(c)
 		default:

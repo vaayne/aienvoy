@@ -252,3 +252,10 @@ const (
 var DefaultAwsBedrockModels = []string{
 	BedrockModelClaudeV1, BedrockModelClaudeV2, BedrockModelClaudeV2Dot1, BedrockModelClaudeInstantV1,
 }
+
+const (
+	GoogleAIModelGeminiPro  = "gemini-pro"
+	GoogleAIModelGeminiProV = "gemini-pro-vision"
+)
+
+var DefaultGeminiModel = fmt.Sprintf("%s/%s", LLMTypeGoogleAI, GoogleAIModelGeminiPro)

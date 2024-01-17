@@ -13,6 +13,7 @@ import (
 	"github.com/Vaayne/aienvoy/internal/pkg/parser"
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 	"github.com/pocketbase/pocketbase"
+	"github.com/vaayne/gtk/cleanweb"
 )
 
 var prompt = `
@@ -71,25 +72,22 @@ func (s *Reader) read(ctx context.Context, url string) (*Article, error) {
 	}
 
 	if content.Content == "" {
-		content, err = parser.New().Parse(url)
+		parser := cleanweb.NewParser().WithFormatMarkdown()
+		data, err := parser.Parse(ctx, url)
 		if err != nil {
 			return nil, fmt.Errorf("summaryArticle readArticle err: %w", err)
 		}
 
-		if content.Content == "" {
+		if data.Content == "" {
 			slog.WarnContext(ctx, "did not get any content from the url", "url", url, "title", content.Title)
 			return nil, fmt.Errorf("did not get any content from url %s", url)
 		}
 
-		if content.URL == "" {
-			content.URL = url
-		}
-
 		article = &Article{
 			Url:         url,
-			OriginalUrl: content.URL,
-			Title:       content.Title,
-			Content:     content.Content,
+			OriginalUrl: url,
+			Title:       data.Title,
+			Content:     data.Content,
 		}
 
 		if err := UpsertArticle(ctx, s.app.Dao(), article); err != nil {

@@ -27,11 +27,12 @@ func NewClient(apiKey string) *Client {
 }
 
 func (c *Client) ListModels() []string {
-	return []string{"gemini-pro", "gemini-pro-vision"}
+	return []string{llm.GoogleAIModelGeminiPro, llm.GoogleAIModelGeminiProV}
 }
 
 func (p *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	reqBody := ChatRequest{}.FromChatCompletionRequest(req)
+	slog.Info("request body", "model", req.Model, "modelId", req.ModelId())
 	chatResp, err := p.post(req.ModelId(), reqBody, true)
 	if err != nil {
 		errChan <- fmt.Errorf("chat with %s error: %w", req.ModelId(), err)
