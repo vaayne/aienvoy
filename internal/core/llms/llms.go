@@ -6,10 +6,10 @@ import (
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 )
 
-func NewWithDao(model string, dao llm.Dao) (llm.Interface, error) {
+func NewWithDao(model string, dao llm.Dao) (*llm.LLM, error) {
 	return llms.NewWithDao(model, config.GetConfig().LLMs, dao)
 }
 
-func New(model string) (llm.Interface, error) {
+func New(model string) (*llm.LLM, error) {
 	return NewWithDao(model, llm.NewMemoryDao())
 }

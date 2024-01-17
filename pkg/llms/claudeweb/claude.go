@@ -37,24 +37,6 @@ func ListModels() []string {
 	return []string{ModelClaude2, ModelClaude2Dot1}
 }
 
-func (cw *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	slog.InfoContext(ctx, "chat with Claude Web start")
-	prompt := req.ToPrompt()
-	cov, err := cw.CreateConversation(prompt[:min(10, len(prompt))])
-	if err != nil {
-		slog.ErrorContext(ctx, "chat with Claude Web error", "err", err)
-		return llm.ChatCompletionResponse{}, fmt.Errorf("create new claude conversiton error: %w", err)
-	}
-
-	resp, err := cw.CreateChatMessage(cov.UUID, prompt)
-	if err != nil {
-		slog.ErrorContext(ctx, "chat with Claude Web error", "err", err)
-		return llm.ChatCompletionResponse{}, fmt.Errorf("chat with claude error: %v", err)
-	}
-	slog.InfoContext(ctx, "chat with Claude Web success")
-	return resp.ToChatCompletionResponse(), nil
-}
-
 func (cw *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	slog.InfoContext(ctx, "chat with Claude Web stream start")
 	prompt := req.ToPrompt()

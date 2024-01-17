@@ -4,15 +4,11 @@ import (
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 )
 
-type GoogleAI struct {
-	*llm.LLM
-}
+type GoogleAI *llm.LLM
 
-func New(cfg llm.Config, dao llm.Dao) (*GoogleAI, error) {
+func New(cfg llm.Config, dao llm.Dao) (GoogleAI, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
-	return &GoogleAI{
-		LLM: llm.New(dao, NewClient(cfg.ApiKey)),
-	}, nil
+	return llm.New(dao, NewClient(cfg.ApiKey)), nil
 }

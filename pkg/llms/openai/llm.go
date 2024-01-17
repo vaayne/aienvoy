@@ -18,16 +18,12 @@ var modelMappings = map[string]string{
 	openai.GPT4:          openai.GPT4TurboPreview,
 }
 
-type OpenAI struct {
-	*llm.LLM
-}
+type OpenAI *llm.LLM
 
-func New(cfg llm.Config, dao llm.Dao) (*OpenAI, error) {
+func New(cfg llm.Config, dao llm.Dao) (OpenAI, error) {
 	client, err := NewClient(cfg)
 	if err != nil {
 		return nil, err
 	}
-	return &OpenAI{
-		llm.New(dao, client),
-	}, nil
+	return llm.New(dao, client), nil
 }

@@ -226,7 +226,7 @@ func (l *LLMHandler) CreateChatCompletion(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (l *LLMHandler) chatStream(c echo.Context, svc llm.Interface, req llm.ChatCompletionRequest) error {
+func (l *LLMHandler) chatStream(c echo.Context, svc *llm.LLM, req llm.ChatCompletionRequest) error {
 	dataChan := make(chan llm.ChatCompletionStreamResponse)
 	defer close(dataChan)
 	errChan := make(chan error)
@@ -265,6 +265,6 @@ func (l *LLMHandler) chatStream(c echo.Context, svc llm.Interface, req llm.ChatC
 	}
 }
 
-func newLlmService(c echo.Context, model string) (llm.Interface, error) {
+func newLlmService(c echo.Context, model string) (*llm.LLM, error) {
 	return llms.NewWithDao(model, llms.NewDao(c.Get(config.ContextKeyDao).(*daos.Dao)))
 }

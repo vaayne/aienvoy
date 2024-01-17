@@ -15,7 +15,7 @@ var NotImplementError = errors.New("the method not implement")
 
 type Client interface {
 	ListModels() []string
-	CreateChatCompletion(ctx context.Context, req ChatCompletionRequest) (ChatCompletionResponse, error)
+	// CreateChatCompletion(ctx context.Context, req ChatCompletionRequest) (ChatCompletionResponse, error)
 	CreateChatCompletionStream(ctx context.Context, req ChatCompletionRequest, respChan chan ChatCompletionStreamResponse, errChan chan error)
 }
 
@@ -87,7 +87,7 @@ func (l *LLM) CreateMessage(ctx context.Context, conversationId string, req Chat
 	}
 	reqMessages = append(reqMessages, originReqMessages...)
 	req.Messages = reqMessages
-	resp, err := l.Client.CreateChatCompletion(ctx, req)
+	resp, err := l.CreateChatCompletion(ctx, req)
 	if err != nil {
 		slog.ErrorContext(ctx, "create message error", "err", err, "conversation_id", conversationId, "model", req.ModelId())
 		return Message{}, err
@@ -195,4 +195,41 @@ func (l *LLM) DeleteMessage(ctx context.Context, id string) error {
 	err := l.dao.DeleteMessage(ctx, id)
 	slog.InfoContext(ctx, "delete message", "id", id, "err", err)
 	return err
+}
+
+func (l *LLM) CreateChatCompletion(ctx context.Context, req ChatCompletionRequest) (ChatCompletionResponse, error) {
+	dataChan := make(chan ChatCompletionStreamResponse)
+	defer close(dataChan)
+	errChan := make(chan error)
+	defer close(errChan)
+
+	go l.CreateChatCompletionStream(ctx, req, dataChan, errChan)
+	sb := strings.Builder{}
+	resp := ChatCompletionResponse{}
+
+	for {
+		select {
+		case data := <-dataChan:
+			if len(data.Choices) == 0 {
+				continue
+			}
+			sb.WriteString(data.Choices[0].Delta.Content)
+			resp = data.ToChatCompletionResponse()
+		case err := <-errChan:
+			if errors.Is(err, io.EOF) {
+				resp.Choices[0].Message.Content = sb.String()
+				return resp, nil
+			}
+			slog.Error("\nerr", "err", err)
+			return ChatCompletionResponse{}, err
+		}
+	}
+}
+
+func (l *LLM) ListModels() []string {
+	return l.Client.ListModels()
+}
+
+func (l *LLM) CreateChatCompletionStream(ctx context.Context, req ChatCompletionRequest, respChan chan ChatCompletionStreamResponse, errChan chan error) {
+	l.Client.CreateChatCompletionStream(ctx, req, respChan, errChan)
 }

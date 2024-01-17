@@ -59,19 +59,6 @@ func (s *Client) ListModels() []string {
 	return s.config.ListModels()
 }
 
-func (s *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	openaiReq := toOpenAIChatCompletionRequest(req)
-	slog.DebugContext(ctx, "chat start", "llm", openaiReq.Model, "is_stream", openaiReq.Stream)
-	resp, err := s.Client.CreateChatCompletion(ctx, openaiReq)
-	if err != nil {
-		slog.ErrorContext(ctx, "chat with OpenAI error", "err", err)
-		return llm.ChatCompletionResponse{}, err
-	}
-	slog.DebugContext(ctx, "chat success", "llm", openaiReq.Model, "is_stream", openaiReq.Stream)
-
-	return toLLMChatCompletionResponse(resp), nil
-}
-
 func (s *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	openaiReq := toOpenAIChatCompletionRequest(req)
 	slog.DebugContext(ctx, "chat start", "llm", openaiReq.Model, "is_stream", openaiReq.Stream)

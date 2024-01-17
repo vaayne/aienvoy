@@ -6,12 +6,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Vaayne/aienvoy/pkg/cache"
@@ -71,34 +68,6 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 	}
 
 	llm.ParseSSE(resp.Body, dataChan, errChan)
-}
-
-func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	dataChan := make(chan llm.ChatCompletionStreamResponse)
-	defer close(dataChan)
-	errChan := make(chan error)
-	defer close(errChan)
-
-	go c.CreateChatCompletionStream(ctx, req, dataChan, errChan)
-	sb := strings.Builder{}
-	resp := llm.ChatCompletionResponse{}
-
-	for {
-		select {
-		case data := <-dataChan:
-			if len(data.Choices) == 0 {
-				continue
-			}
-			resp = data.ToChatCompletionResponse()
-		case err := <-errChan:
-			if errors.Is(err, io.EOF) {
-				resp.Choices[0].Message.Content = sb.String()
-				return resp, nil
-			}
-			slog.Error("\nerr", "err", err)
-			return llm.ChatCompletionResponse{}, err
-		}
-	}
 }
 
 // getCopilotToken retrieves a token for GitHub Copilot.

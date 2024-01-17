@@ -139,30 +139,6 @@ func (c *Client) ListModels() []string {
 	return readModelsCache()
 }
 
-func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	req.Stream = false
-	togReq := &TogetherChatRequest{}
-	togReq.FromChatCompletionRequest(req)
-	reqBody, err := json.Marshal(togReq)
-	if err != nil {
-		return llm.ChatCompletionResponse{}, fmt.Errorf("create chat completion marshal request error: %w", err)
-	}
-
-	httpReq, _ := http.NewRequest("POST", c.baseUrl+"/v1/completions", bytes.NewBuffer(reqBody))
-	c.setHeaders(httpReq)
-	resp, err := c.session.Do(httpReq)
-	if err != nil {
-		return llm.ChatCompletionResponse{}, fmt.Errorf("create chat completion error: %w", err)
-	}
-	defer resp.Body.Close()
-	var togResp TogetherChatResponse
-	if err := json.NewDecoder(resp.Body).Decode(&togResp); err != nil {
-		return llm.ChatCompletionResponse{}, fmt.Errorf("create chat completion decode response error: %w", err)
-	}
-
-	return togResp.ToChatCompletionResponse(), nil
-}
-
 func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	req.Stream = true
 	togReq := &TogetherChatRequest{}

@@ -52,27 +52,6 @@ func (c *Client) ListModels() []string {
 	return c.config.ListModels()
 }
 
-func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	slog.DebugContext(ctx, "chat start", "model", req.ModelId(), "is_stream", false)
-	bedrockRequest := &BedrockRequest{}
-	bedrockRequest.FromChatCompletionRequest(req)
-
-	output, err := c.InvokeModel(ctx, &bedrockruntime.InvokeModelInput{
-		ModelId:     aws.String(req.ModelId()),
-		Body:        bedrockRequest.Marshal(),
-		Accept:      aws.String("application/json"),
-		ContentType: aws.String("application/json"),
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "chat start", "model", req.ModelId(), "is_stream", false, "err", err)
-		return llm.ChatCompletionResponse{}, err
-	}
-	resp := &BedrockResponse{}
-	resp.Unmarshal(output.Body)
-	slog.DebugContext(ctx, "chat success", "model", req.ModelId(), "is_stream", false)
-	return resp.ToChatCompletionResponse(), nil
-}
-
 func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	slog.DebugContext(ctx, "chat start", "model", req.ModelId(), "is_stream", true)
 	bedrockRequest := &BedrockRequest{}

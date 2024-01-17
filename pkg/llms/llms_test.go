@@ -8,7 +8,7 @@ import (
 )
 
 func TestSplitModel(t *testing.T) {
-	modelLlmMapping = map[string]llm.Interface{
+	modelLlmMapping = map[string]*llm.LLM{
 		llm.LLMTypeOpenAI.String(): nil,
 	}
 

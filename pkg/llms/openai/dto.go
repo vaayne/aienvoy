@@ -19,13 +19,6 @@ func toOpenAIChatCompletionRequest(req llm.ChatCompletionRequest) openai.ChatCom
 	return resp
 }
 
-func toLLMChatCompletionResponse(resp openai.ChatCompletionResponse) llm.ChatCompletionResponse {
-	data, _ := json.Marshal(resp)
-	var req llm.ChatCompletionResponse
-	_ = json.Unmarshal(data, &req)
-	return req
-}
-
 // func toOpenAIChatCompletionStreamResponse(resp llm.ChatCompletionStreamResponse) openai.ChatCompletionStreamResponse {
 // 	data, _ := json.Marshal(resp)
 // 	var req openai.ChatCompletionStreamResponse
