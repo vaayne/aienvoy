@@ -22,6 +22,8 @@ var validLLMTypes = map[llm.LLMType]struct{}{
 	llm.LLMTypeOpenAI:      {},
 	llm.LLMTypeAzureOpenAI: {},
 	llm.LLMTypeOpenRouter:  {},
+	llm.LLMTypeTogether:    {},
+	llm.LLMTypeAnyScale:    {},
 }
 
 func NewClient(cfg llm.Config) (*Client, error) {
@@ -36,16 +38,16 @@ func NewClient(cfg llm.Config) (*Client, error) {
 	}
 
 	var oaiConfig openai.ClientConfig
-	if cfg.LLMType == llm.LLMTypeOpenAI {
-		oaiConfig = openai.DefaultConfig(cfg.ApiKey)
-		if cfg.BaseUrl != "" {
-			oaiConfig.BaseURL = cfg.BaseUrl
-		}
-	} else if cfg.LLMType == llm.LLMTypeAzureOpenAI {
+	if cfg.LLMType == llm.LLMTypeAzureOpenAI {
 		baseUrl := fmt.Sprintf("https://%s.openai.azure.com", cfg.AzureOpenAI.ResourceName)
 		oaiConfig = openai.DefaultAzureConfig(cfg.ApiKey, baseUrl)
 		if cfg.AzureOpenAI.Version != "" {
 			oaiConfig.APIVersion = cfg.AzureOpenAI.Version
+		}
+	} else {
+		oaiConfig = openai.DefaultConfig(cfg.ApiKey)
+		if cfg.BaseUrl != "" {
+			oaiConfig.BaseURL = cfg.BaseUrl
 		}
 	}
 

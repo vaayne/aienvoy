@@ -33,7 +33,7 @@ type Client struct {
 
 func NewClient(cfg llm.Config) (*Client, error) {
 	if cfg.LLMType != llm.LLMTypeTogether {
-		return nil, fmt.Errorf("invalid config for together, llmtype: %s", cfg.LLMType)
+		return nil, fmt.Errorf("invalid config, llmtype: %s", cfg.LLMType)
 	}
 	if err := cfg.Validate(); err != nil {
 		return nil, err

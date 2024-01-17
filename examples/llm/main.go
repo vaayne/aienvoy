@@ -6,11 +6,10 @@ import (
 
 	"github.com/Vaayne/aienvoy/internal/core/llms"
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
-	"github.com/Vaayne/aienvoy/pkg/llms/openai"
 )
 
 func main() {
-	model := openai.ModelGPT3Dot5Turbo
+	model := llm.OAIModelGPT3Dot5Turbo
 	svc, err := llms.New(model)
 	if err != nil {
 		slog.Error("create llm service error", "err", err)

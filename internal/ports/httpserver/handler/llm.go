@@ -11,7 +11,6 @@ import (
 	"github.com/Vaayne/aienvoy/internal/core/llms"
 	"github.com/Vaayne/aienvoy/internal/pkg/config"
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
-	"github.com/Vaayne/aienvoy/pkg/llms/openai"
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase/daos"
 )
@@ -48,7 +47,7 @@ func (l *LLMHandler) CreateConversation(c echo.Context) error {
 
 func (l *LLMHandler) ListConversations(c echo.Context) error {
 	ctx := c.Request().Context()
-	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	svc, err := newLlmService(c, llm.OAIModelGPT3Dot5Turbo)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -62,7 +61,7 @@ func (l *LLMHandler) ListConversations(c echo.Context) error {
 func (l *LLMHandler) GetConversation(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.PathParam("id")
-	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	svc, err := newLlmService(c, llm.OAIModelGPT3Dot5Turbo)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -76,7 +75,7 @@ func (l *LLMHandler) GetConversation(c echo.Context) error {
 func (l *LLMHandler) DeleteConversation(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.PathParam("id")
-	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	svc, err := newLlmService(c, llm.OAIModelGPT3Dot5Turbo)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -157,7 +156,7 @@ func (l *LLMHandler) createMessageStream(c echo.Context, conversationId string, 
 func (l *LLMHandler) ListMessages(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.PathParam("conversationId")
-	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	svc, err := newLlmService(c, llm.OAIModelGPT3Dot5Turbo)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -172,7 +171,7 @@ func (l *LLMHandler) GetMessage(c echo.Context) error {
 	ctx := c.Request().Context()
 	// conversationId := c.PathParam("conversationId")
 	messageId := c.PathParam("messageId")
-	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	svc, err := newLlmService(c, llm.OAIModelGPT3Dot5Turbo)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -187,7 +186,7 @@ func (l *LLMHandler) DeleteMessage(c echo.Context) error {
 	ctx := c.Request().Context()
 	// conversationId := c.PathParam("conversationId")
 	messageId := c.PathParam("messageId")
-	svc, err := newLlmService(c, openai.ModelGPT3Dot5Turbo)
+	svc, err := newLlmService(c, llm.OAIModelGPT3Dot5Turbo)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}

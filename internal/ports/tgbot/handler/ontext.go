@@ -6,7 +6,6 @@ import (
 	"github.com/Vaayne/aienvoy/pkg/llms/bard"
 	"github.com/Vaayne/aienvoy/pkg/llms/claudeweb"
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
-	"github.com/Vaayne/aienvoy/pkg/llms/openai"
 
 	tb "gopkg.in/telebot.v3"
 )
@@ -46,9 +45,9 @@ func OnText(c tb.Context) error {
 		case CommandRead:
 			return OnReadEase(c)
 		case CommandChatGPT35:
-			model = openai.ModelGPT3Dot5Turbo
+			model = llm.OAIModelGPT3Dot5Turbo
 		case CommandChatGPT4:
-			model = openai.ModelGPT4
+			model = llm.OAIModelGPT4TurboPreview
 		case CommandClaudeWeb:
 			model = claudeweb.ModelClaude2
 		case CommandClaudeV2:
