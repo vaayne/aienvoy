@@ -16,6 +16,7 @@ const (
 	LLMTypeAzureOpenAI   LLMType = "azure-openai"
 	LLMTypeAWSBedrock    LLMType = "aws-bedrock"
 	LLMTypeTogether      LLMType = "together"
+	LLMTypeAnyScale      LLMType = "anyscale"
 	LLMTypeOpenRouter    LLMType = "open-router"
 	LLMTypeReplicate     LLMType = "replicate"
 	LLMTypeClaudeWeb     LLMType = "claude-web"
@@ -70,7 +71,9 @@ func (c Config) Validate() error {
 	}
 
 	switch c.LLMType {
-	case LLMTypeOpenAI, LLMTypeClaudeWeb, LLMTypeGoogleBard, LLMTypeTogether, LLMTypeReplicate, LLMTypeGoogleAI, LLMTypeOpenRouter:
+	case LLMTypeOpenAI, LLMTypeClaudeWeb, LLMTypeGoogleBard,
+		LLMTypeTogether, LLMTypeReplicate, LLMTypeGoogleAI,
+		LLMTypeOpenRouter, LLMTypeAnyScale:
 		if c.ApiKey == "" {
 			return fmt.Errorf("api_key is required")
 		}

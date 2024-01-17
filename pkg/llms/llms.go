@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/Vaayne/aienvoy/pkg/llms/aigateway"
+	"github.com/Vaayne/aienvoy/pkg/llms/anyscale"
 	"github.com/Vaayne/aienvoy/pkg/llms/awsbedrock"
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 
@@ -27,6 +28,8 @@ func getClient(cfg llm.Config, dao llm.Dao) (*llm.LLM, error) {
 		return openai.New(cfg, dao)
 	case llm.LLMTypeTogether:
 		return together.New(cfg, dao)
+	case llm.LLMTypeAnyScale:
+		return anyscale.New(cfg, dao)
 	case llm.LLMTypeGoogleAI:
 		return googleai.New(cfg, dao)
 	case llm.LLMTypeAWSBedrock:
