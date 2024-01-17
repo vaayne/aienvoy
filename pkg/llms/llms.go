@@ -65,7 +65,7 @@ func initModelMapping(dao llm.Dao, cfgs []llm.Config) {
 		}
 
 		// Map the client to the LLMType in the configuration
-		modelLlmMapping[cfg.LLMTypeID()] = cli
+		modelLlmMapping[cfg.ID()] = cli
 
 		// Map the client to each Model in the
 		for _, model := range cfg.ListModels() {

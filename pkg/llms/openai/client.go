@@ -15,7 +15,6 @@ import (
 
 type Client struct {
 	*openai.Client
-	Models []string `json:"models" yaml:"models"`
 	config llm.Config
 }
 
@@ -53,12 +52,11 @@ func NewClient(cfg llm.Config) (*Client, error) {
 	return &Client{
 		Client: openai.NewClientWithConfig(oaiConfig),
 		config: cfg,
-		Models: cfg.ListModels(),
 	}, nil
 }
 
 func (s *Client) ListModels() []string {
-	return s.Models
+	return s.config.ListModels()
 }
 
 func (s *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {

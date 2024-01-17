@@ -21,8 +21,7 @@ import (
 
 type Client struct {
 	session *http.Client
-	config  llm.AiGatewayConfig
-	Models  []string `json:"models"`
+	config  llm.Config
 }
 
 func NewClient(cfg llm.Config) (*Client, error) {
@@ -35,19 +34,18 @@ func NewClient(cfg llm.Config) (*Client, error) {
 
 	client := &Client{
 		session: http.DefaultClient,
-		config:  cfg.AiGateway,
-		Models:  cfg.ListModels(),
+		config:  cfg,
 	}
 
 	return client, nil
 }
 
 func (c *Client) ListModels() []string {
-	return c.Models
+	return c.config.ListModels()
 }
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	config := c.config
+	config := c.config.AiGateway
 	payload, err := buildRequestPayload(req, config)
 	if err != nil {
 		return llm.ChatCompletionResponse{}, fmt.Errorf("build request payload error: %w", err)
@@ -84,7 +82,7 @@ func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletio
 
 func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	req.Stream = true
-	config := c.config
+	config := c.config.AiGateway
 	payload, err := buildRequestPayload(req, config)
 	if err != nil {
 		errChan <- fmt.Errorf("build request payload error: %w", err)

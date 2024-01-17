@@ -46,6 +46,8 @@ const AIGatewayHost = "https://gateway.ai.cloudflare.com/v1"
 type Config struct {
 	// LLMType is the type of LLM to use
 	LLMType LLMType `json:"type" yaml:"type" mapstructure:"type"`
+	// Alias is the alias for the provider, if not set, will use the type instead
+	Alias string `json:"alias" yaml:"alias" mapstructure:"alias"`
 	// Models is a list of valid model ids for this config
 	Models []string `json:"models" yaml:"models" mapstructure:"models"`
 
@@ -92,7 +94,10 @@ func (c *Config) ListModels() []string {
 	}
 }
 
-func (c *Config) LLMTypeID() string {
+func (c *Config) ID() string {
+	if c.Alias != "" {
+		return c.Alias
+	}
 	if c.LLMType == LLMTypeAiGateway {
 		return fmt.Sprintf("%s-%s", c.LLMType, c.AiGateway.Provider.Type)
 	}

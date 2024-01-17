@@ -21,7 +21,6 @@ import (
 type Client struct {
 	*bedrockruntime.Client
 	config llm.Config
-	Models []string `json:"models"`
 }
 
 func NewClient(cfg llm.Config) (*Client, error) {
@@ -46,12 +45,11 @@ func NewClient(cfg llm.Config) (*Client, error) {
 	return &Client{
 		Client: bedrockruntime.NewFromConfig(awsConfig),
 		config: cfg,
-		Models: cfg.ListModels(),
 	}, nil
 }
 
 func (c *Client) ListModels() []string {
-	return c.Models
+	return c.config.ListModels()
 }
 
 func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
