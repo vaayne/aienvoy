@@ -1,8 +1,6 @@
 package together
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -11,16 +9,26 @@ import (
 	"path/filepath"
 
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
+	"github.com/Vaayne/aienvoy/pkg/llms/openai"
 )
 
 const baseUrl = "https://api.together.xyz"
 
 var cacheModelsFile = filepath.Join(os.TempDir(), "together_models.json")
 
+type Together *llm.LLM
+
+func New(cfg llm.Config, dao llm.Dao) (Together, error) {
+	client, err := NewClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return llm.New(dao, client), nil
+}
+
 type Client struct {
-	session *http.Client
-	baseUrl string
-	Apikey  string `json:"apikey"`
+	*openai.Client
+	config llm.Config
 }
 
 func NewClient(cfg llm.Config) (*Client, error) {
@@ -30,32 +38,16 @@ func NewClient(cfg llm.Config) (*Client, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
-
-	client := &Client{
-		baseUrl: baseUrl,
-		session: http.DefaultClient,
-		Apikey:  cfg.ApiKey,
-	}
-	if cfg.BaseUrl != "" {
-		client.baseUrl = cfg.BaseUrl
+	if cfg.BaseUrl == "" {
+		cfg.BaseUrl = baseUrl
 	}
 
-	return client, nil
-}
+	cli, err := openai.NewClient(cfg)
 
-func (c *Client) WithSession(session *http.Client) *Client {
-	c.session = session
-	return c
-}
-
-func (c *Client) WithApikey(apikey string) *Client {
-	c.Apikey = apikey
-	return c
-}
-
-func (c *Client) WithBaseUrl(url string) *Client {
-	c.baseUrl = url
-	return c
+	return &Client{
+		Client: cli,
+		config: cfg,
+	}, err
 }
 
 type Model struct {
@@ -73,7 +65,7 @@ type Model struct {
 }
 
 func (c *Client) setHeaders(req *http.Request) {
-	req.Header.Set("Authorization", "Bearer "+c.Apikey)
+	req.Header.Set("Authorization", "Bearer "+c.config.ApiKey)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "TogetherPythonOfficial/0.2.10")
@@ -116,9 +108,9 @@ func saveModelsCache(models []any) {
 
 func (c *Client) getModelsFromServer() []any {
 	models := make([]any, 0)
-	req, _ := http.NewRequest("GET", c.baseUrl+"/models/info", nil)
+	req, _ := http.NewRequest("GET", c.config.BaseUrl+"/models/info", nil)
 	c.setHeaders(req)
-	resp, err := c.session.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		slog.Error("list models", "err", err)
 		return models
@@ -137,40 +129,4 @@ func (c *Client) ListModels() []string {
 		saveModelsCache(models)
 	}
 	return readModelsCache()
-}
-
-func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
-	req.Stream = true
-	togReq := &TogetherChatRequest{}
-	togReq.FromChatCompletionRequest(req)
-	reqBody, err := json.Marshal(togReq)
-	if err != nil {
-		errChan <- fmt.Errorf("create chat completion stream marshal request error: %w", err)
-		return
-	}
-
-	httpReq, _ := http.NewRequest("POST", c.baseUrl+"/v1/completions", bytes.NewBuffer(reqBody))
-	c.setHeaders(httpReq)
-	resp, err := c.session.Do(httpReq)
-	if err != nil {
-		errChan <- fmt.Errorf("create chat completion stream error: %w", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	innerDataChan := make(chan TogetherChatResponse)
-	defer close(innerDataChan)
-	innerErrChan := make(chan error)
-	defer close(innerErrChan)
-
-	go llm.ParseSSE(resp.Body, innerDataChan, innerErrChan)
-	for {
-		select {
-		case data := <-innerDataChan:
-			dataChan <- data.ToChatCompletionStreamResponse()
-		case err := <-innerErrChan:
-			errChan <- err
-			return
-		}
-	}
 }

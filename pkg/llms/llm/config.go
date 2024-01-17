@@ -235,10 +235,17 @@ var DefaultOpenAIChatModels = []string{
 	"gpt-3.5-turbo-1106", "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-3.5-turbo-instruct", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-16k-0613", "gpt-3.5-turbo-0301",
 }
 
+const (
+	BedrockModelClaudeV1        = "anthropic.claude-v1"
+	BedrockModelClaudeV2        = "anthropic.claude-v2"
+	BedrockModelClaudeV2Dot1    = "anthropic.claude-v2:1"
+	BedrockModelClaudeInstantV1 = "anthropic.claude-instant-v1"
+)
+
 var DefaultAwsBedrockModels = []string{
+	BedrockModelClaudeV1, BedrockModelClaudeV2, BedrockModelClaudeV2Dot1, BedrockModelClaudeInstantV1,
 	// "ai21.2-mid-v1", "ai21.2-ultra-v1",
 	// "amazon.titan-embed-text-v1", "amazon.titan-text-express-v1", "amazon.titan-embed-image-v1", "amazon.titan-image-generator-v1",
-	"anthropic.claude-v1", "anthropic.claude-v2", "anthropic.claude-v2:1", "anthropic.claude-instant-v1",
 	// "cohere.command-text-v14", "cohere.command-light-text-v14", "cohere.embed-english-v3", "cohere.embed-multilingual-v3",
 	// "meta.llama2-13b-chat-v1", "metallama2-70b-chat-v1",
 	// "stability.stable-diffusion-xl-vo", "stability.stable-diffusion-xL-v1",

@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Vaayne/aienvoy/pkg/llms/claude"
+	"github.com/Vaayne/aienvoy/pkg/llms/awsbedrock"
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
@@ -93,7 +93,7 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 		case data := <-innerDataChan:
 			switch config.Provider.Type {
 			case llm.AiGatewayProviderAWSBedrock:
-				var val claude.BedrockResponse
+				var val awsbedrock.BedrockResponse
 				if err := mapstructure.Decode(data, &val); err != nil {
 					errChan <- fmt.Errorf("parse response error: %w", err)
 					return
@@ -124,7 +124,7 @@ func buildRequestPayload(req llm.ChatCompletionRequest, config llm.AiGatewayConf
 
 	switch config.Provider.Type {
 	case llm.AiGatewayProviderAWSBedrock:
-		bedrockRequest := &claude.BedrockRequest{}
+		bedrockRequest := &awsbedrock.BedrockRequest{}
 		bedrockRequest.FromChatCompletionRequest(req)
 		payload = bedrockRequest.Marshal()
 	default:

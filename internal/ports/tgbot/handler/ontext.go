@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/Vaayne/aienvoy/pkg/llms/bard"
-	"github.com/Vaayne/aienvoy/pkg/llms/claude"
 	"github.com/Vaayne/aienvoy/pkg/llms/claudeweb"
+	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 	"github.com/Vaayne/aienvoy/pkg/llms/openai"
 
 	tb "gopkg.in/telebot.v3"
@@ -52,11 +52,11 @@ func OnText(c tb.Context) error {
 		case CommandClaudeWeb:
 			model = claudeweb.ModelClaude2
 		case CommandClaudeV2:
-			model = claude.ModelClaudeV2
+			model = llm.BedrockModelClaudeV2
 		case CommandClaudeV1:
-			model = claude.ModelClaudeV1Dot3
+			model = llm.BedrockModelClaudeV1
 		case CommandClaudeInstant:
-			model = claude.ModelClaudeInstantV1Dot2
+			model = llm.BedrockModelClaudeInstantV1
 		case CommandImagine:
 			return OnMidJourneyImagine(c)
 		default:
