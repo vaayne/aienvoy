@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/Vaayne/aienvoy/pkg/llms/aigateway"
+	"github.com/Vaayne/aienvoy/pkg/llms/anyscale"
 	"github.com/Vaayne/aienvoy/pkg/llms/awsbedrock"
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 
@@ -17,16 +18,18 @@ import (
 )
 
 var (
-	modelLlmMapping map[string]llm.Interface
+	modelLlmMapping map[string]*llm.LLM
 	once            sync.Once
 )
 
-func getClient(cfg llm.Config, dao llm.Dao) (llm.Interface, error) {
+func getClient(cfg llm.Config, dao llm.Dao) (*llm.LLM, error) {
 	switch cfg.LLMType {
 	case llm.LLMTypeOpenAI, llm.LLMTypeAzureOpenAI, llm.LLMTypeOpenRouter:
 		return openai.New(cfg, dao)
 	case llm.LLMTypeTogether:
 		return together.New(cfg, dao)
+	case llm.LLMTypeAnyScale:
+		return anyscale.New(cfg, dao)
 	case llm.LLMTypeGoogleAI:
 		return googleai.New(cfg, dao)
 	case llm.LLMTypeAWSBedrock:
@@ -52,7 +55,7 @@ func getClient(cfg llm.Config, dao llm.Dao) (llm.Interface, error) {
 // This function doesn't return a value.
 func initModelMapping(dao llm.Dao, cfgs []llm.Config) {
 	// Initialize the modelLlmMapping map
-	modelLlmMapping = make(map[string]llm.Interface)
+	modelLlmMapping = make(map[string]*llm.LLM)
 
 	// Iterate over the provided configurations
 	for _, cfg := range cfgs {
@@ -88,7 +91,7 @@ func splitModel(model string) (string, string) {
 	return provider, modelId
 }
 
-func NewWithDao(model string, cfgs []llm.Config, dao llm.Dao) (llm.Interface, error) {
+func NewWithDao(model string, cfgs []llm.Config, dao llm.Dao) (*llm.LLM, error) {
 	once.Do(func() {
 		initModelMapping(dao, cfgs)
 	})
@@ -106,6 +109,6 @@ func NewWithDao(model string, cfgs []llm.Config, dao llm.Dao) (llm.Interface, er
 	return nil, fmt.Errorf("model %s is not supported", model)
 }
 
-func New(model string, cfgs []llm.Config) (llm.Interface, error) {
+func New(model string, cfgs []llm.Config) (*llm.LLM, error) {
 	return NewWithDao(model, cfgs, llm.NewMemoryDao())
 }

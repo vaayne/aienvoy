@@ -40,7 +40,7 @@ func OnReadEase(c tb.Context) error {
 	defer close(respChan)
 	defer close(errChan)
 
-	go reader.ReadStream(ctx, urlStr, "gemini-pro", respChan, errChan)
+	go reader.ReadStream(ctx, urlStr, llm.DefaultGeminiModel, respChan, errChan)
 
 	text := ""
 	chunk := ""

@@ -36,19 +36,6 @@ func (c *Client) ListModels() []string {
 	return []string{ModelBard}
 }
 
-func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	slog.InfoContext(ctx, "chat with Google Bard start")
-	prompt := req.ToPrompt()
-	resp, err := c.Ask(prompt, "", "", "", 0)
-	if err != nil {
-		slog.ErrorContext(ctx, "chat with Google Bard error", "err", err)
-		return llm.ChatCompletionResponse{}, fmt.Errorf("bard got an error, %w", err)
-	}
-	res := resp.ToChatCompletionResponse()
-	slog.InfoContext(ctx, "chat with Google Bard success")
-	return res, nil
-}
-
 func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
 	slog.InfoContext(ctx, "chat with Google Bard stream start")
 	prompt := req.ToPrompt()

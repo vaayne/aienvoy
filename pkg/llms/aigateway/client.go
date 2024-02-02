@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Vaayne/aienvoy/pkg/llms/claude"
+	"github.com/Vaayne/aienvoy/pkg/llms/awsbedrock"
 	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
@@ -42,42 +42,6 @@ func NewClient(cfg llm.Config) (*Client, error) {
 
 func (c *Client) ListModels() []string {
 	return c.config.ListModels()
-}
-
-func (c *Client) CreateChatCompletion(ctx context.Context, req llm.ChatCompletionRequest) (llm.ChatCompletionResponse, error) {
-	config := c.config.AiGateway
-	payload, err := buildRequestPayload(req, config)
-	if err != nil {
-		return llm.ChatCompletionResponse{}, fmt.Errorf("build request payload error: %w", err)
-	}
-
-	url := config.GetChatURL(req.ModelId())
-	slog.DebugContext(ctx, "chat request", "url", url, "req", string(payload))
-	requestBody := bytes.NewReader(payload)
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, requestBody)
-	if err != nil {
-		return llm.ChatCompletionResponse{}, fmt.Errorf("create request error: %w", err)
-	}
-
-	if err := setRequestHeaders(ctx, request, config, false, requestBody); err != nil {
-		return llm.ChatCompletionResponse{}, fmt.Errorf("set request headers error: %w", err)
-	}
-
-	resp, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return llm.ChatCompletionResponse{}, fmt.Errorf("do request error: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// check response status, if not 200, return error
-	if resp.StatusCode != http.StatusOK {
-		respBody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return llm.ChatCompletionResponse{}, fmt.Errorf("decode response error: %w", err)
-		}
-		return llm.ChatCompletionResponse{}, fmt.Errorf("chat error, status: %s, body: %s, headers: %v", resp.Status, string(respBody), resp.Header)
-	}
-	return processResponse(ctx, resp.Body, config)
 }
 
 func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCompletionRequest, dataChan chan llm.ChatCompletionStreamResponse, errChan chan error) {
@@ -129,7 +93,7 @@ func (c *Client) CreateChatCompletionStream(ctx context.Context, req llm.ChatCom
 		case data := <-innerDataChan:
 			switch config.Provider.Type {
 			case llm.AiGatewayProviderAWSBedrock:
-				var val claude.BedrockResponse
+				var val awsbedrock.BedrockResponse
 				if err := mapstructure.Decode(data, &val); err != nil {
 					errChan <- fmt.Errorf("parse response error: %w", err)
 					return
@@ -160,7 +124,7 @@ func buildRequestPayload(req llm.ChatCompletionRequest, config llm.AiGatewayConf
 
 	switch config.Provider.Type {
 	case llm.AiGatewayProviderAWSBedrock:
-		bedrockRequest := &claude.BedrockRequest{}
+		bedrockRequest := &awsbedrock.BedrockRequest{}
 		bedrockRequest.FromChatCompletionRequest(req)
 		payload = bedrockRequest.Marshal()
 	default:
@@ -202,24 +166,4 @@ func setRequestHeaders(ctx context.Context, request *http.Request, config llm.Ai
 	}
 	slog.DebugContext(ctx, "chat request headers", "headers", request.Header)
 	return nil
-}
-
-func processResponse(ctx context.Context, body io.ReadCloser, config llm.AiGatewayConfig) (llm.ChatCompletionResponse, error) {
-	var respBody llm.ChatCompletionResponse
-	switch config.Provider.Type {
-	case llm.AiGatewayProviderAWSBedrock:
-		var bedrockResp claude.BedrockResponse
-		err := json.NewDecoder(body).Decode(&bedrockResp)
-		if err != nil {
-			return llm.ChatCompletionResponse{}, fmt.Errorf("decode response error: %w", err)
-		}
-		respBody = bedrockResp.ToChatCompletionResponse()
-	default:
-		err := json.NewDecoder(body).Decode(&respBody)
-		if err != nil {
-			return llm.ChatCompletionResponse{}, fmt.Errorf("decode response error: %w", err)
-		}
-	}
-	slog.DebugContext(ctx, "chat response success", "resp", respBody)
-	return respBody, nil
 }

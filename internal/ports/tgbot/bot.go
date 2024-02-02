@@ -71,8 +71,8 @@ func registerCommands(b *TeleBot) {
 			Description: "ReadEase to summary article or video using Claude 2",
 		},
 		{
-			Text:        handler.CommandBard,
-			Description: "Chat using Google Bard",
+			Text:        handler.CommandGemini,
+			Description: "Chat using Goodle Gemini Pro",
 		},
 		{
 			Text:        handler.CommandChatGPT35,
@@ -83,20 +83,8 @@ func registerCommands(b *TeleBot) {
 			Description: "Chat using ChatGPT 4",
 		},
 		{
-			Text:        handler.CommandClaudeWeb,
-			Description: "Chat using Claude Web",
-		},
-		{
 			Text:        handler.CommandClaudeV2,
 			Description: "Chat using Claude API V2",
-		},
-		{
-			Text:        handler.CommandClaudeV1,
-			Description: "Chat using Claude API V1",
-		},
-		{
-			Text:        handler.CommandClaudeInstant,
-			Description: "Chat using Claude API Instant",
 		},
 		{
 			Text:        handler.CommandImagine,

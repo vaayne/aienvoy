@@ -16,6 +16,7 @@ const (
 	LLMTypeAzureOpenAI   LLMType = "azure-openai"
 	LLMTypeAWSBedrock    LLMType = "aws-bedrock"
 	LLMTypeTogether      LLMType = "together"
+	LLMTypeAnyScale      LLMType = "anyscale"
 	LLMTypeOpenRouter    LLMType = "open-router"
 	LLMTypeReplicate     LLMType = "replicate"
 	LLMTypeClaudeWeb     LLMType = "claude-web"
@@ -70,7 +71,9 @@ func (c Config) Validate() error {
 	}
 
 	switch c.LLMType {
-	case LLMTypeOpenAI, LLMTypeClaudeWeb, LLMTypeGoogleBard, LLMTypeTogether, LLMTypeReplicate, LLMTypeGoogleAI, LLMTypeOpenRouter:
+	case LLMTypeOpenAI, LLMTypeClaudeWeb, LLMTypeGoogleBard,
+		LLMTypeTogether, LLMTypeReplicate, LLMTypeGoogleAI,
+		LLMTypeOpenRouter, LLMTypeAnyScale:
 		if c.ApiKey == "" {
 			return fmt.Errorf("api_key is required")
 		}
@@ -230,16 +233,29 @@ func (c AiGatewayConfig) GetAuthHeader() map[string]string {
 	return nil
 }
 
-var DefaultOpenAIChatModels = []string{
-	"gpt-4-1106-preview", "gpt-4-vision-preview", "gpt-4", "gpt-4-32k", "gpt-4-0613", "gpt-4-32k-0613", "gpt-4-0314", "gpt-4-32k-0314",
-	"gpt-3.5-turbo-1106", "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-3.5-turbo-instruct", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-16k-0613", "gpt-3.5-turbo-0301",
-}
+const (
+	OAIModelGPT3Dot5Turbo    = "gpt-3.5-turbo"
+	OAIModelGPT3Dot5Turbo16K = "gpt-3.5-turbo-16k"
+	OAIModelGPT4             = "gpt-4"
+	OAIModelGPT4Dot32K       = "gpt-4-32k"
+	OAIModelGPT4TurboPreview = "gpt-4-1106-preview"
+	OAIModelGPT4V            = "gpt-4-vision-preview"
+)
+
+const (
+	BedrockModelClaudeV1        = "anthropic.claude-v1"
+	BedrockModelClaudeV2        = "anthropic.claude-v2"
+	BedrockModelClaudeV2Dot1    = "anthropic.claude-v2:1"
+	BedrockModelClaudeInstantV1 = "anthropic.claude-instant-v1"
+)
 
 var DefaultAwsBedrockModels = []string{
-	// "ai21.2-mid-v1", "ai21.2-ultra-v1",
-	// "amazon.titan-embed-text-v1", "amazon.titan-text-express-v1", "amazon.titan-embed-image-v1", "amazon.titan-image-generator-v1",
-	"anthropic.claude-v1", "anthropic.claude-v2", "anthropic.claude-v2:1", "anthropic.claude-instant-v1",
-	// "cohere.command-text-v14", "cohere.command-light-text-v14", "cohere.embed-english-v3", "cohere.embed-multilingual-v3",
-	// "meta.llama2-13b-chat-v1", "metallama2-70b-chat-v1",
-	// "stability.stable-diffusion-xl-vo", "stability.stable-diffusion-xL-v1",
+	BedrockModelClaudeV1, BedrockModelClaudeV2, BedrockModelClaudeV2Dot1, BedrockModelClaudeInstantV1,
 }
+
+const (
+	GoogleAIModelGeminiPro  = "gemini-pro"
+	GoogleAIModelGeminiProV = "gemini-pro-vision"
+)
+
+var DefaultGeminiModel = fmt.Sprintf("%s/%s", LLMTypeGoogleAI, GoogleAIModelGeminiPro)

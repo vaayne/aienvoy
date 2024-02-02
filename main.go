@@ -13,6 +13,7 @@ import (
 	"github.com/Vaayne/aienvoy/internal/ports/httpserver"
 	"github.com/Vaayne/aienvoy/internal/ports/tgbot"
 	_ "github.com/Vaayne/aienvoy/migrations"
+	"github.com/Vaayne/aienvoy/pkg/llms/llm"
 	"github.com/pocketbase/pocketbase/tools/cron"
 	tb "gopkg.in/telebot.v3"
 
@@ -39,7 +40,7 @@ func SetScheduledJobs(app *pocketbase.PocketBase) {
 		// hourly readease job
 		if config.GetConfig().ReadEase.TelegramChannel != 0 {
 			scheduler.MustAdd("readease", "0 * * * *", func() {
-				summaries, err := readease.PeriodJob(app, "gemini-pro")
+				summaries, err := readease.PeriodJob(app, llm.DefaultGeminiModel)
 				if err != nil {
 					slog.Error("run period readease job error", "err", err)
 				}
